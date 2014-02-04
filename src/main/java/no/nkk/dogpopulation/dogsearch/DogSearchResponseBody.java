@@ -1,40 +1,42 @@
 package no.nkk.dogpopulation.dogsearch;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class DogSearchResponseBody {
-    String name;
-    String breed;
-    String id;
 
-    public DogSearchResponseBody(String name, String breed, String id) {
-        this.name = name;
-        this.breed = breed;
-        this.id = id;
+    int numFound;
+    int start;
+
+    DogDocument[] docs;
+
+    public DogSearchResponseBody() {
     }
 
-    public String getName() {
-        return name;
+    public int getNumFound() {
+        return numFound;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setNumFound(int numFound) {
+        this.numFound = numFound;
     }
 
-    public String getBreed() {
-        return breed;
+    public int getStart() {
+        return start;
     }
 
-    public void setBreed(String breed) {
-        this.breed = breed;
+    public void setStart(int start) {
+        this.start = start;
     }
 
-    public String getId() {
-        return id;
+    public DogDocument[] getDocs() {
+        return docs;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setDocs(DogDocument[] docs) {
+        this.docs = docs;
     }
 }

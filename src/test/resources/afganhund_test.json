@@ -1,7 +1,7 @@
 {
     "responseHeader": {
         "status": 0,
-        "QTime": 1002,
+        "QTime": 249,
         "params": {
             "facet": "true",
             "fl": "json_detailed",
@@ -18,7 +18,7 @@
         }
     },
     "response": {
-        "numFound": 1392,
+        "numFound": 5,
         "start": 0,
         "docs": [
             {
@@ -44,7 +44,7 @@
             "breed": [
                 "", 0,
                 "Affenpinscher", 0,
-                "Afghanhund", 1392,
+                "Afghanhund", 5,
                 "Afghansk Mynde", 0,
                 "Agility S - 2", 0,
                 "Aidi", 0,
@@ -54,11 +54,10 @@
             "gender": [
                 "", 0,
                 "F", 0,
-                "female", 674,
-                "male", 718]
+                "female", 3,
+                "male", 2]
         },
         "facet_dates": {},
         "facet_ranges": {}
     }
 }
-

@@ -1,44 +1,30 @@
 package no.nkk.dogpopulation.dogsearch;
 
-import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class DogSearchResponse {
-    Map<String, Object> responseHeader;
 
-    String name;
-    String breed;
-    String id;
+    DogSearchResponseHeader responseHeader;
+    DogSearchResponseBody response;
 
-    public DogSearchResponse(String name, String breed, String id) {
-        this.name = name;
-        this.breed = breed;
-        this.id = id;
+    public DogSearchResponseHeader getResponseHeader() {
+        return responseHeader;
     }
 
-    public String getName() {
-        return name;
+    public void setResponseHeader(DogSearchResponseHeader responseHeader) {
+        this.responseHeader = responseHeader;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public DogSearchResponseBody getResponse() {
+        return response;
     }
 
-    public String getBreed() {
-        return breed;
-    }
-
-    public void setBreed(String breed) {
-        this.breed = breed;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
+    public void setResponse(DogSearchResponseBody response) {
+        this.response = response;
     }
 }
