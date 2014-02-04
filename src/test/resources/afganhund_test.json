@@ -1,0 +1,64 @@
+{
+    "responseHeader": {
+        "status": 0,
+        "QTime": 1002,
+        "params": {
+            "facet": "true",
+            "fl": "json_detailed",
+            "sort": "name asc",
+            "indent": "true",
+            "start": "0",
+            "q": "{!q.op=AND}*  ",
+            "facet.limit": "-1",
+            "facet.field": ["breed",
+                "gender"],
+            "wt": "json",
+            "fq": "breed:(\"Afghanhund\")",
+            "rows": "1000000"
+        }
+    },
+    "response": {
+        "numFound": 1392,
+        "start": 0,
+        "docs": [
+            {
+                "json_detailed": "{\"id\":\"51224fa5-f15f-42c1-9fd8-d9fab2740f3c\",\"breed\":{\"id\":\"\",\"name\":\"Afghanhund\"},\"born\":\"2005-11-08T00:00:00Z\",\"postalCode\":\"Sweden\",\"gender\":\"female\",\"name\":\"A Heaven Sent Habib Ul-Lah\",\"ancestry\":{\"father\":{\"id\":\"KCAB0900301\",\"name\":\"Jacosta Black In A Flash To Elangen\",\"breed\":{\"id\":\"\",\"name\":\"\"}},\"mother\":{\"id\":\"S17227/2002\",\"name\":\"Summerstorm\\u0027s Beauty And The Beast\",\"breed\":{\"id\":\"\",\"name\":\"\"}}},\"ids\":[{\"type\":\"huid\",\"value\":\"S38454/2006\"},{\"type\":\"chip\",\"value\":\"276098100914744\"}],\"size\":\"\",\"hairType\":\"\",\"color\":\"black \\u0026 tan\",\"health\":{\"hd\":[],\"eye\":[{\"id\":\"\",\"diagnosis\":\"ua\",\"provenOnRightEye\":false,\"provenOnLeftEye\":false,\"registered\":\"\",\"registeredBy\":\"Granar Marie\"}],\"tests\":[]},\"quality\":90}"
+            },
+            {
+                "json_detailed": "{\"id\":\"b4f29cc6-bab2-42d2-9c49-e7ca1d0357c5\",\"breed\":{\"id\":\"\",\"name\":\"Afghanhund\"},\"born\":\"2001-03-02T00:00:00Z\",\"postalCode\":\"Sweden\",\"gender\":\"female\",\"name\":\"A Tiger By The Tail\",\"ancestry\":{\"father\":{\"id\":\"ANKC1604148\",\"name\":\"Quom Jambalaya N Jazz\",\"breed\":{\"id\":\"\",\"name\":\"\"}},\"mother\":{\"id\":\"N11025/96\",\"name\":\"Only Angels Have Wings\",\"breed\":{\"id\":\"\",\"name\":\"\"}}},\"ids\":[{\"type\":\"huid\",\"value\":\"S44863/2001\"},{\"type\":\"chip\",\"value\":\"57805000014420\"}],\"size\":\"\",\"hairType\":\"\",\"color\":\"brindle\",\"siblings\":[{\"id\":\"N07244/01\"}],\"quality\":90}"
+            },
+            {
+                "json_detailed": "{\"id\":\"bec30583-87ce-4b18-b0a6-42eb873a0fb8\",\"breed\":{\"id\":\"\",\"name\":\"Afghanhund\"},\"born\":\"1996-08-04T00:00:00Z\",\"postalCode\":\"Sweden\",\"gender\":\"male\",\"name\":\"A\\u0027Rosafan Bluetime Print\",\"ancestry\":{\"father\":{\"id\":\"S33677/93\",\"name\":\"Gold\\u0027n Copper Blue Print\",\"breed\":{\"id\":\"\",\"name\":\"\"}},\"mother\":{\"id\":\"SF39499/93\",\"name\":\"A\\u0027Rosafan I\\u0027m Irmelie\",\"breed\":{\"id\":\"\",\"name\":\"\"}}},\"ids\":[{\"type\":\"huid\",\"value\":\"S25652/2000\"},{\"type\":\"chip\",\"value\":\"985100005223642\"}],\"size\":\"\",\"hairType\":\"\",\"color\":\"blå\",\"quality\":90}"
+            },
+            {
+                "json_detailed": "{\"id\":\"1dcaa3d8-0711-442f-86b1-6f5989201713\",\"breed\":{\"id\":\"\",\"name\":\"Afghanhund\"},\"born\":\"1998-10-26T00:00:00Z\",\"postalCode\":\"Sweden\",\"gender\":\"female\",\"name\":\"A\\u0027Rosafan Milli Vanilli\",\"ancestry\":{\"father\":{\"id\":\"FIN36962/96\",\"name\":\"A\\u0027Rosafan Bluetime Print\",\"breed\":{\"id\":\"\",\"name\":\"\"}},\"mother\":{\"id\":\"FIN19312/95\",\"name\":\"A\\u0027Rosafan Dad\\u0027s Mercedes\",\"breed\":{\"id\":\"\",\"name\":\"\"}}},\"ids\":[{\"type\":\"huid\",\"value\":\"S12103/2000\"}],\"size\":\"\",\"hairType\":\"\",\"color\":\"domino\",\"siblings\":[{\"id\":\"FIN41316/98\"},{\"id\":\"S37465/99\"}],\"quality\":50}"
+            },
+            {
+                "json_detailed": "{\"id\":\"a2976733-0511-4904-b796-2ab399414199\",\"breed\":{\"id\":\"\",\"name\":\"Afghanhund\"},\"born\":\"2008-09-06T00:00:00Z\",\"postalCode\":\"Sweden\",\"gender\":\"male\",\"name\":\"Zola\",\"ancestry\":{\"father\":{\"id\":\"S67652/2004\",\"name\":\"Spin-Kendos Red Hot\",\"breed\":{\"id\":\"\",\"name\":\"\"}},\"mother\":{\"id\":\"S47076/2007\",\"name\":\"Donna\",\"breed\":{\"id\":\"\",\"name\":\"\"}}},\"ids\":[{\"type\":\"huid\",\"value\":\"S64712/2008\"}],\"size\":\"\",\"hairType\":\"\",\"color\":\"svart\",\"siblings\":[{\"id\":\"S64708/2008\"},{\"id\":\"S64709/2008\"},{\"id\":\"S64710/2008\"},{\"id\":\"S64711/2008\"},{\"id\":\"S64713/2008\"},{\"id\":\"S64714/2008\"},{\"id\":\"S64715/2008\"},{\"id\":\"S64716/2008\"},{\"id\":\"S64717/2008\"}],\"quality\":50}"
+            }
+        ]
+    },
+    "facet_counts": {
+        "facet_queries": {},
+        "facet_fields": {
+            "breed": [
+                "", 0,
+                "Affenpinscher", 0,
+                "Afghanhund", 1392,
+                "Afghansk Mynde", 0,
+                "Agility S - 2", 0,
+                "Aidi", 0,
+                "Airedale Terrier", 0,
+                "Airedaleterrier", 0,
+                "Akita", 0],
+            "gender": [
+                "", 0,
+                "F", 0,
+                "female", 674,
+                "male", 718]
+        },
+        "facet_dates": {},
+        "facet_ranges": {}
+    }
+}
+
