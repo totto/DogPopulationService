@@ -3,12 +3,17 @@ package no.nkk.dogpopulation.pedigree;
 import com.jayway.restassured.RestAssured;
 import no.nkk.dogpopulation.Main;
 import no.nkk.dogpopulation.ResourceConfigFactory;
-import no.nkk.dogpopulation.dogsearch.DogSearchTestClient;
+import no.nkk.dogpopulation.graph.Dog;
+import no.nkk.dogpopulation.graph.GraphQueryService;
+import org.apache.commons.io.FileUtils;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
+
+import java.io.File;
 
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
@@ -20,15 +25,19 @@ public class PedigreeResourceTest {
     @BeforeClass
     public void startServer() {
         int httpPort = 10000 + Main.DEFAULT_HTTP_PORT;
+        String dbPath = "target/unittestdogdb";
+        File dbFolder = new File(dbPath);
+        FileUtils.deleteQuietly(dbFolder);
+        final GraphDatabaseService graphDb = Main.createGraphDb(dbPath);
         ResourceConfigFactory resourceConfigFactory = new ResourceConfigFactory() {
             @Override
             public ResourceConfig createResourceConfig() {
                 ResourceConfig resourceConfig = new ResourceConfig();
-                resourceConfig.registerInstances(new PedigreeResource(new DogSearchTestClient()));
+                resourceConfig.registerInstances(new PedigreeResource(new GraphQueryService(graphDb)));
                 return resourceConfig;
             }
         };
-        main = new Main(resourceConfigFactory, httpPort);
+        main = new Main(graphDb, resourceConfigFactory, httpPort);
         main.start();
         RestAssured.port = httpPort;
     }

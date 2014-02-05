@@ -11,8 +11,6 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
@@ -34,7 +32,7 @@ public class DogSearchHttpClient implements DogSearchClient {
 
     @Override
     public DogSearchResponse findDog(String query) {
-        WebTarget configTarget = client.target(dogSearchUri).path(dogSearchContextPath).queryParam("q", query).queryParam("wt", "json");
+        WebTarget configTarget = client.target(dogSearchUri).path(dogSearchContextPath).queryParam("q", query).queryParam("wt", "json").queryParam("rows", "10");
         Response response = configTarget.request(MediaType.TEXT_PLAIN_TYPE).get();
         boolean success = handleResponseStatus(response);
         if (!success) {

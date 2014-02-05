@@ -2,7 +2,8 @@ package no.nkk.dogpopulation.pedigree;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import no.nkk.dogpopulation.dogsearch.*;
+import no.nkk.dogpopulation.graph.Dog;
+import no.nkk.dogpopulation.graph.GraphQueryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,34 +23,23 @@ public class PedigreeResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PedigreeResource.class);
 
-    private final DogSearchClient dogSearchClient;
-
     private final ObjectMapper objectMapper;
     private final ObjectWriter prettyPrintingObjectWriter;
 
-    public PedigreeResource(DogSearchClient dogSearchClient) {
+    private final PedigreeService pedigreeService;
+
+    public PedigreeResource(GraphQueryService graphQueryService) {
         objectMapper = new ObjectMapper();
         prettyPrintingObjectWriter = objectMapper.writerWithDefaultPrettyPrinter();
-        this.dogSearchClient = dogSearchClient;
+        this.pedigreeService = new PedigreeService(graphQueryService);
     }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getPedigree(@QueryParam("q") String query) {
-        LOGGER.trace("getPedigree for query " + query);
+    public Response getPedigree(@QueryParam("uuid") String uuid) {
+        LOGGER.trace("getPedigree for dog with uuid " + uuid);
 
-        DogSearchResponse dogSearchResponse = dogSearchClient.findDog(query);
-
-        if (dogSearchResponse == null) {
-            return Response.status(Response.Status.NOT_FOUND).build();
-        }
-
-        DogSearchResponseBody dogSearchResponseBody = dogSearchResponse.getResponse();
-        DogDocument[] dogDocuments = dogSearchResponseBody.getDocs();
-        DogDocument dogDocument = dogDocuments[0];
-        DogDetails dogDetails = dogDocument.toDogDetails(objectMapper);
-
-        Dog dog = new Dog(dogDetails);
+        Dog dog = pedigreeService.getPedigree(uuid);
 
         try {
             String json = prettyPrintingObjectWriter.writeValueAsString(dog);

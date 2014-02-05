@@ -1,4 +1,4 @@
-package no.nkk.dogpopulation.pedigree;
+package no.nkk.dogpopulation.graph;
 
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>

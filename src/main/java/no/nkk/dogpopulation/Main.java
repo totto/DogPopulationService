@@ -4,12 +4,15 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.glassfish.jersey.jetty.JettyHttpContainerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import javax.ws.rs.core.UriBuilder;
 import java.net.URI;
+import java.net.URL;
 
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
@@ -30,19 +33,22 @@ public class Main {
 
     private Server server;
 
-    public Main(ResourceConfigFactory resourceConfigFactory) {
-        this(resourceConfigFactory, DEFAULT_HTTP_PORT);
+    private final GraphDatabaseService graphDb;
+
+    public Main(GraphDatabaseService graphDb, ResourceConfigFactory resourceConfigFactory) {
+        this(graphDb, resourceConfigFactory, DEFAULT_HTTP_PORT);
     }
 
-    public Main(ResourceConfigFactory resourceConfigFactory, int httpPort) {
-        this(resourceConfigFactory, httpPort, DEFAULT_MAX_THREADS, DEFAULT_MIN_THREADS);
+    public Main(GraphDatabaseService graphDb, ResourceConfigFactory resourceConfigFactory, int httpPort) {
+        this(graphDb, resourceConfigFactory, httpPort, DEFAULT_MAX_THREADS, DEFAULT_MIN_THREADS);
     }
 
-    public Main(ResourceConfigFactory resourceConfigFactory, int httpPort, int maxThreads, int minThreads) {
+    public Main(GraphDatabaseService graphDb, ResourceConfigFactory resourceConfigFactory, int httpPort, int maxThreads, int minThreads) {
         this.resourceConfigFactory = resourceConfigFactory;
         this.httpPort = httpPort;
         this.maxThreads = maxThreads;
         this.minThreads = minThreads;
+        this.graphDb = graphDb;
     }
 
     public void start() {
@@ -77,13 +83,26 @@ public class Main {
         }
     }
 
+    public GraphDatabaseService getGraphDb() {
+        return graphDb;
+    }
+
+    public static GraphDatabaseService createGraphDb(String dogDbFolder) {
+        // initialize embedded neo4j graph database
+        URL neo4jPropertiesUrl = ClassLoader.getSystemClassLoader().getResource("neo4j.properties");
+        return new GraphDatabaseFactory()
+                .newEmbeddedDatabaseBuilder(dogDbFolder)
+                .loadPropertiesFromURL(neo4jPropertiesUrl)
+                .newGraphDatabase();
+    }
 
     public static void main(String... args) {
         // Bridge Jersey from java.util.logging to slf4
         SLF4JBridgeHandler.removeHandlersForRootLogger();
         SLF4JBridgeHandler.install();
 
-        Main main = new Main(new DogPopulationResourceConfigFactory());
+        GraphDatabaseService db = createGraphDb("data/dogdb");
+        Main main = new Main(db, new DogPopulationResourceConfigFactory(db));
         main.start();
         main.join();
     }

@@ -1,4 +1,4 @@
-package no.nkk.dogpopulation.pedigree;
+package no.nkk.dogpopulation.graph;
 
 import no.nkk.dogpopulation.dogsearch.*;
 
@@ -10,6 +10,7 @@ import java.util.Map;
  */
 public class Dog {
 
+    private String uuid;
     private String name;
     private Breed breed;
     private Map<String, String> ids = new LinkedHashMap<>();
@@ -19,7 +20,13 @@ public class Dog {
     public Dog() {
     }
 
+    public Dog(String name, Breed breed) {
+        this.name = name;
+        this.breed = breed;
+    }
+
     public Dog(DogDetails dogDetails) {
+        this.uuid = dogDetails.getId();
         for (DogId dogId : dogDetails.getIds()) {
             this.ids.put(dogId.getType(), dogId.getValue());
         }
@@ -53,9 +60,12 @@ public class Dog {
         return parent;
     }
 
-    public Dog(String name, Breed breed) {
-        this.name = name;
-        this.breed = breed;
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
     }
 
     public String getName() {
@@ -97,4 +107,5 @@ public class Dog {
     public void setAncestry(Ancestry ancestry) {
         this.ancestry = ancestry;
     }
+
 }

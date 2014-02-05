@@ -1,9 +1,9 @@
 package no.nkk.dogpopulation.dogsearch;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import no.nkk.dogpopulation.pedigree.Ancestry;
-import no.nkk.dogpopulation.pedigree.Breed;
-import no.nkk.dogpopulation.pedigree.Dog;
+import no.nkk.dogpopulation.graph.Ancestry;
+import no.nkk.dogpopulation.graph.Breed;
+import no.nkk.dogpopulation.graph.Dog;
 
 import java.io.IOException;
 import java.io.InputStream;
