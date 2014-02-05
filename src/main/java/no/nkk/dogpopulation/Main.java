@@ -78,6 +78,7 @@ public class Main {
     public void stop() {
         try {
             server.stop();
+            graphDb.shutdown();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -105,6 +106,7 @@ public class Main {
         Main main = new Main(db, new DogPopulationResourceConfigFactory(db));
         main.start();
         main.join();
+        db.shutdown();
     }
 
 }
