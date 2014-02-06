@@ -6,5 +6,5 @@ package no.nkk.dogpopulation.dogsearch;
  */
 public interface DogSearchClient {
 
-    DogSearchResponse findDog(String query);
+    DogDetails findDog(String id);
 }

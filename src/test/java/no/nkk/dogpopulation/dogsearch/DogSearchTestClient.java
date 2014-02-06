@@ -13,11 +13,11 @@ import java.io.InputStream;
  */
 public class DogSearchTestClient implements DogSearchClient {
     @Override
-    public DogSearchResponse findDog(String query) {
+    public DogDetails findDog(String id) {
         InputStream in = getClass().getClassLoader().getResourceAsStream("afganhund_test.json");
         ObjectMapper objectMapper = new ObjectMapper();
         try {
-            DogSearchResponse dogSearchResponse = objectMapper.readValue(in, DogSearchResponse.class);
+            DogDetails dogSearchResponse = objectMapper.readValue(in, DogDetails.class);
             return dogSearchResponse;
         } catch (IOException e) {
             throw new RuntimeException(e);

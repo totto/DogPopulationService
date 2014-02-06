@@ -8,6 +8,7 @@ import org.neo4j.graphdb.RelationshipType;
 public enum DogGraphRelationshipType implements RelationshipType {
     IS_BREED,
     HAS_PARENT,
+    OWN_ANCESTOR,
     MEMBER_OF,
     REGISTERED_IN
 }
