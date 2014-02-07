@@ -28,7 +28,7 @@
 
     <logger name="org.glassfish.jersey" level="INFO"/>
 
-    <logger name="no.nkk.dogpopulation" level="TRACE"/>
+    <logger name="no.nkk.dogpopulation" level="DEBUG"/>
 
     <root level="INFO">
         <appender-ref ref="logfile" />

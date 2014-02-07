@@ -7,11 +7,17 @@ import no.nkk.dogpopulation.graph.Dog;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Set;
 
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
 public class DogSearchTestClient implements DogSearchClient {
+    @Override
+    public Set<String> listIdsForBreed(String breed) {
+        return null;
+    }
+
     @Override
     public DogDetails findDog(String id) {
         InputStream in = getClass().getClassLoader().getResourceAsStream("afganhund_test.json");

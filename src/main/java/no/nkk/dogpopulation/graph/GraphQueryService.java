@@ -1,6 +1,8 @@
 package no.nkk.dogpopulation.graph;
 
 import org.neo4j.graphdb.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 
@@ -9,6 +11,8 @@ import java.util.Set;
  */
 public class GraphQueryService {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(GraphQueryService.class);
+
     private final GraphDatabaseService graphDb;
 
     public GraphQueryService(GraphDatabaseService graphDb) {
@@ -16,11 +20,24 @@ public class GraphQueryService {
     }
 
 
-    public void populateDescendantUuids(String uuid, Set<String> descendants) {
-        // TODO - populate set with the uuids of all descendants of the provided uuid (do not add the provided uuid itself).
-        // // This is needed to ensure correct own-ancestor detection and to avoid circular parent relations in graph.
+    public void populateDescendantUuids(Node dog, Set<String> descendants) {
+        try (Transaction tx = graphDb.beginTx()) {
+            recursivePopulateDescendantUuids(dog, descendants);
+        }
     }
 
+    private void recursivePopulateDescendantUuids(Node dog, Set<String> descendants) {
+        for (Relationship relationship : dog.getRelationships(Direction.INCOMING, DogGraphRelationshipType.HAS_PARENT)) {
+            Node descendant = relationship.getEndNode();
+            String uuid = (String) descendant.getProperty("uuid");
+            if (descendants.contains(uuid)) {
+                LOGGER.warn("Dog appears to have circular relations: {}", uuid);
+                return;
+            }
+            descendants.add(uuid);
+            populateDescendantUuids(descendant, descendants);
+        }
+    }
 
     public Dog getPedigree(String uuid) {
         try (Transaction tx = graphDb.beginTx()) {
