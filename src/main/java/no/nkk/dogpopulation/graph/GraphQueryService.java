@@ -31,11 +31,10 @@ public class GraphQueryService {
             Node descendant = relationship.getEndNode();
             String uuid = (String) descendant.getProperty("uuid");
             if (descendants.contains(uuid)) {
-                LOGGER.warn("Dog appears to have circular relations: {}", uuid);
-                return;
+                return; // more than one path to descendant, this is because of inbreeding
             }
             descendants.add(uuid);
-            populateDescendantUuids(descendant, descendants);
+            recursivePopulateDescendantUuids(descendant, descendants);
         }
     }
 

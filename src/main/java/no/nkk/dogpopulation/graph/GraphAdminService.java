@@ -34,7 +34,6 @@ public class GraphAdminService {
      * @return the node in the graph with the provided UUID.
      */
     public Node addDog(String uuid, String name, String breed) {
-        LOGGER.trace("Added DOG to graph {}", uuid);
         try (Transaction tx = graphDb.beginTx()) {
             Node dogNode = createDogNode(uuid, name);
             connectToBreed(dogNode, breed);
@@ -170,6 +169,7 @@ public class GraphAdminService {
         if (!dogNode.hasProperty("name")) {
             // new dog
             dogNode.setProperty("name", name);
+            LOGGER.trace("Added DOG to graph {}", uuid);
             return dogNode;
 
         }

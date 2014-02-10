@@ -1,4 +1,4 @@
-package no.nkk.dogpopulation.dogsearch;
+package no.nkk.dogpopulation.importer.dogsearch;
 
 
 import java.util.Set;

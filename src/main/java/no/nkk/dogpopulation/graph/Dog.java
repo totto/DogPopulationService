@@ -1,6 +1,6 @@
 package no.nkk.dogpopulation.graph;
 
-import no.nkk.dogpopulation.dogsearch.*;
+import no.nkk.dogpopulation.importer.dogsearch.*;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

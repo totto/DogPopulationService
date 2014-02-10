@@ -1,4 +1,4 @@
-package no.nkk.dogpopulation.dogsearch;
+package no.nkk.dogpopulation.importer.dogsearch;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.solr.client.solrj.SolrQuery;
@@ -14,8 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
@@ -23,9 +22,12 @@ import java.util.Set;
 public class DogSearchSolrClient implements DogSearchClient {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DogSearchSolrClient.class);
+    private static final Logger DOGSEARCH = LoggerFactory.getLogger("dogsearch");
 
     private final SolrServer solrServer;
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private final Random rnd = new Random();
 
     public DogSearchSolrClient(String dogServiceUrl) {
         solrServer = new HttpSolrServer(dogServiceUrl);
@@ -55,7 +57,7 @@ public class DogSearchSolrClient implements DogSearchClient {
         try {
             QueryResponse queryResponse = runFindDogQuery(id);
             SolrDocumentList results = queryResponse.getResults();
-            DogDetails chosenCandidate = getFirstCandidate(id, results);
+            DogDetails chosenCandidate = getFirstValidCandidate(id, results);
             return chosenCandidate;
         } catch (RuntimeException e) {
             LOGGER.warn("", e);
@@ -72,27 +74,40 @@ public class DogSearchSolrClient implements DogSearchClient {
 
     private QueryResponse runSolrQueryWithRetries(SolrQuery solrQuery) {
         final int maxRetries = 100;
-        float waitTimeMs = 1000;
+        int waitTimeMs = 5000 + rnd.nextInt(5001); // initial random wait-time between 5 and 10 seconds.
+        final int maxWaitTimeMs = 300 * 1000; // at most 5 minutes between retries
         for (int i=1; true; i++) {
             try {
                 return solrServer.query(solrQuery);
             } catch (SolrServerException e) {
-                LOGGER.error(solrQuery.toString(), e);
-                throw new RuntimeException(e);
+                if (i >= maxRetries) {
+                    throw new RuntimeException("Failed again after retrying " + i + " times.", e);
+                }
+                LOGGER.warn("SolrServerException: attempt={}, secondsBeforeRetry={}", i, waitTimeMs / 1000);
+                waitTimeMs = exponentialWait(maxWaitTimeMs, waitTimeMs);
             } catch (SolrException e) {
                 if (i >= maxRetries) {
-                    throw e;
+                    throw new RuntimeException("Failed again after retrying " + i + " times.", e);
                 }
                 int code = e.code();
-                LOGGER.trace("SolrException: code={}. attempt={}, secondsBeforeRetry={}, msg={}", code, i, waitTimeMs/1000, e.getMessage());
-                try {
-                    Thread.sleep((int) waitTimeMs);
-                    waitTimeMs *= 1.1;
-                } catch (InterruptedException ie) {
-                    throw new RuntimeException(ie);
-                }
+                LOGGER.debug("SolrException: code={}. attempt={}, secondsBeforeRetry={}, msg={}", code, i, waitTimeMs / 1000, e.getMessage());
+                waitTimeMs = exponentialWait(maxWaitTimeMs, waitTimeMs);
             }
         }
+    }
+
+    private int exponentialWait(int maxWaitTimeMs, int waitTimeMs) {
+        if (waitTimeMs > maxWaitTimeMs) {
+            waitTimeMs = maxWaitTimeMs;
+        }
+
+        try {
+            Thread.sleep((int) waitTimeMs);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        return 2 * waitTimeMs;
     }
 
     private QueryResponse runFindDogIdsQuery(String breed, int n, int start) {
@@ -105,28 +120,48 @@ public class DogSearchSolrClient implements DogSearchClient {
         return runSolrQueryWithRetries(solrQuery);
     }
 
-    private DogDetails getFirstCandidate(String id, SolrDocumentList results) {
-        int candidate = 1;
-        DogDetails dogDetails = null;
+    private DogDetails getFirstValidCandidate(String id, SolrDocumentList results) {
+        if (results.isEmpty()) {
+            return null;
+        }
+        List<DogDetails> candidates = new ArrayList<>();
         for (SolrDocument solrDocument : results) {
             String json_detailed = (String) solrDocument.get("json_detailed");
             try {
-                dogDetails = objectMapper.readValue(json_detailed, DogDetails.class);
-                break; // found candidate
+                DogDetails dogDetails = objectMapper.readValue(json_detailed, DogDetails.class);
+                candidates.add(dogDetails); // found candidate
             } catch (IOException e) {
-                LOGGER.warn("BAD JSON: {}", json_detailed);
+                if (json_detailed.startsWith("{{")) {
+                    String intended_json_detailed = json_detailed.substring(1, json_detailed.length() - 1);
+                    try {
+                        DogDetails dogDetails = objectMapper.readValue(intended_json_detailed, DogDetails.class);
+                        candidates.add(dogDetails); // found candidate
+                    } catch (IOException e1) {
+                        DOGSEARCH.warn("BAD JSON: {}", json_detailed);
+                    }
+                } else {
+                    DOGSEARCH.warn("BAD JSON: {}", json_detailed);
+                }
             }
-            candidate++;
         }
-        if (LOGGER.isInfoEnabled() && results.getNumFound() > 1 && dogDetails != null) {
-            LOGGER.info("Found more than 1 dog with id {}, listing candidates (Candidate {} was picked):", id, candidate);
-            int i = 1;
-            for (SolrDocument solrDocument : results) {
-                String json_detailed = (String) solrDocument.get("json_detailed");
-                LOGGER.info("CANDIDATE {}: {}", i++, json_detailed);
-            }
+        if (candidates.isEmpty()) {
+            DOGSEARCH.info("No valid candidates for dog ", id);
+            return null;
         }
-        return dogDetails; // return candidate
+        if (candidates.size() == 1) {
+            return candidates.get(0); // only one valid candidate
+        }
+
+        // candidates.size() > 1
+
+        DogDetails chosenCandidate = candidates.get(0);
+        DOGSEARCH.info("Found more than 1 dog with id {}, listing candidates (Elected candidate {}):", id, chosenCandidate.getId());
+        int i = 1;
+        for (SolrDocument solrDocument : results) {
+            String json_detailed = (String) solrDocument.get("json_detailed");
+            DOGSEARCH.info("CANDIDATE {}: {}", i++, json_detailed);
+        }
+        return chosenCandidate; // return first candidate
     }
 
 }

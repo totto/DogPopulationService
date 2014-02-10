@@ -22,6 +22,20 @@
         </encoder>
     </appender>
 
+    <appender name="dogsearch" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_DIR}/dogsearch.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_DIR}/dogsearch-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>10</maxHistory>
+            <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <maxFileSize>20MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] - %msg%n</pattern>
+        </encoder>
+    </appender>
+
     <!-- Reduce logging from dependencies -->
     <logger name="org.eclipse.jetty" level="WARN"/>
     <logger name="org.apache" level="WARN"/>
@@ -29,6 +43,10 @@
     <logger name="org.glassfish.jersey" level="INFO"/>
 
     <logger name="no.nkk.dogpopulation" level="DEBUG"/>
+
+    <logger name="dogsearch" additivity="false" level="INFO">
+        <appender-ref ref="dogsearch" />
+    </logger>
 
     <root level="INFO">
         <appender-ref ref="logfile" />

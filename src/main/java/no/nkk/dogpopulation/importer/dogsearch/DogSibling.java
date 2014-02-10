@@ -1,4 +1,4 @@
-package no.nkk.dogpopulation.dogsearch;
+package no.nkk.dogpopulation.importer.dogsearch;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 

@@ -1,10 +1,9 @@
 package no.nkk.dogpopulation.importer;
 
-import no.nkk.dogpopulation.Main;
-import no.nkk.dogpopulation.dogsearch.*;
 import no.nkk.dogpopulation.graph.GraphAdminService;
 import no.nkk.dogpopulation.graph.GraphQueryService;
 import no.nkk.dogpopulation.graph.ParentRole;
+import no.nkk.dogpopulation.importer.dogsearch.*;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.slf4j.Logger;
@@ -24,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 public class DogImporter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DogImporter.class);
+    private static final Logger DOGSEARCH = LoggerFactory.getLogger("dogsearch");
 
     static class TraversalStatistics {
         int dogCount;
@@ -43,15 +43,62 @@ public class DogImporter {
     private final GraphAdminService graphAdminService;
     private final GraphQueryService graphQueryService;
     private final DogSearchClient dogSearchClient;
+    private final Set<String> breeds;
+    private final Set<String> ids;
 
-    public DogImporter(GraphDatabaseService graphDb) {
+    public DogImporter(GraphDatabaseService graphDb, DogSearchClient dogSearchClient, Set<String> breeds, Set<String> ids) {
         this.graphAdminService = new GraphAdminService(graphDb);
         this.graphQueryService = new GraphQueryService(graphDb);
-
-        dogSearchClient = new DogSearchSolrClient("http://dogsearch.nkk.no/dogservice/dogs");
+        this.dogSearchClient = dogSearchClient;
+        this.breeds = breeds;
+        this.ids = ids;
     }
 
-    public int importBreedPedigree(String breed) {
+    public void runDogImport() {
+        ExecutorService executorService = Executors.newFixedThreadPool(50);
+        for (final String id : ids) {
+            executorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    final String origThreadName = Thread.currentThread().getName();
+                    Thread.currentThread().setName(id);
+                    try {
+                        importDogPedigree(id);
+                    } catch (Throwable e) {
+                        LOGGER.error("", e);
+                    } finally {
+                        Thread.currentThread().setName(origThreadName);
+                    }
+                }
+            });
+        }
+        for (final String breed : breeds) {
+            executorService.submit(new Runnable() {
+                @Override
+                public void run() {
+                    final String origThreadName = Thread.currentThread().getName();
+                    Thread.currentThread().setName(breed);
+                    try {
+                        importBreedPedigree(breed);
+                    } catch (Throwable e) {
+                        LOGGER.error("", e);
+                    } finally {
+                        Thread.currentThread().setName(origThreadName);
+                    }
+                }
+            });
+        }
+
+        try {
+            executorService.shutdown();
+            executorService.awaitTermination(10, TimeUnit.HOURS);
+        } catch (Exception e) {
+            LOGGER.error("", e);
+        }
+
+    }
+
+    private int importBreedPedigree(String breed) {
         Map<String, String> alreadySearchedIds = new LinkedHashMap<>();
         int n = 0;
         LOGGER.info("Looking up all UUIDs on dogsearch for breed {}", breed);
@@ -67,15 +114,15 @@ public class DogImporter {
             LOGGER.trace("Imported pedigree({} new dogs) for {}", ts.dogCount, id);
             i++;
             if (i%100 == 0) {
-                LOGGER.debug("Progress of {} is {} of {} -- {}%", breed, i, breedIds.size(), 100 * i / breedIds.size());
+                LOGGER.debug("Progress: {} of {} -- {}%", i, breedIds.size(), 100 * i / breedIds.size());
             }
         }
         LOGGER.info("Completed pedigree import of {} {} dogs from dogsearch to graph.", n, breed);
         return n;
     }
 
-    public int importDogPedigree(String id) {
-        LOGGER.trace("Importing Pedigree from DogSearch for DOG {}", id);
+    private int importDogPedigree(String id) {
+        LOGGER.info("Importing Pedigree from DogSearch for DOG {}", id);
         TraversalStatistics ts = new TraversalStatistics();
         Set<String> descendants = new LinkedHashSet<>();
         Map<String, String> alreadySearchedIds = new LinkedHashMap<>();
@@ -92,10 +139,9 @@ public class DogImporter {
         DogDetails dogDetails = dogSearchClient.findDog(id);
 
         if (dogDetails == null) {
-            if (depth < ts.minDepth) {
-                ts.minDepth = depth;
+            if ((depth - 1) < ts.minDepth) {
+                ts.minDepth = depth - 1;
             }
-            LOGGER.trace("Unable to find DOG {}", id);
             return null;
         }
 
@@ -105,13 +151,13 @@ public class DogImporter {
         String name = dogDetails.getName();
         if (name == null) {
             name = "";
-            LOGGER.warn("UNKNOWN name of dog, using empty name. {}.", uuid);
+            DOGSEARCH.warn("UNKNOWN name of dog, using empty name. {}.", uuid);
         }
         DogBreed dogBreed = dogDetails.getBreed();
         String breed;
-        if (dogBreed == null) {
+        if (dogBreed == null || dogBreed.getName().trim().isEmpty()) {
+            DOGSEARCH.warn("UNKNOWN breed of dog {}.", uuid);
             breed = "UNKNOWN";
-            LOGGER.warn("UNKNOWN breed of dog {}.", uuid);
         } else {
             breed = dogBreed.getName();
         }
@@ -162,7 +208,7 @@ public class DogImporter {
             }
 
             if (descendants.contains(parentId)) {
-                LOGGER.info("DOG cannot be its own ancestor {}: {}", parentRole, uuid);
+                DOGSEARCH.info("DOG cannot be its own ancestor {}: {}", parentRole, uuid);
                 graphAdminService.connectChildAsOwnAncestor(dogDetails.getId(), parentId, parentRole);
                 return parentId;
             }
@@ -176,50 +222,4 @@ public class DogImporter {
         }
     }
 
-    public static void main(String... args) throws InterruptedException {
-        final GraphDatabaseService graphDb = Main.createGraphDb("data/dogdb");
-
-        // DogImporter dogImporter = new DogImporter(graphDb);
-        // dogImporter.importDogPedigree("NO/24463/05");
-
-        final Set<String> breeds = new LinkedHashSet<>();
-        breeds.add("Rottweiler");
-        breeds.add("Chow Chow");
-        breeds.add("Engelsk Setter");
-        breeds.add("Golden Retriever");
-        breeds.add("Dobermann");
-        breeds.add("Pointer");
-        breeds.add("Boxer");
-        breeds.add("Dalmatiner");
-        breeds.add("Berner Sennenhund");
-        breeds.add("Leonberger");
-
-
-        ExecutorService executorService = Executors.newFixedThreadPool(10);
-        for (final String breed : breeds) {
-            executorService.submit(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        DogImporter dogImporter = new DogImporter(graphDb);
-                        dogImporter.importBreedPedigree(breed);
-                    } catch (Throwable e) {
-                        LOGGER.error("", e);
-                    }
-                }
-            });
-        }
-
-        try {
-            executorService.shutdown();
-            executorService.awaitTermination(10, TimeUnit.HOURS);
-        } catch (Exception e) {
-            LOGGER.error("", e);
-            graphDb.shutdown();
-            System.exit(1);
-        }
-
-        graphDb.shutdown();
-        System.exit(0);
-    }
 }
