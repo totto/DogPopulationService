@@ -74,7 +74,7 @@ public class DogSearchSolrClient implements DogSearchClient {
 
     private QueryResponse runSolrQueryWithRetries(SolrQuery solrQuery) {
         final int maxRetries = 100;
-        int waitTimeMs = 5000 + rnd.nextInt(5001); // initial random wait-time between 5 and 10 seconds.
+        int waitTimeMs = 1000 + rnd.nextInt(9001); // initial random wait-time between 1 and 10 seconds.
         final int maxWaitTimeMs = 300 * 1000; // at most 5 minutes between retries
         for (int i=1; true; i++) {
             try {
