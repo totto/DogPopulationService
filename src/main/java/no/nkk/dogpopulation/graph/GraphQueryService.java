@@ -4,9 +4,15 @@ import org.neo4j.graphdb.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 /**
+ * All public methods must wrap access to the graph-database within a transaction. Private methods may assume that
+ * they are called within the context of an already open transaction.
+ *
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
 public class GraphQueryService {
@@ -136,5 +142,31 @@ public class GraphQueryService {
             }
         }
         return null;
+    }
+
+    public List<String> getBreedList(String breed) {
+        try (Transaction tx = graphDb.beginTx()) {
+
+            ResourceIterable<Node> breedNodeIterator = graphDb.findNodesByLabelAndProperty(DogGraphLabel.BREED, "breed", breed);
+
+            Node breedRoot;
+            try (ResourceIterator<Node> iterator = breedNodeIterator.iterator()) {
+                if (iterator.hasNext()) {
+                    breedRoot = iterator.next();
+                } else {
+                    return Collections.emptyList();
+                }
+            }
+
+            Iterable<Relationship> relationships = breedRoot.getRelationships(Direction.INCOMING, DogGraphRelationshipType.IS_BREED);
+            List<String> dogIds = new ArrayList<>(1000);
+            for (Relationship relationship : relationships) {
+                Node dogNode = relationship.getStartNode();
+                dogIds.add((String) dogNode.getProperty("uuid"));
+            }
+
+            tx.success();
+            return dogIds;
+        }
     }
 }
