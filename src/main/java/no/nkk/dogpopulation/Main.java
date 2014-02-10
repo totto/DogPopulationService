@@ -1,5 +1,7 @@
 package no.nkk.dogpopulation;
 
+import no.nkk.dogpopulation.graph.DogGraphConstants;
+import no.nkk.dogpopulation.graph.DogGraphLabel;
 import no.nkk.dogpopulation.importer.DogImporter;
 import no.nkk.dogpopulation.importer.dogsearch.DogSearchClient;
 import no.nkk.dogpopulation.importer.dogsearch.DogSearchSolrClient;
@@ -8,7 +10,12 @@ import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.glassfish.jersey.jetty.JettyHttpContainerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Label;
+import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
+import org.neo4j.graphdb.schema.ConstraintDefinition;
+import org.neo4j.graphdb.schema.IndexDefinition;
+import org.neo4j.graphdb.schema.Schema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
@@ -23,6 +30,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
@@ -94,17 +102,59 @@ public class Main {
         }
     }
 
-    public GraphDatabaseService getGraphDb() {
-        return graphDb;
-    }
-
     public static GraphDatabaseService createGraphDb(String dogDbFolder) {
         // initialize embedded neo4j graph database
         URL neo4jPropertiesUrl = ClassLoader.getSystemClassLoader().getResource("neo4j.properties");
-        return new GraphDatabaseFactory()
+        long startTime = System.currentTimeMillis();
+        LOGGER.debug("Neo4j Initializing...");
+        GraphDatabaseService graphDatabaseService = new GraphDatabaseFactory()
                 .newEmbeddedDatabaseBuilder(dogDbFolder)
                 .loadPropertiesFromURL(neo4jPropertiesUrl)
                 .newGraphDatabase();
+        long graphDbDelay = System.currentTimeMillis() - startTime;
+        LOGGER.debug("Neo4j core engine up in {} seconds, initializing indexes...", graphDbDelay / 1000);
+        try (Transaction tx = graphDatabaseService.beginTx()) {
+            Schema schema = graphDatabaseService.schema();
+            startTime = System.currentTimeMillis();
+            createIndexIfNeeded(schema, DogGraphLabel.CATEGORY, DogGraphConstants.CATEGORY_CATEGORY);
+            createIndexIfNeeded(schema, DogGraphLabel.BREED, DogGraphConstants.BREED_BREED);
+            createIndexIfNeeded(schema, DogGraphLabel.DOG, DogGraphConstants.DOG_NAME);
+            createIndexIfNeeded(schema, DogGraphLabel.DOG, DogGraphConstants.DOG_REGNO);
+            createUniqueConstraintIfNeeded(schema, DogGraphLabel.DOG, DogGraphConstants.DOG_UUID);
+            tx.success();
+        }
+        try (Transaction tx = graphDatabaseService.beginTx()) {
+            Schema schema = graphDatabaseService.schema();
+            schema.awaitIndexesOnline(30, TimeUnit.MINUTES);
+            tx.success();
+        }
+        long indexDelay = System.currentTimeMillis() - startTime;
+        LOGGER.debug("Neo4j indexes initialized in {} seconds", indexDelay / 1000);
+        return graphDatabaseService;
+    }
+
+    private static void createUniqueConstraintIfNeeded(Schema schema, Label label, String property) {
+        Set<String> indexedConstraints = new LinkedHashSet<>();
+        for (ConstraintDefinition cdef : schema.getConstraints(label)) {
+            for (String propertyKey : cdef.getPropertyKeys()) {
+                indexedConstraints.add(propertyKey);
+            }
+        }
+        if (!indexedConstraints.contains(property)) {
+            schema.constraintFor(label).assertPropertyIsUnique(property).create();
+        }
+    }
+
+    private static void createIndexIfNeeded(Schema schema, Label label, String property) {
+        Set<String> indexedProperties = new LinkedHashSet<>();
+        for (IndexDefinition idef : schema.getIndexes(label)) {
+            for (String propertyKey : idef.getPropertyKeys()) {
+                indexedProperties.add(propertyKey);
+            }
+        }
+        if (!indexedProperties.contains(property)) {
+            schema.indexFor(label).on(property).create();
+        }
     }
 
     public static void main(String... args) {
