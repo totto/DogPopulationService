@@ -73,7 +73,7 @@ public class GraphAdminService {
         return connectChildToParent(DogGraphRelationshipType.OWN_ANCESTOR, childUuid, parentUuid, parentRole);
     }
 
-    private Relationship connectChildToParent(DogGraphRelationshipType relationshipType, String childUuid, String parentUuid, ParentRole parentRole) throws DogUuidUnknownException {
+    private Relationship connectChildToParent(RelationshipType relationshipType, String childUuid, String parentUuid, ParentRole parentRole) throws DogUuidUnknownException {
         try (Transaction tx = graphDb.beginTx()) {
             Node child = findDog(childUuid);
             if (child == null) {
@@ -82,10 +82,10 @@ public class GraphAdminService {
             Iterable<Relationship> parentRelationshipIterator = child.getRelationships(relationshipType, Direction.OUTGOING);
             for (Relationship relationship : parentRelationshipIterator) {
                 // iterate through parents already known by graph
-                ParentRole existingParentRole = ParentRole.valueOf(((String) relationship.getProperty("role")).toUpperCase());
+                ParentRole existingParentRole = ParentRole.valueOf(((String) relationship.getProperty(DogGraphConstants.HASPARENT_ROLE)).toUpperCase());
                 if (parentRole.equals(existingParentRole)) {
                     Node existingParent = relationship.getEndNode();
-                    if (existingParent.getProperty("uuid").equals(parentUuid)) {
+                    if (existingParent.getProperty(DogGraphConstants.DOG_UUID).equals(parentUuid)) {
                         return relationship; // the child and parent is already connected
                     }
                     // child-parent relationship in graph is wrong
@@ -98,7 +98,7 @@ public class GraphAdminService {
                 throw new DogUuidUnknownException("Dog (parent) with uuid " + parentUuid + " does not exist in graph.");
             }
             Relationship relationship = child.createRelationshipTo(parent, relationshipType);
-            relationship.setProperty("role", parentRole.name().toLowerCase());
+            relationship.setProperty(DogGraphConstants.HASPARENT_ROLE, parentRole.name().toLowerCase());
             tx.success();
             return relationship;
         }
@@ -106,7 +106,7 @@ public class GraphAdminService {
 
 
     private Node findOrCreateBreedCategoryNode() {
-        Node breed = findOrCreateNode(DogGraphLabel.CATEGORY, "category", "Breed");
+        Node breed = findOrCreateNode(DogGraphLabel.CATEGORY, DogGraphConstants.CATEGORY_CATEGORY, DogGraphConstants.CATEGORY_CATEGORY_BREED);
         if (!breed.hasRelationship(DogGraphRelationshipType.MEMBER_OF, Direction.OUTGOING)) {
             breed.createRelationshipTo(findOrCreateRootNode(), DogGraphRelationshipType.MEMBER_OF);
         }
@@ -115,7 +115,7 @@ public class GraphAdminService {
 
 
     private Node findOrCreateBreedNode(String breed) {
-        Node breedNode = findOrCreateNode(DogGraphLabel.BREED, "breed", breed);
+        Node breedNode = findOrCreateNode(DogGraphLabel.BREED, DogGraphConstants.BREED_BREED, breed);
         if (!breedNode.hasRelationship(DogGraphRelationshipType.MEMBER_OF, Direction.OUTGOING)) {
             breedNode.createRelationshipTo(findOrCreateBreedCategoryNode(), DogGraphRelationshipType.MEMBER_OF);
         }
@@ -124,12 +124,12 @@ public class GraphAdminService {
 
 
     private Node findOrCreateRootNode() {
-        return findOrCreateNode(DogGraphLabel.CATEGORY, "category", "Root");
+        return findOrCreateNode(DogGraphLabel.CATEGORY, DogGraphConstants.CATEGORY_CATEGORY, DogGraphConstants.CATEGORY_CATEGORY_ROOT);
     }
 
 
     private Node findDog(String uuid) {
-        ResourceIterable<Node> dogIterator = graphDb.findNodesByLabelAndProperty(DogGraphLabel.DOG, "uuid", uuid);
+        ResourceIterable<Node> dogIterator = graphDb.findNodesByLabelAndProperty(DogGraphLabel.DOG, DogGraphConstants.DOG_UUID, uuid);
         try (ResourceIterator<Node> iterator = dogIterator.iterator()) {
             if (iterator.hasNext()) {
                 // found the dog
@@ -140,7 +140,7 @@ public class GraphAdminService {
     }
 
 
-    private Node findOrCreateNode(DogGraphLabel label, String propertyKey, String propertyValue) {
+    private Node findOrCreateNode(Label label, String propertyKey, String propertyValue) {
         ResourceIterable<Node> rootIterator = graphDb.findNodesByLabelAndProperty(label, propertyKey, propertyValue);
         Node node;
         try (ResourceIterator<Node> iterator = rootIterator.iterator()) {
@@ -164,11 +164,11 @@ public class GraphAdminService {
 
     private Node createDogNode(String uuid, String name) {
 
-        Node dogNode = findOrCreateNode(DogGraphLabel.DOG, "uuid", uuid);
+        Node dogNode = findOrCreateNode(DogGraphLabel.DOG, DogGraphConstants.DOG_UUID, uuid);
 
-        if (!dogNode.hasProperty("name")) {
+        if (!dogNode.hasProperty(DogGraphConstants.DOG_NAME)) {
             // new dog
-            dogNode.setProperty("name", name);
+            dogNode.setProperty(DogGraphConstants.DOG_NAME, name);
             LOGGER.trace("Added DOG to graph {}", uuid);
             return dogNode;
 
@@ -176,13 +176,13 @@ public class GraphAdminService {
 
         // existing dog
 
-        String existingName = (String) dogNode.getProperty("name");
+        String existingName = (String) dogNode.getProperty(DogGraphConstants.DOG_NAME);
         if (existingName.equals(name)) {
             return dogNode; // existing name in graph matches - do nothing
         }
 
         LOGGER.warn("NAME of dog \"{}\" changed from \"{}\" to \"{}\".", uuid, existingName, name);
-        dogNode.setProperty("name", name);
+        dogNode.setProperty(DogGraphConstants.DOG_NAME, name);
         return dogNode;
     }
 
@@ -193,12 +193,12 @@ public class GraphAdminService {
             // relationship already exists
             Relationship relationship = dogNode.getSingleRelationship(DogGraphRelationshipType.IS_BREED, Direction.OUTGOING);
             Node breedNode = relationship.getEndNode();
-            String existingBreed = (String) breedNode.getProperty("breed");
+            String existingBreed = (String) breedNode.getProperty(DogGraphConstants.BREED_BREED);
             if (existingBreed.equals(breed)) {
                 return relationship; // breed is correct - do nothing
             }
 
-            String uuid = (String) dogNode.getProperty("uuid");
+            String uuid = (String) dogNode.getProperty(DogGraphConstants.DOG_UUID);
             LOGGER.warn("BREED of dog \"{}\" changed from \"{}\" to \"{}\".", uuid, existingBreed, breed);
             relationship.delete();
         }

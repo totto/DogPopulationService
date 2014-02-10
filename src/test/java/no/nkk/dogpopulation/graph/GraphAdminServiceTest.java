@@ -108,8 +108,8 @@ public class GraphAdminServiceTest {
             Relationship childParentRelation1 = iterator.next();
             Relationship childParentRelation2 = iterator.next();
             Assert.assertFalse(iterator.hasNext()); // no more than two parents
-            ParentRole parent1Role = ParentRole.valueOf(((String) childParentRelation1.getProperty("role")).toUpperCase());
-            ParentRole parent2Role = ParentRole.valueOf(((String) childParentRelation2.getProperty("role")).toUpperCase());
+            ParentRole parent1Role = ParentRole.valueOf(((String) childParentRelation1.getProperty(DogGraphConstants.HASPARENT_ROLE)).toUpperCase());
+            ParentRole parent2Role = ParentRole.valueOf(((String) childParentRelation2.getProperty(DogGraphConstants.HASPARENT_ROLE)).toUpperCase());
             Assert.assertNotEquals(parent1Role, parent2Role); // not two fathers or two mothers
             Relationship fatherRelation;
             Relationship motherRelation;
@@ -121,32 +121,32 @@ public class GraphAdminServiceTest {
                 motherRelation = childParentRelation1;
             }
             Node fatherNode = fatherRelation.getEndNode();
-            Assert.assertEquals((String) fatherNode.getProperty("uuid"), fatherUuid); // correct father
+            Assert.assertEquals((String) fatherNode.getProperty(DogGraphConstants.DOG_UUID), fatherUuid); // correct father
             Node motherNode = motherRelation.getEndNode();
-            Assert.assertEquals((String) motherNode.getProperty("uuid"), motherUuid); // correct mother
+            Assert.assertEquals((String) motherNode.getProperty(DogGraphConstants.DOG_UUID), motherUuid); // correct mother
         }
     }
 
     private void validateCorrectBreedLineage(String uuid, String name, String breed) {
         try (Transaction tx = graphDb.beginTx()) {
             Node dogNode = findDog(uuid);
-            Assert.assertEquals((String) dogNode.getProperty("uuid"), uuid);
-            Assert.assertEquals((String) dogNode.getProperty("name"), name);
+            Assert.assertEquals((String) dogNode.getProperty(DogGraphConstants.DOG_UUID), uuid);
+            Assert.assertEquals((String) dogNode.getProperty(DogGraphConstants.DOG_NAME), name);
             Relationship dogToBreedRelation = dogNode.getSingleRelationship(DogGraphRelationshipType.IS_BREED, Direction.OUTGOING);
             Node breedNode = dogToBreedRelation.getEndNode();
-            Assert.assertEquals((String) breedNode.getProperty("breed"), breed);
+            Assert.assertEquals((String) breedNode.getProperty(DogGraphConstants.BREED_BREED), breed);
             Relationship breedToCategoryRelation = breedNode.getSingleRelationship(DogGraphRelationshipType.MEMBER_OF, Direction.OUTGOING);
             Node breedCategoryNode = breedToCategoryRelation.getEndNode();
             Relationship breedToRootRelation = breedCategoryNode.getSingleRelationship(DogGraphRelationshipType.MEMBER_OF, Direction.OUTGOING);
             Node rootNode = breedToRootRelation.getEndNode();
-            String category = (String) rootNode.getProperty("category");
-            Assert.assertEquals(category, "Root");
+            String category = (String) rootNode.getProperty(DogGraphConstants.CATEGORY_CATEGORY);
+            Assert.assertEquals(category, DogGraphConstants.CATEGORY_CATEGORY_ROOT);
             tx.success();
         }
     }
 
     private Node findDog(String uuid) {
-        ResourceIterable<Node> nodeIterator = graphDb.findNodesByLabelAndProperty(DogGraphLabel.DOG, "uuid", uuid);
+        ResourceIterable<Node> nodeIterator = graphDb.findNodesByLabelAndProperty(DogGraphLabel.DOG, DogGraphConstants.DOG_UUID, uuid);
         ResourceIterator<Node> iterator = nodeIterator.iterator();
         Node dogNode = iterator.next(); // exception thrown if dog with UUID does not exist
         Assert.assertFalse(iterator.hasNext()); // only one dog with given UUID

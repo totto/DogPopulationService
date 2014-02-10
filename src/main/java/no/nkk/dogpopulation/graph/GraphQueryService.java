@@ -35,7 +35,7 @@ public class GraphQueryService {
     private void recursivePopulateDescendantUuids(Node dog, Set<String> descendants) {
         for (Relationship relationship : dog.getRelationships(Direction.INCOMING, DogGraphRelationshipType.HAS_PARENT)) {
             Node descendant = relationship.getEndNode();
-            String uuid = (String) descendant.getProperty("uuid");
+            String uuid = (String) descendant.getProperty(DogGraphConstants.DOG_UUID);
             if (descendants.contains(uuid)) {
                 return; // more than one path to descendant, this is because of inbreeding
             }
@@ -57,11 +57,11 @@ public class GraphQueryService {
     }
 
     private Dog recursiveGetDog(Node node) {
-        String uuid = (String) node.getProperty("uuid");
-        String name = (String) node.getProperty("name");
+        String uuid = (String) node.getProperty(DogGraphConstants.DOG_UUID);
+        String name = (String) node.getProperty(DogGraphConstants.DOG_NAME);
         Relationship breedRelation = node.getSingleRelationship(DogGraphRelationshipType.IS_BREED, Direction.OUTGOING);
         Node breedNode = breedRelation.getEndNode();
-        String breedName = (String) breedNode.getProperty("breed");
+        String breedName = (String) breedNode.getProperty(DogGraphConstants.BREED_BREED);
         Breed breed = new Breed(breedName);
         Dog dog = new Dog(name, breed);
         dog.setUuid(uuid);
@@ -71,7 +71,7 @@ public class GraphQueryService {
 
         Iterable<Relationship> parentRelationIterable = node.getRelationships(Direction.OUTGOING, DogGraphRelationshipType.HAS_PARENT);
         for (Relationship parentRelation : parentRelationIterable) {
-            ParentRole parentRole = ParentRole.valueOf(((String) parentRelation.getProperty("role")).toUpperCase());
+            ParentRole parentRole = ParentRole.valueOf(((String) parentRelation.getProperty(DogGraphConstants.HASPARENT_ROLE)).toUpperCase());
             switch(parentRole) {
                 case FATHER:
                     fatherDog = getParentDog(parentRelation.getEndNode());
@@ -84,7 +84,7 @@ public class GraphQueryService {
 
         Iterable<Relationship> invalidParentRelationIterable = node.getRelationships(Direction.OUTGOING, DogGraphRelationshipType.OWN_ANCESTOR);
         for (Relationship parentRelation : invalidParentRelationIterable) {
-            ParentRole parentRole = ParentRole.valueOf(((String) parentRelation.getProperty("role")).toUpperCase());
+            ParentRole parentRole = ParentRole.valueOf(((String) parentRelation.getProperty(DogGraphConstants.HASPARENT_ROLE)).toUpperCase());
             switch(parentRole) {
                 case FATHER:
                     fatherDog = getInvalidAncestorDog(parentRelation.getEndNode());
@@ -119,11 +119,11 @@ public class GraphQueryService {
             return null;
         }
 
-        String uuid = (String) parent.getProperty("uuid");
-        String name = (String) parent.getProperty("name");
+        String uuid = (String) parent.getProperty(DogGraphConstants.DOG_UUID);
+        String name = (String) parent.getProperty(DogGraphConstants.DOG_NAME);
         Relationship breedRelation = parent.getSingleRelationship(DogGraphRelationshipType.IS_BREED, Direction.OUTGOING);
         Node breedNode = breedRelation.getEndNode();
-        String breedName = (String) breedNode.getProperty("breed");
+        String breedName = (String) breedNode.getProperty(DogGraphConstants.BREED_BREED);
         Breed breed = new Breed(breedName);
         Dog dog = new Dog(name, breed);
         dog.setUuid(uuid);
@@ -134,7 +134,7 @@ public class GraphQueryService {
     }
 
     private Node findDog(String uuid) {
-        ResourceIterable<Node> dogIterator = graphDb.findNodesByLabelAndProperty(DogGraphLabel.DOG, "uuid", uuid);
+        ResourceIterable<Node> dogIterator = graphDb.findNodesByLabelAndProperty(DogGraphLabel.DOG, DogGraphConstants.DOG_UUID, uuid);
         try (ResourceIterator<Node> iterator = dogIterator.iterator()) {
             if (iterator.hasNext()) {
                 // found the dog
@@ -147,7 +147,7 @@ public class GraphQueryService {
     public List<String> getBreedList(String breed) {
         try (Transaction tx = graphDb.beginTx()) {
 
-            ResourceIterable<Node> breedNodeIterator = graphDb.findNodesByLabelAndProperty(DogGraphLabel.BREED, "breed", breed);
+            ResourceIterable<Node> breedNodeIterator = graphDb.findNodesByLabelAndProperty(DogGraphLabel.BREED, DogGraphConstants.BREED_BREED, breed);
 
             Node breedRoot;
             try (ResourceIterator<Node> iterator = breedNodeIterator.iterator()) {
@@ -162,7 +162,7 @@ public class GraphQueryService {
             List<String> dogIds = new ArrayList<>(1000);
             for (Relationship relationship : relationships) {
                 Node dogNode = relationship.getStartNode();
-                dogIds.add((String) dogNode.getProperty("uuid"));
+                dogIds.add((String) dogNode.getProperty(DogGraphConstants.DOG_UUID));
             }
 
             tx.success();
