@@ -122,11 +122,12 @@ public class DogImporter {
     }
 
     private int importDogPedigree(String id) {
-        LOGGER.info("Importing Pedigree from DogSearch for DOG {}", id);
+        LOGGER.info("Importing Pedigree from DogSearch for dog {}", id);
         TraversalStatistics ts = new TraversalStatistics();
         Set<String> descendants = new LinkedHashSet<>();
         Map<String, String> alreadySearchedIds = new LinkedHashMap<>();
         depthFirstDogImport(ts, alreadySearchedIds, descendants, 1, id);
+        LOGGER.info("Imported Pedigree for dog {}", id);
         LOGGER.trace(ts.toString());
         return ts.dogCount;
     }
