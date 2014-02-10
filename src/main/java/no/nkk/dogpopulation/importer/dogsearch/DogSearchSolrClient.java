@@ -83,7 +83,7 @@ public class DogSearchSolrClient implements DogSearchClient {
                 if (i >= maxRetries) {
                     throw new RuntimeException("Failed again after retrying " + i + " times.", e);
                 }
-                LOGGER.warn("SolrServerException: attempt={}, secondsBeforeRetry={}", i, waitTimeMs / 1000);
+                LOGGER.debug("SolrServerException: attempt={}, secondsBeforeRetry={}, msg={}", i, waitTimeMs / 1000, e.getMessage());
                 waitTimeMs = exponentialWait(maxWaitTimeMs, waitTimeMs);
             } catch (SolrException e) {
                 if (i >= maxRetries) {
