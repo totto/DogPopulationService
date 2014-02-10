@@ -42,7 +42,7 @@ public class DogImporter {
     private final Set<String> breeds;
     private final Set<String> ids;
 
-    private final ConcurrentMap<String, String> alreadySearchedIds = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, String> alreadyImportedIds = new ConcurrentHashMap<>();
 
     public DogImporter(GraphDatabaseService graphDb, DogSearchClient dogSearchClient, Set<String> breeds, Set<String> ids) {
         this.graphAdminService = new GraphAdminService(graphDb);
@@ -129,8 +129,8 @@ public class DogImporter {
     }
 
     public String depthFirstDogImport(TraversalStatistics ts, Set<String> descendants, int depth, String id) {
-        if (alreadySearchedIds.containsKey(id)) {
-            return alreadySearchedIds.get(id); // already searched before by us or another thread
+        if (alreadyImportedIds.containsKey(id)) {
+            return alreadyImportedIds.get(id); // already imported before by us or another thread
         }
 
         DogDetails dogDetails = dogSearchClient.findDog(id);
@@ -146,8 +146,8 @@ public class DogImporter {
 
         String uuid = dogDetails.getId();
 
-        if ((alreadySearchedIds.putIfAbsent(id, uuid) != null)) {
-            return alreadySearchedIds.get(id); // another thread searched for the same dog and found it.
+        if ((alreadyImportedIds.putIfAbsent(id, uuid) != null)) {
+            return alreadyImportedIds.get(id); // another thread imported the same dog at the same time, let other thread import recursively.
         }
 
         String name = dogDetails.getName();
