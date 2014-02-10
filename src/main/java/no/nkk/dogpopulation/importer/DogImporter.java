@@ -9,13 +9,9 @@ import org.neo4j.graphdb.Node;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
@@ -45,6 +41,8 @@ public class DogImporter {
     private final DogSearchClient dogSearchClient;
     private final Set<String> breeds;
     private final Set<String> ids;
+
+    private final ConcurrentMap<String, String> alreadySearchedIds = new ConcurrentHashMap<>();
 
     public DogImporter(GraphDatabaseService graphDb, DogSearchClient dogSearchClient, Set<String> breeds, Set<String> ids) {
         this.graphAdminService = new GraphAdminService(graphDb);
@@ -99,7 +97,6 @@ public class DogImporter {
     }
 
     private int importBreedPedigree(String breed) {
-        Map<String, String> alreadySearchedIds = new LinkedHashMap<>();
         int n = 0;
         LOGGER.info("Looking up all UUIDs on dogsearch for breed {}", breed);
         Set<String> breedIds = dogSearchClient.listIdsForBreed(breed);
@@ -109,7 +106,7 @@ public class DogImporter {
             TraversalStatistics ts = new TraversalStatistics();
             Set<String> descendants = new LinkedHashSet<>();
             LOGGER.trace("Importing pedigree for {}", id);
-            depthFirstDogImport(ts, alreadySearchedIds, descendants, 1, id);
+            depthFirstDogImport(ts, descendants, 1, id);
             n += ts.dogCount;
             LOGGER.trace("Imported pedigree({} new dogs) for {}", ts.dogCount, id);
             i++;
@@ -125,16 +122,15 @@ public class DogImporter {
         LOGGER.info("Importing Pedigree from DogSearch for dog {}", id);
         TraversalStatistics ts = new TraversalStatistics();
         Set<String> descendants = new LinkedHashSet<>();
-        Map<String, String> alreadySearchedIds = new LinkedHashMap<>();
-        depthFirstDogImport(ts, alreadySearchedIds, descendants, 1, id);
+        depthFirstDogImport(ts, descendants, 1, id);
         LOGGER.info("Imported Pedigree for dog {}", id);
         LOGGER.trace(ts.toString());
         return ts.dogCount;
     }
 
-    public String depthFirstDogImport(TraversalStatistics ts, Map<String, String> alreadySearchedIds, Set<String> descendants, int depth, String id) {
+    public String depthFirstDogImport(TraversalStatistics ts, Set<String> descendants, int depth, String id) {
         if (alreadySearchedIds.containsKey(id)) {
-            return alreadySearchedIds.get(id);
+            return alreadySearchedIds.get(id); // already searched before by us or another thread
         }
 
         DogDetails dogDetails = dogSearchClient.findDog(id);
@@ -149,6 +145,11 @@ public class DogImporter {
         // Dog found
 
         String uuid = dogDetails.getId();
+
+        if ((alreadySearchedIds.putIfAbsent(id, uuid) != null)) {
+            return alreadySearchedIds.get(id); // another thread searched for the same dog and found it.
+        }
+
         String name = dogDetails.getName();
         if (name == null) {
             name = "";
@@ -164,7 +165,6 @@ public class DogImporter {
         }
         Node dogNode = graphAdminService.addDog(uuid, name, breed);
 
-        alreadySearchedIds.put(id, uuid);
         ts.dogCount++;
         if (depth > ts.maxDepth) {
             ts.maxDepth = depth;
@@ -185,15 +185,15 @@ public class DogImporter {
         // perform depth first traversal (father side first)
 
         DogParent father = dogAncestry.getFather();
-        traverseParent(ts, alreadySearchedIds, descendants, depth, uuid, dogDetails, father, ParentRole.FATHER);
+        traverseParent(ts, descendants, depth, uuid, dogDetails, father, ParentRole.FATHER);
 
         DogParent mother = dogAncestry.getMother();
-        traverseParent(ts, alreadySearchedIds, descendants, depth, uuid, dogDetails, mother, ParentRole.MOTHER);
+        traverseParent(ts, descendants, depth, uuid, dogDetails, mother, ParentRole.MOTHER);
 
         return uuid;
     }
 
-    private String traverseParent(TraversalStatistics ts, Map<String, String> alreadySearchedIds, Set<String> descendants, int depth, String uuid, DogDetails dogDetails, DogParent parent, ParentRole parentRole) {
+    private String traverseParent(TraversalStatistics ts, Set<String> descendants, int depth, String uuid, DogDetails dogDetails, DogParent parent, ParentRole parentRole) {
         if (parent == null) {
             LOGGER.trace("DOG is missing {}: {}", parentRole, uuid);
             return null;
@@ -202,7 +202,7 @@ public class DogImporter {
         descendants.add(uuid);
         try {
 
-            String parentId = depthFirstDogImport(ts, alreadySearchedIds, descendants, depth + 1, parent.getId());
+            String parentId = depthFirstDogImport(ts, descendants, depth + 1, parent.getId());
             if (parentId == null) {
                 LOGGER.trace("{} not found: {}", parentRole, parent.getId());
                 return null;
