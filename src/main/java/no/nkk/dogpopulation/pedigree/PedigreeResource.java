@@ -9,8 +9,8 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
@@ -35,8 +35,9 @@ public class PedigreeResource {
     }
 
     @GET
+    @Path("/{uuid}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getPedigree(@QueryParam("uuid") String uuid) {
+    public Response getPedigree(@PathParam("uuid") String uuid) {
         LOGGER.trace("getPedigree for dog with uuid " + uuid);
 
         Dog dog = pedigreeService.getPedigree(uuid);
@@ -48,5 +49,4 @@ public class PedigreeResource {
             throw new RuntimeException(e);
         }
     }
-
 }
