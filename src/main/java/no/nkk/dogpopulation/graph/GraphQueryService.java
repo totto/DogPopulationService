@@ -33,7 +33,7 @@ public class GraphQueryService {
         }
     }
 
-    public void populateDescendantUuids(Node dog, Collection<? super String> descendants) {
+    private void populateDescendantUuids(Node dog, Collection<? super String> descendants) {
         for (Path position : graphDb.traversalDescription()
                 .depthFirst()
                 .uniqueness(Uniqueness.NODE_PATH)
@@ -55,13 +55,13 @@ public class GraphQueryService {
             if (node == null) {
                 return null; // dog not found
             }
-            Dog dog = recursiveGetDog(node);
+            Dog dog = recursiveGetPedigree(node);
             tx.success();
             return dog;
         }
     }
 
-    private Dog recursiveGetDog(Node node) {
+    private Dog recursiveGetPedigree(Node node) {
         String uuid = (String) node.getProperty(DogGraphConstants.DOG_UUID);
         String name = (String) node.getProperty(DogGraphConstants.DOG_NAME);
         Relationship breedRelation = node.getSingleRelationship(DogGraphRelationshipType.IS_BREED, Direction.OUTGOING);
@@ -116,7 +116,7 @@ public class GraphQueryService {
         if (parent == null) {
             return null;
         }
-        return recursiveGetDog(parent);
+        return recursiveGetPedigree(parent);
     }
 
     private Dog getInvalidAncestorDog(Node parent) {
