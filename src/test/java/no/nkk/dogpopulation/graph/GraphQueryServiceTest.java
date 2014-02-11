@@ -33,7 +33,7 @@ public class GraphQueryServiceTest {
     }
 
     @Test
-    public void thatPopulateDescendantsIncludesAllButItself() throws InterruptedException {
+    public void thatPopulateDescendantsIncludesAllButItself() {
         // given
         GraphAdminService graphAdminService = new GraphAdminService(graphDb);
         graphAdminService.addDog("a", "A", "Unit-test Breed");
@@ -91,7 +91,7 @@ public class GraphQueryServiceTest {
     }
 
     @Test
-    public void thatGetBreedDogsWorks() throws InterruptedException {
+    public void thatGetBreedDogsWorks() {
         // given
         GraphAdminService graphAdminService = new GraphAdminService(graphDb);
         graphAdminService.addDog("a", "A", "Unwanted Breed");
@@ -116,5 +116,71 @@ public class GraphQueryServiceTest {
         Assert.assertTrue(dogsOfBreed.contains("e"));
     }
 
+    @Test
+    public void thatCoefficientOfInbreedingIsCorrectForOffspringOfAFatherWithDaughterMatingUsingPedigreeOfThreeGenerations() {
+        /*
+         *  ---------------
+         * |   |   |   | G |
+         * |   |   | X  ---
+         * |   |   |   | H |
+         * |   | B  --- ---
+         * |   |   |   | I |
+         * |   |   | Y  ---
+         * |   |   |   | J |
+         *   A  -----------
+         * |   |   |   | X |
+         * |   |   | B  ---
+         * |   |   |   | Y |
+         * |   | C  --- ---
+         * |   |   |   | E |
+         * |   |   | D  ---
+         * |   |   |   | F |
+         *  ---------------
+         *
+         * B is common ancestor, Distinct dogs traversing from father to mother through common ancestor are: BC = 2 dogs.
+         * This gives COI = (0.5)^2 = 0.25 = 25%
+         */
+
+        // given
+        GraphAdminService graphAdminService = new GraphAdminService(graphDb);
+        graphAdminService.addDog("a", "A", "Unit-test Breed");
+        graphAdminService.addDog("b", "B", "Unit-test Breed");
+        graphAdminService.addDog("c", "C", "Unit-test Breed");
+        graphAdminService.addDog("d", "D", "Unit-test Breed");
+        graphAdminService.addDog("e", "E", "Unit-test Breed");
+        graphAdminService.addDog("f", "F", "Unit-test Breed");
+        graphAdminService.addDog("g", "G", "Unit-test Breed");
+        graphAdminService.addDog("h", "H", "Unit-test Breed");
+        graphAdminService.addDog("i", "I", "Unit-test Breed");
+        graphAdminService.addDog("j", "J", "Unit-test Breed");
+        graphAdminService.addDog("x", "X", "Unit-test Breed");
+        graphAdminService.addDog("y", "Y", "Unit-test Breed");
+
+        // 1st gen
+        graphAdminService.connectChildToParent("a", "b", ParentRole.FATHER);
+        graphAdminService.connectChildToParent("a", "c", ParentRole.MOTHER);
+        // 2nd gen
+        graphAdminService.connectChildToParent("b", "x", ParentRole.FATHER);
+        graphAdminService.connectChildToParent("b", "y", ParentRole.MOTHER);
+        graphAdminService.connectChildToParent("c", "b", ParentRole.FATHER);
+        graphAdminService.connectChildToParent("c", "d", ParentRole.MOTHER);
+        // 3rd gen
+        graphAdminService.connectChildToParent("x", "g", ParentRole.FATHER);
+        graphAdminService.connectChildToParent("x", "h", ParentRole.MOTHER);
+        graphAdminService.connectChildToParent("y", "i", ParentRole.FATHER);
+        graphAdminService.connectChildToParent("y", "j", ParentRole.MOTHER);
+        // no need to repeat inbreed X father of B from 2nd gen
+        // no need to repeat inbreed Y mother of B from 2nd gen
+        graphAdminService.connectChildToParent("d", "e", ParentRole.FATHER);
+        graphAdminService.connectChildToParent("d", "f", ParentRole.MOTHER);
+
+        GraphQueryService graphQueryService = new GraphQueryService(graphDb);
+
+        // when
+        double coi = graphQueryService.computeCoefficientOfInbreeding("a", 3);
+
+        // then
+        Assert.assertEquals(coi, 0.25, 0.0001);
+    }
 
 }

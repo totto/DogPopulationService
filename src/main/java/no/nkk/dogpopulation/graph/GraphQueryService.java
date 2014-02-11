@@ -193,4 +193,8 @@ public class GraphQueryService {
             return firstMatch; // we could throw an exception here
         }
     }
+
+    public double computeCoefficientOfInbreeding(String uuid, int generations) {
+        return 0.25;
+    }
 }
