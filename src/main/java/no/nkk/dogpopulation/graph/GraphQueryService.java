@@ -1,6 +1,8 @@
 package no.nkk.dogpopulation.graph;
 
 import org.neo4j.graphdb.*;
+import org.neo4j.graphdb.traversal.Evaluators;
+import org.neo4j.graphdb.traversal.Uniqueness;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,19 +29,23 @@ public class GraphQueryService {
         try (Transaction tx = graphDb.beginTx()) {
             ResourceIterable<Node> iterator = graphDb.findNodesByLabelAndProperty(DogGraphLabel.DOG, DogGraphConstants.DOG_UUID, uuid);
             Node node = iterator.iterator().next();
-            recursivePopulateDescendantUuids(node, descendants);
+            populateDescendantUuids(node, descendants);
         }
     }
 
-    private void recursivePopulateDescendantUuids(Node dog, Collection<? super String> descendants) {
-        for (Relationship relationship : dog.getRelationships(Direction.INCOMING, DogGraphRelationshipType.HAS_PARENT)) {
-            Node descendant = relationship.getStartNode();
+    public void populateDescendantUuids(Node dog, Collection<? super String> descendants) {
+        for (Path position : graphDb.traversalDescription()
+                .depthFirst()
+                .uniqueness(Uniqueness.NODE_PATH)
+                .relationships(DogGraphRelationshipType.HAS_PARENT, Direction.INCOMING)
+                .evaluator(Evaluators.excludeStartPosition())
+                .traverse(dog)) {
+            Node descendant = position.endNode();
             String uuid = (String) descendant.getProperty(DogGraphConstants.DOG_UUID);
             if (descendants.contains(uuid)) {
                 return; // more than one path to descendant, this is because of inbreeding
             }
             descendants.add(uuid);
-            recursivePopulateDescendantUuids(descendant, descendants);
         }
     }
 
