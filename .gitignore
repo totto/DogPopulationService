@@ -11,6 +11,7 @@
 
 # Maven output
 /target/
+/dependency-reduced-pom.xml
 
 # Runtime folders
 /data/
