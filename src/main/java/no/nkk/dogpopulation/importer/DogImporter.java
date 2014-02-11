@@ -5,7 +5,6 @@ import no.nkk.dogpopulation.graph.GraphQueryService;
 import no.nkk.dogpopulation.graph.ParentRole;
 import no.nkk.dogpopulation.importer.dogsearch.*;
 import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Node;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -163,7 +162,7 @@ public class DogImporter {
         } else {
             breed = dogBreed.getName();
         }
-        Node dogNode = graphAdminService.addDog(uuid, name, breed);
+        graphAdminService.addDog(uuid, name, breed);
 
         ts.dogCount++;
         if (depth > ts.maxDepth) {
@@ -179,7 +178,7 @@ public class DogImporter {
 
         if (depth == 1) {
             // will not happen in any of the recursions (assuming an ever increasing depth on recursion stack)
-            graphQueryService.populateDescendantUuids(dogNode, descendants);
+            graphQueryService.populateDescendantUuids(uuid, descendants);
         }
 
         // perform depth first traversal (father side first)

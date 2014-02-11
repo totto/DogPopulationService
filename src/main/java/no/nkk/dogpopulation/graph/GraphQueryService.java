@@ -4,10 +4,7 @@ import org.neo4j.graphdb.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * All public methods must wrap access to the graph-database within a transaction. Private methods may assume that
@@ -26,15 +23,17 @@ public class GraphQueryService {
     }
 
 
-    public void populateDescendantUuids(Node dog, Set<String> descendants) {
+    public void populateDescendantUuids(String uuid, Set<String> descendants) {
         try (Transaction tx = graphDb.beginTx()) {
-            recursivePopulateDescendantUuids(dog, descendants);
+            ResourceIterable<Node> iterator = graphDb.findNodesByLabelAndProperty(DogGraphLabel.DOG, DogGraphConstants.DOG_UUID, uuid);
+            Node node = iterator.iterator().next();
+            recursivePopulateDescendantUuids(node, descendants);
         }
     }
 
-    private void recursivePopulateDescendantUuids(Node dog, Set<String> descendants) {
+    private void recursivePopulateDescendantUuids(Node dog, Collection<? super String> descendants) {
         for (Relationship relationship : dog.getRelationships(Direction.INCOMING, DogGraphRelationshipType.HAS_PARENT)) {
-            Node descendant = relationship.getEndNode();
+            Node descendant = relationship.getStartNode();
             String uuid = (String) descendant.getProperty(DogGraphConstants.DOG_UUID);
             if (descendants.contains(uuid)) {
                 return; // more than one path to descendant, this is because of inbreeding
