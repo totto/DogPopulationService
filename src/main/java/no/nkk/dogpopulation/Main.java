@@ -170,12 +170,10 @@ public class Main {
             if (args.length > 0 && args[0].equalsIgnoreCase("--import")) {
                 String[] suboptions = Arrays.copyOfRange(args, 1, args.length);
                 int statusCode = mainImport(db, suboptions);
-                if (statusCode != 0) {
-                    main.stop();
-                    db.shutdown();
-                    System.exit(statusCode);
-                    return;
-                }
+                main.stop();
+                db.shutdown();
+                System.exit(statusCode);
+                return; // always exit after import
             }
 
             main.join();
