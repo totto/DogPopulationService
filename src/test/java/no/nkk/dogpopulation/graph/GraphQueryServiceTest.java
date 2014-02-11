@@ -10,6 +10,7 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 import java.util.LinkedHashSet;
+import java.util.List;
 
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
@@ -87,6 +88,32 @@ public class GraphQueryServiceTest {
         Assert.assertTrue(descendants.contains("m"));
         Assert.assertTrue(descendants.contains("n"));
         Assert.assertTrue(descendants.contains("o"));
+    }
+
+    @Test
+    public void thatGetBreedDogsWorks() throws InterruptedException {
+        // given
+        GraphAdminService graphAdminService = new GraphAdminService(graphDb);
+        graphAdminService.addDog("a", "A", "Unwanted Breed");
+        graphAdminService.addDog("b", "B", "Unit-test Breed");
+        graphAdminService.addDog("c", "C", "Unit-test Breed");
+        graphAdminService.addDog("d", "D", "Unit-test Breed");
+        graphAdminService.addDog("e", "E", "Unit-test Breed");
+        graphAdminService.connectChildToParent("b", "a", ParentRole.FATHER);
+        graphAdminService.connectChildToParent("c", "b", ParentRole.FATHER);
+        graphAdminService.connectChildToParent("d", "c", ParentRole.FATHER);
+        graphAdminService.connectChildToParent("e", "c", ParentRole.FATHER);
+        GraphQueryService graphQueryService = new GraphQueryService(graphDb);
+
+        // when
+        List<String> dogsOfBreed = graphQueryService.getBreedList("Unit-test Breed");
+
+        // then
+        Assert.assertEquals(dogsOfBreed.size(), 4);
+        Assert.assertTrue(dogsOfBreed.contains("b"));
+        Assert.assertTrue(dogsOfBreed.contains("c"));
+        Assert.assertTrue(dogsOfBreed.contains("d"));
+        Assert.assertTrue(dogsOfBreed.contains("e"));
     }
 
 

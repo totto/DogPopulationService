@@ -18,10 +18,46 @@ public class GraphQueryService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GraphQueryService.class);
 
+
     private final GraphDatabaseService graphDb;
+
 
     public GraphQueryService(GraphDatabaseService graphDb) {
         this.graphDb = graphDb;
+    }
+
+
+    public List<String> getBreedList(String breed) {
+        try (Transaction tx = graphDb.beginTx()) {
+            Node breedRoot = getBreedNode(breed);
+            if (breedRoot == null) {
+                return Collections.emptyList();
+            }
+            List<String> dogIds = new ArrayList<>(10000);
+            for (Path path : graphDb.traversalDescription()
+                    .depthFirst()
+                    .relationships(DogGraphRelationshipType.IS_BREED, Direction.INCOMING)
+                    .evaluator(Evaluators.includingDepths(1, 1))
+                    .traverse(breedRoot)) {
+                Node dogOfBreed = path.endNode();
+                dogIds.add((String) dogOfBreed.getProperty(DogGraphConstants.DOG_UUID));
+            }
+            tx.success();
+            return dogIds;
+        }
+    }
+
+
+    public Dog getPedigree(String uuid) {
+        try (Transaction tx = graphDb.beginTx()) {
+            Node node = findDog(uuid);
+            if (node == null) {
+                return null; // dog not found
+            }
+            Dog dog = recursiveGetPedigree(node);
+            tx.success();
+            return dog;
+        }
     }
 
 
@@ -32,6 +68,7 @@ public class GraphQueryService {
             populateDescendantUuids(node, descendants);
         }
     }
+
 
     private void populateDescendantUuids(Node dog, Collection<? super String> descendants) {
         for (Path position : graphDb.traversalDescription()
@@ -46,18 +83,6 @@ public class GraphQueryService {
                 return; // more than one path to descendant, this is because of inbreeding
             }
             descendants.add(uuid);
-        }
-    }
-
-    public Dog getPedigree(String uuid) {
-        try (Transaction tx = graphDb.beginTx()) {
-            Node node = findDog(uuid);
-            if (node == null) {
-                return null; // dog not found
-            }
-            Dog dog = recursiveGetPedigree(node);
-            tx.success();
-            return dog;
         }
     }
 
@@ -149,29 +174,23 @@ public class GraphQueryService {
         return null;
     }
 
-    public List<String> getBreedList(String breed) {
-        try (Transaction tx = graphDb.beginTx()) {
+    private Node getBreedNode(String breed) {
+        return getSingleNode(DogGraphLabel.BREED, DogGraphConstants.BREED_BREED, breed);
+    }
 
-            ResourceIterable<Node> breedNodeIterator = graphDb.findNodesByLabelAndProperty(DogGraphLabel.BREED, DogGraphConstants.BREED_BREED, breed);
-
-            Node breedRoot;
-            try (ResourceIterator<Node> iterator = breedNodeIterator.iterator()) {
-                if (iterator.hasNext()) {
-                    breedRoot = iterator.next();
-                } else {
-                    return Collections.emptyList();
-                }
+    private Node getSingleNode(DogGraphLabel label, String property, String value) {
+        ResourceIterable<Node> breedNodeIterator = graphDb.findNodesByLabelAndProperty(label, property, value);
+        try (ResourceIterator<Node> iterator = breedNodeIterator.iterator()) {
+            if (!iterator.hasNext()) {
+                return null; // node not found
             }
-
-            Iterable<Relationship> relationships = breedRoot.getRelationships(Direction.INCOMING, DogGraphRelationshipType.IS_BREED);
-            List<String> dogIds = new ArrayList<>(1000);
-            for (Relationship relationship : relationships) {
-                Node dogNode = relationship.getStartNode();
-                dogIds.add((String) dogNode.getProperty(DogGraphConstants.DOG_UUID));
+            Node firstMatch = iterator.next();
+            if (!iterator.hasNext()) {
+                return firstMatch; // only match
             }
-
-            tx.success();
-            return dogIds;
+            // more than one node match
+            LOGGER.warn("More than one node match: label={}, property={}, value={}", label.name(), property, value);
+            return firstMatch; // we could throw an exception here
         }
     }
 }
