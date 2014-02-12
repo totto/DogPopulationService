@@ -18,7 +18,7 @@ import java.io.IOException;
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
-@Path("/pedigree")
+@Path("/dogpopulation/pedigree")
 public class PedigreeResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PedigreeResource.class);

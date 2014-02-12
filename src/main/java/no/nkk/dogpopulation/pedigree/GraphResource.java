@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
-@Path("/graph")
+@Path("/dogpopulation/graph")
 public class GraphResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GraphResource.class);
