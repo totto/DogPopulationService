@@ -102,9 +102,7 @@ public class InbreedingAlgorithm {
 
                 double contribution = Math.pow(0.5, n + 1);
 
-                recursionLevel++;
-                double ancestorCoi = computeCoefficientOfInbreeding(commonAncestor, toDepth - secondParentPath.length(), recursionLevel);
-                recursionLevel--;
+                double ancestorCoi = computeCoefficientOfInbreeding(commonAncestor, toDepth - secondParentPath.length(), recursionLevel + 1);
 
                 coi += contribution * (1 + ancestorCoi);
 
