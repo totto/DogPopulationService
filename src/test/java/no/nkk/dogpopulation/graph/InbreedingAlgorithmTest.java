@@ -99,7 +99,7 @@ public class InbreedingAlgorithmTest {
     }
 
     @Test
-    public void thatCoefficientOfInbreedingIsCorrectForOffspringOfAComplesInbreedingUsingPedigreeOfFourGenerations() {
+    public void thatCoefficientOfInbreedingIsCorrectForOffspringOfAComplexInbreedingUsingPedigreeOfFourGenerations() {
         // given
 
         /*
