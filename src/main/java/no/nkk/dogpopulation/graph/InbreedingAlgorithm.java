@@ -1,0 +1,256 @@
+package no.nkk.dogpopulation.graph;
+
+import com.google.common.collect.Sets;
+import org.neo4j.graphdb.*;
+import org.neo4j.graphdb.traversal.Evaluation;
+import org.neo4j.graphdb.traversal.Evaluator;
+import org.neo4j.graphdb.traversal.Evaluators;
+import org.neo4j.graphdb.traversal.Uniqueness;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.text.DecimalFormat;
+import java.util.*;
+
+/**
+ * This class encapsulates the algorithm for computing a "Coefficient Of Inbreeding". The principles of this method
+ * was first discovered by geneticist Sewall Wright.
+ *
+ * Thread-safety: Instances of this class are thread-safe.
+ *
+ * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
+ */
+public class InbreedingAlgorithm {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(InbreedingAlgorithm.class);
+
+    private final GraphDatabaseService graphDb;
+
+
+    public InbreedingAlgorithm(GraphDatabaseService graphDb) {
+        this.graphDb = graphDb;
+    }
+
+
+    /**
+     * Compute the "Coefficient Of Inbreeding" using the method by geneticist Sewall Wright.
+     *
+     * @param dog the dog for which we want the inbreeding coefficient of.
+     * @param toDepth how many generations to use from the pedigree.
+     * @return the Coefficient Of Inbreeding.
+     */
+    double computeSewallWrightCoefficientOfInbreeding(Node dog, int toDepth) {
+        return computeCoefficientOfInbreeding(dog, toDepth, 0);
+    }
+
+
+    private double computeCoefficientOfInbreeding(Node dog, int toDepth, int recursionLevel) {
+        Iterable<Relationship> relationships = dog.getRelationships(Direction.OUTGOING, DogGraphRelationshipType.HAS_PARENT);
+
+        Iterator<Relationship> parents = relationships.iterator();
+
+        if (!parents.hasNext()) {
+            return 0; // no known parents
+        }
+
+        Relationship firstParent = parents.next();
+
+        if (!parents.hasNext()) {
+            return 0; // missing one parent
+        }
+
+        Relationship secondParent = parents.next();
+
+        // traverse pedigree of first parent, and collect all paths while traversing
+        Map<String, List<Path>> firstParentPathsByUuid = mapAncestryPathsByAncestorUuid(firstParent.getEndNode(), toDepth - 1, recursionLevel);
+
+        double coi = computeInbreedingCoefficient(secondParent, firstParentPathsByUuid, toDepth - 1, recursionLevel);
+
+        return coi;
+    }
+
+
+    private double computeInbreedingCoefficient(Relationship secondParent, Map<String, List<Path>> firstParentPathsByUuid, int toDepth, int recursionLevel) {
+        CommonAncestorEvaluator commonAncestorEvaluator = new CommonAncestorEvaluator(firstParentPathsByUuid, recursionLevel);
+
+        double coi = 0;
+
+        for (Path secondParentPath : graphDb.traversalDescription()
+                .depthFirst()
+                .uniqueness(Uniqueness.NODE_PATH)
+                .relationships(DogGraphRelationshipType.HAS_PARENT, Direction.OUTGOING)
+                .evaluator(Evaluators.toDepth(toDepth))
+                .evaluator(commonAncestorEvaluator)
+                .traverse(secondParent.getEndNode())){
+
+            Node commonAncestor = secondParentPath.endNode();
+
+            String ancestorUuid = (String) commonAncestor.getProperty(DogGraphConstants.DOG_UUID);
+
+            // determine path from one parent to the other through this common ancestor.
+
+            List<Path> firstParentPaths = firstParentPathsByUuid.get(ancestorUuid);
+
+            for (Path firstParentPath : firstParentPaths) {
+
+                Sets.SetView<Node> intersection = Sets.intersection(Sets.newLinkedHashSet(secondParentPath.nodes()), Sets.newLinkedHashSet(firstParentPath.nodes()));
+                if (intersection.size() > 1) {
+                    continue; // there are more than one common ancestor in the two paths
+                }
+
+                int n = secondParentPath.length() + firstParentPath.length();
+
+                double contribution = Math.pow(0.5, n + 1);
+
+                recursionLevel++;
+                double ancestorCoi = computeCoefficientOfInbreeding(commonAncestor, toDepth - secondParentPath.length(), recursionLevel);
+                recursionLevel--;
+
+                coi += contribution * (1 + ancestorCoi);
+
+                tracePathBetweenParentsThroughCommonAncestor(secondParent.getStartNode(), secondParentPath, firstParentPath, ancestorCoi, recursionLevel);
+            }
+        }
+        return coi;
+    }
+
+
+    private Map<String, List<Path>> mapAncestryPathsByAncestorUuid(Node startNode, int toDepth, int recursionLevel) {
+        Map<String, List<Path>> visited = new LinkedHashMap<>();
+        for (Path path : graphDb.traversalDescription()
+                .depthFirst()
+                .uniqueness(Uniqueness.NONE)
+                .relationships(DogGraphRelationshipType.HAS_PARENT, Direction.OUTGOING)
+                .evaluator(Evaluators.toDepth(toDepth))
+                .traverse(startNode)) {
+            Node endNode = path.endNode();
+            String endNodeUuid = (String) endNode.getProperty(DogGraphConstants.DOG_UUID);
+            List<Path> paths = visited.get(endNodeUuid);
+            if (paths == null) {
+                paths = new ArrayList<>();
+                visited.put(endNodeUuid, paths);
+            }
+            paths.add(path);
+            tracePath(1, path, false, recursionLevel);
+        }
+        return visited;
+    }
+
+
+    /**
+     * Used for debugging only. This method does not produce any useful logic other tracing inbreeding coefficient contributions.
+     *
+     * This method assumes that the two supplied paths have the same end-node. The start-node of each path correlates to
+     * each parent of the inbred dog. The end-node of both paths represents the common ancestor.
+     *
+     * @param inbredDog
+     * @param path
+     * @param otherPath
+     * @param ancestorCoi
+     */
+    private static void tracePathBetweenParentsThroughCommonAncestor(Node inbredDog, Path path, Path otherPath, double ancestorCoi, int recursionLevel) {
+        if (!LOGGER.isTraceEnabled()) {
+            return;
+        }
+        StringBuilder sb = new StringBuilder();
+        boolean first = true;
+        for (Node node : otherPath.nodes()) {
+            if (first) {
+                first = false;
+            } else {
+                sb.append("->");
+            }
+            sb.append(node.getProperty(DogGraphConstants.DOG_UUID));
+        }
+        Iterator<Node> reverseNodeIterator = path.reverseNodes().iterator();
+        reverseNodeIterator.next(); // avoid repeating common ancestor when combining paths
+        while (reverseNodeIterator.hasNext()) {
+            Node node = reverseNodeIterator.next();
+            sb.append("<-").append(node.getProperty(DogGraphConstants.DOG_UUID));
+        }
+        int contributingRelations = path.length() + otherPath.length() + 1;
+        Node ancestorDog = path.endNode();
+        String inbredDogId = (String) inbredDog.getProperty(DogGraphConstants.DOG_UUID);
+        String ancestorDogId = (String) ancestorDog.getProperty(DogGraphConstants.DOG_UUID);
+        String indentation = "";
+        for (int i=0; i<recursionLevel; i++) {
+            indentation += "    ";
+        }
+        if (ancestorCoi > 0) {
+            String formattedAncestorCoi = new DecimalFormat("0.00").format(ancestorCoi);
+            LOGGER.trace("{}F({},{}) = 0.5^{}(1+{})   {}", indentation, inbredDogId, ancestorDogId, contributingRelations, formattedAncestorCoi, sb.toString());
+        } else {
+            LOGGER.trace("{}F({},{}) = 0.5^{}           {}", indentation, inbredDogId, ancestorDogId, contributingRelations, sb.toString());
+        }
+    }
+
+
+    /**
+     * Used for debugging only. This method does not produce any useful logic other than path tracing information.
+     *
+     * @param parentIndex
+     * @param path
+     * @param commonAncestor
+     */
+    private static void tracePath(int parentIndex, Path path, boolean commonAncestor, int recursionLevel) {
+        if (!LOGGER.isTraceEnabled()) {
+            return;
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i=0; i<recursionLevel; i++) {
+            sb.append("    ");
+        }
+        sb.append("P").append(parentIndex).append(": ");
+        Iterator<Node> iterator = path.nodes().iterator();
+        Node node = iterator.next();
+        sb.append((String) node.getProperty(DogGraphConstants.DOG_UUID));
+        while (iterator.hasNext()) {
+            node = iterator.next();
+            sb.append("-").append((String) node.getProperty(DogGraphConstants.DOG_UUID));
+        }
+        if (commonAncestor) {
+            sb.append(" (*)");
+        }
+        LOGGER.trace(sb.toString());
+    }
+
+
+    /**
+     * Evaluates whether or not a node is a common ancestor.
+     */
+    private static class CommonAncestorEvaluator implements Evaluator {
+
+        private final Map<String, List<Path>> otherParentPathsByEndNodeUuid;
+
+        private final int recursionLevel;
+
+        CommonAncestorEvaluator(Map<String, List<Path>> otherParentPathsByEndNodeUuid, int recursionLevel) {
+            this.otherParentPathsByEndNodeUuid = otherParentPathsByEndNodeUuid;
+            this.recursionLevel = recursionLevel;
+        }
+
+        @Override
+        public Evaluation evaluate(Path path) {
+            Node endNode = path.endNode();
+            String endNodeUuid = (String) endNode.getProperty(DogGraphConstants.DOG_UUID);
+
+            List<Path> otherPaths = otherParentPathsByEndNodeUuid.get(endNodeUuid);
+
+            if (otherPaths == null) {
+                tracePath(2, path, false, recursionLevel);
+                return Evaluation.EXCLUDE_AND_CONTINUE; // node never before seen in pedigree
+            }
+
+            for (Path otherPath : otherPaths) {
+                Sets.SetView<Node> intersection = Sets.intersection(Sets.newLinkedHashSet(path.nodes()), Sets.newLinkedHashSet(otherPath.nodes()));
+                if (intersection.size() == 1) {
+                    tracePath(2, path, true, recursionLevel);
+                    return Evaluation.INCLUDE_AND_CONTINUE; // common ancestor on both mother and father side
+                }
+            }
+
+            tracePath(2, path, false, recursionLevel);
+            return Evaluation.EXCLUDE_AND_CONTINUE; // ancestor is not common on both mother and father side
+        }
+    }
+}

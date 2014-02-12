@@ -55,6 +55,10 @@ public class GraphQueryService {
                 return null; // dog not found
             }
             Dog dog = recursiveGetPedigree(node);
+            double coi3 = computeCoefficientOfInbreeding(uuid, 3);
+            double coi6 = computeCoefficientOfInbreeding(uuid, 6);
+            dog.setInbreedingCoefficient3((int) Math.round(100 * coi3));
+            dog.setInbreedingCoefficient6((int) Math.round(100 * coi6));
             tx.success();
             return dog;
         }
@@ -66,6 +70,24 @@ public class GraphQueryService {
             ResourceIterable<Node> iterator = graphDb.findNodesByLabelAndProperty(DogGraphLabel.DOG, DogGraphConstants.DOG_UUID, uuid);
             Node node = iterator.iterator().next();
             populateDescendantUuids(node, descendants);
+        }
+    }
+
+
+    /**
+     * Compute the "Coefficient Of Inbreeding" using the method by geneticist Sewall Wright. The computation is done
+     * within a single Neo4j transaction.
+     *
+     * @param uuid the uuid of the dog for which we want the inbreeding coefficient of.
+     * @param generations how many generations to use from the pedigree.
+     * @return the Coefficient Of Inbreeding.
+     */
+    public double computeCoefficientOfInbreeding(String uuid, int generations) {
+        try (Transaction tx = graphDb.beginTx()) {
+            Node dog = getSingleNode(DogGraphLabel.DOG, DogGraphConstants.DOG_UUID, uuid);
+            double coi = new InbreedingAlgorithm(graphDb).computeSewallWrightCoefficientOfInbreeding(dog, generations);
+            tx.success();
+            return coi;
         }
     }
 
@@ -192,9 +214,5 @@ public class GraphQueryService {
             LOGGER.warn("More than one node match: label={}, property={}, value={}", label.name(), property, value);
             return firstMatch; // we could throw an exception here
         }
-    }
-
-    public double computeCoefficientOfInbreeding(String uuid, int generations) {
-        return 0.25;
     }
 }

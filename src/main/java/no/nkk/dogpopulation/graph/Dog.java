@@ -14,7 +14,8 @@ public class Dog {
     private String name;
     private Breed breed;
     private Map<String, String> ids = new LinkedHashMap<>();
-    private int inbreedingCoefficient;
+    private int inbreedingCoefficient3;
+    private int inbreedingCoefficient6;
     private boolean ownAncestor;
     private Ancestry ancestry;
 
@@ -93,12 +94,20 @@ public class Dog {
         this.ids = ids;
     }
 
-    public int getInbreedingCoefficient() {
-        return inbreedingCoefficient;
+    public int getInbreedingCoefficient3() {
+        return inbreedingCoefficient3;
     }
 
-    public void setInbreedingCoefficient(int inbreedingCoefficient) {
-        this.inbreedingCoefficient = inbreedingCoefficient;
+    public void setInbreedingCoefficient3(int inbreedingCoefficient3) {
+        this.inbreedingCoefficient3 = inbreedingCoefficient3;
+    }
+
+    public int getInbreedingCoefficient6() {
+        return inbreedingCoefficient6;
+    }
+
+    public void setInbreedingCoefficient6(int inbreedingCoefficient6) {
+        this.inbreedingCoefficient6 = inbreedingCoefficient6;
     }
 
     public Ancestry getAncestry() {

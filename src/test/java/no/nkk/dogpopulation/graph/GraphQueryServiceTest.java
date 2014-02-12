@@ -36,73 +36,73 @@ public class GraphQueryServiceTest {
     public void thatPopulateDescendantsIncludesAllButItself() {
         // given
         GraphAdminService graphAdminService = new GraphAdminService(graphDb);
-        graphAdminService.addDog("a", "A", "Unit-test Breed");
-        graphAdminService.addDog("b", "B", "Unit-test Breed");
-        graphAdminService.addDog("c", "C", "Unit-test Breed");
-        graphAdminService.addDog("d", "D", "Unit-test Breed");
-        graphAdminService.addDog("e", "E", "Unit-test Breed");
-        graphAdminService.addDog("f", "F", "Unit-test Breed");
-        graphAdminService.addDog("g", "G", "Unit-test Breed");
-        graphAdminService.addDog("h", "H", "Unit-test Breed");
-        graphAdminService.addDog("i", "I", "Unit-test Breed");
-        graphAdminService.addDog("j", "J", "Unit-test Breed");
-        graphAdminService.addDog("k", "K", "Unit-test Breed");
-        graphAdminService.addDog("l", "L", "Unit-test Breed");
-        graphAdminService.addDog("m", "M", "Unit-test Breed");
-        graphAdminService.addDog("n", "N", "Unit-test Breed");
-        graphAdminService.addDog("o", "O", "Unit-test Breed");
-        graphAdminService.connectChildToParent("b", "a", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("c", "b", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("d", "c", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("e", "c", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("f", "b", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("g", "f", ParentRole.MOTHER);
-        graphAdminService.connectChildToParent("h", "f", ParentRole.MOTHER);
-        graphAdminService.connectChildToParent("i", "a", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("j", "i", ParentRole.MOTHER);
-        graphAdminService.connectChildToParent("k", "j", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("l", "j", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("m", "i", ParentRole.MOTHER);
-        graphAdminService.connectChildToParent("n", "m", ParentRole.MOTHER);
-        graphAdminService.connectChildToParent("o", "m", ParentRole.MOTHER);
+        graphAdminService.addDog("A", "A", "Unit-test Breed");
+        graphAdminService.addDog("B", "B", "Unit-test Breed");
+        graphAdminService.addDog("C", "C", "Unit-test Breed");
+        graphAdminService.addDog("D", "D", "Unit-test Breed");
+        graphAdminService.addDog("E", "E", "Unit-test Breed");
+        graphAdminService.addDog("F", "F", "Unit-test Breed");
+        graphAdminService.addDog("G", "G", "Unit-test Breed");
+        graphAdminService.addDog("H", "H", "Unit-test Breed");
+        graphAdminService.addDog("I", "I", "Unit-test Breed");
+        graphAdminService.addDog("J", "J", "Unit-test Breed");
+        graphAdminService.addDog("K", "K", "Unit-test Breed");
+        graphAdminService.addDog("L", "L", "Unit-test Breed");
+        graphAdminService.addDog("M", "M", "Unit-test Breed");
+        graphAdminService.addDog("N", "N", "Unit-test Breed");
+        graphAdminService.addDog("O", "O", "Unit-test Breed");
+        graphAdminService.connectChildToParent("B", "A", ParentRole.FATHER);
+        graphAdminService.connectChildToParent("C", "B", ParentRole.FATHER);
+        graphAdminService.connectChildToParent("D", "C", ParentRole.FATHER);
+        graphAdminService.connectChildToParent("E", "C", ParentRole.FATHER);
+        graphAdminService.connectChildToParent("F", "B", ParentRole.FATHER);
+        graphAdminService.connectChildToParent("G", "F", ParentRole.MOTHER);
+        graphAdminService.connectChildToParent("H", "F", ParentRole.MOTHER);
+        graphAdminService.connectChildToParent("I", "A", ParentRole.FATHER);
+        graphAdminService.connectChildToParent("J", "I", ParentRole.MOTHER);
+        graphAdminService.connectChildToParent("K", "J", ParentRole.FATHER);
+        graphAdminService.connectChildToParent("L", "J", ParentRole.FATHER);
+        graphAdminService.connectChildToParent("M", "I", ParentRole.MOTHER);
+        graphAdminService.connectChildToParent("N", "M", ParentRole.MOTHER);
+        graphAdminService.connectChildToParent("O", "M", ParentRole.MOTHER);
         GraphQueryService graphQueryService = new GraphQueryService(graphDb);
 
         // when
         LinkedHashSet<String> descendants = new LinkedHashSet<>();
-        graphQueryService.populateDescendantUuids("a", descendants);
+        graphQueryService.populateDescendantUuids("A", descendants);
 
         // then
         Assert.assertEquals(descendants.size(), 14);
-        Assert.assertFalse(descendants.contains("a"));
-        Assert.assertTrue(descendants.contains("b"));
-        Assert.assertTrue(descendants.contains("c"));
-        Assert.assertTrue(descendants.contains("d"));
-        Assert.assertTrue(descendants.contains("e"));
-        Assert.assertTrue(descendants.contains("f"));
-        Assert.assertTrue(descendants.contains("g"));
-        Assert.assertTrue(descendants.contains("h"));
-        Assert.assertTrue(descendants.contains("i"));
-        Assert.assertTrue(descendants.contains("j"));
-        Assert.assertTrue(descendants.contains("k"));
-        Assert.assertTrue(descendants.contains("l"));
-        Assert.assertTrue(descendants.contains("m"));
-        Assert.assertTrue(descendants.contains("n"));
-        Assert.assertTrue(descendants.contains("o"));
+        Assert.assertFalse(descendants.contains("A"));
+        Assert.assertTrue(descendants.contains("B"));
+        Assert.assertTrue(descendants.contains("C"));
+        Assert.assertTrue(descendants.contains("D"));
+        Assert.assertTrue(descendants.contains("E"));
+        Assert.assertTrue(descendants.contains("F"));
+        Assert.assertTrue(descendants.contains("G"));
+        Assert.assertTrue(descendants.contains("H"));
+        Assert.assertTrue(descendants.contains("I"));
+        Assert.assertTrue(descendants.contains("J"));
+        Assert.assertTrue(descendants.contains("K"));
+        Assert.assertTrue(descendants.contains("L"));
+        Assert.assertTrue(descendants.contains("M"));
+        Assert.assertTrue(descendants.contains("N"));
+        Assert.assertTrue(descendants.contains("O"));
     }
 
     @Test
     public void thatGetBreedDogsWorks() {
         // given
         GraphAdminService graphAdminService = new GraphAdminService(graphDb);
-        graphAdminService.addDog("a", "A", "Unwanted Breed");
-        graphAdminService.addDog("b", "B", "Unit-test Breed");
-        graphAdminService.addDog("c", "C", "Unit-test Breed");
-        graphAdminService.addDog("d", "D", "Unit-test Breed");
-        graphAdminService.addDog("e", "E", "Unit-test Breed");
-        graphAdminService.connectChildToParent("b", "a", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("c", "b", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("d", "c", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("e", "c", ParentRole.FATHER);
+        graphAdminService.addDog("A", "A", "Unwanted Breed");
+        graphAdminService.addDog("B", "B", "Unit-test Breed");
+        graphAdminService.addDog("C", "C", "Unit-test Breed");
+        graphAdminService.addDog("D", "D", "Unit-test Breed");
+        graphAdminService.addDog("E", "E", "Unit-test Breed");
+        graphAdminService.connectChildToParent("B", "A", ParentRole.FATHER);
+        graphAdminService.connectChildToParent("C", "B", ParentRole.FATHER);
+        graphAdminService.connectChildToParent("D", "C", ParentRole.FATHER);
+        graphAdminService.connectChildToParent("E", "C", ParentRole.FATHER);
         GraphQueryService graphQueryService = new GraphQueryService(graphDb);
 
         // when
@@ -110,77 +110,10 @@ public class GraphQueryServiceTest {
 
         // then
         Assert.assertEquals(dogsOfBreed.size(), 4);
-        Assert.assertTrue(dogsOfBreed.contains("b"));
-        Assert.assertTrue(dogsOfBreed.contains("c"));
-        Assert.assertTrue(dogsOfBreed.contains("d"));
-        Assert.assertTrue(dogsOfBreed.contains("e"));
-    }
-
-    @Test
-    public void thatCoefficientOfInbreedingIsCorrectForOffspringOfAFatherWithDaughterMatingUsingPedigreeOfThreeGenerations() {
-        /*
-         *  ---------------
-         * |   |   |   | G |
-         * |   |   | X  ---
-         * |   |   |   | H |
-         * |   | B  --- ---
-         * |   |   |   | I |
-         * |   |   | Y  ---
-         * |   |   |   | J |
-         *   A  -----------
-         * |   |   |   | X |
-         * |   |   | B  ---
-         * |   |   |   | Y |
-         * |   | C  --- ---
-         * |   |   |   | E |
-         * |   |   | D  ---
-         * |   |   |   | F |
-         *  ---------------
-         *
-         * B is common ancestor, Distinct dogs traversing from father to mother through common ancestor are: BC = 2 dogs.
-         * This gives COI = (0.5)^2 = 0.25 = 25%
-         */
-
-        // given
-        GraphAdminService graphAdminService = new GraphAdminService(graphDb);
-        graphAdminService.addDog("a", "A", "Unit-test Breed");
-        graphAdminService.addDog("b", "B", "Unit-test Breed");
-        graphAdminService.addDog("c", "C", "Unit-test Breed");
-        graphAdminService.addDog("d", "D", "Unit-test Breed");
-        graphAdminService.addDog("e", "E", "Unit-test Breed");
-        graphAdminService.addDog("f", "F", "Unit-test Breed");
-        graphAdminService.addDog("g", "G", "Unit-test Breed");
-        graphAdminService.addDog("h", "H", "Unit-test Breed");
-        graphAdminService.addDog("i", "I", "Unit-test Breed");
-        graphAdminService.addDog("j", "J", "Unit-test Breed");
-        graphAdminService.addDog("x", "X", "Unit-test Breed");
-        graphAdminService.addDog("y", "Y", "Unit-test Breed");
-
-        // 1st gen
-        graphAdminService.connectChildToParent("a", "b", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("a", "c", ParentRole.MOTHER);
-        // 2nd gen
-        graphAdminService.connectChildToParent("b", "x", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("b", "y", ParentRole.MOTHER);
-        graphAdminService.connectChildToParent("c", "b", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("c", "d", ParentRole.MOTHER);
-        // 3rd gen
-        graphAdminService.connectChildToParent("x", "g", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("x", "h", ParentRole.MOTHER);
-        graphAdminService.connectChildToParent("y", "i", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("y", "j", ParentRole.MOTHER);
-        // no need to repeat inbreed X father of B from 2nd gen
-        // no need to repeat inbreed Y mother of B from 2nd gen
-        graphAdminService.connectChildToParent("d", "e", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("d", "f", ParentRole.MOTHER);
-
-        GraphQueryService graphQueryService = new GraphQueryService(graphDb);
-
-        // when
-        double coi = graphQueryService.computeCoefficientOfInbreeding("a", 3);
-
-        // then
-        Assert.assertEquals(coi, 0.25, 0.0001);
+        Assert.assertTrue(dogsOfBreed.contains("B"));
+        Assert.assertTrue(dogsOfBreed.contains("C"));
+        Assert.assertTrue(dogsOfBreed.contains("D"));
+        Assert.assertTrue(dogsOfBreed.contains("E"));
     }
 
 }
