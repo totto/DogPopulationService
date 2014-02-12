@@ -76,7 +76,7 @@ public class PedigreeResourceTest {
 
     @Test
     public void thatPedigreeIsWellFormed() throws Exception {
-        Dog dog = RestAssured.expect().statusCode(200).given().when().get("/pedigree/uuid-1234567891").as(Dog.class);
+        Dog dog = RestAssured.expect().statusCode(200).given().when().get("/dogpopulation/pedigree/uuid-1234567891").as(Dog.class);
         String dogName = dog.getName();
         Assert.assertEquals(dogName, "Wicked teeth Sr. II");
     }
