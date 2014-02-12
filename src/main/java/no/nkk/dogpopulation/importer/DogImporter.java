@@ -52,7 +52,7 @@ public class DogImporter {
     }
 
     public void runDogImport() {
-        ExecutorService executorService = Executors.newFixedThreadPool(50);
+        ExecutorService executorService = Executors.newFixedThreadPool(100);
         for (final String id : ids) {
             executorService.submit(new Runnable() {
                 @Override
@@ -88,7 +88,7 @@ public class DogImporter {
 
         try {
             executorService.shutdown();
-            executorService.awaitTermination(10, TimeUnit.HOURS);
+            executorService.awaitTermination(7, TimeUnit.DAYS);
         } catch (Exception e) {
             LOGGER.error("", e);
         }
