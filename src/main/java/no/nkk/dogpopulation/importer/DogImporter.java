@@ -10,7 +10,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
 
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
@@ -43,7 +45,10 @@ public class DogImporter {
 
     private final ConcurrentMap<String, String> alreadyImportedIds = new ConcurrentHashMap<>();
 
-    public DogImporter(GraphDatabaseService graphDb, DogSearchClient dogSearchClient, Set<String> breeds, Set<String> ids) {
+    private final ExecutorService executorService;
+
+    public DogImporter(ExecutorService executorService, GraphDatabaseService graphDb, DogSearchClient dogSearchClient, Set<String> breeds, Set<String> ids) {
+        this.executorService = executorService;
         this.graphAdminService = new GraphAdminService(graphDb);
         this.graphQueryService = new GraphQueryService(graphDb);
         this.dogSearchClient = dogSearchClient;
@@ -51,8 +56,7 @@ public class DogImporter {
         this.ids = ids;
     }
 
-    public void runDogImport() {
-        ExecutorService executorService = Executors.newFixedThreadPool(100);
+    public void startDogImport() {
         for (final String id : ids) {
             executorService.submit(new Runnable() {
                 @Override
@@ -85,14 +89,6 @@ public class DogImporter {
                 }
             });
         }
-
-        try {
-            executorService.shutdown();
-            executorService.awaitTermination(7, TimeUnit.DAYS);
-        } catch (Exception e) {
-            LOGGER.error("", e);
-        }
-
     }
 
     private int importBreedPedigree(String breed) {

@@ -30,6 +30,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -52,6 +54,9 @@ public class Main {
     private Server server;
 
     private final GraphDatabaseService graphDb;
+
+    private final ExecutorService executorService = Executors.newFixedThreadPool(100);
+    private final DogSearchClient dogSearchClient = new DogSearchSolrClient("http://dogsearch.nkk.no/dogservice/dogs");
 
     public Main(GraphDatabaseService graphDb, ResourceConfigFactory resourceConfigFactory) {
         this(graphDb, resourceConfigFactory, DEFAULT_HTTP_PORT);
@@ -169,7 +174,7 @@ public class Main {
 
             if (args.length > 0 && args[0].equalsIgnoreCase("--import")) {
                 String[] suboptions = Arrays.copyOfRange(args, 1, args.length);
-                int statusCode = mainImport(db, suboptions);
+                int statusCode = main.mainImport(db, suboptions);
                 main.stop();
                 db.shutdown();
                 System.exit(statusCode);
@@ -183,7 +188,7 @@ public class Main {
     }
 
 
-    public static int mainImport(GraphDatabaseService db, String... args) {
+    public int mainImport(GraphDatabaseService db, String... args) {
         if (args.length < 2) {
             printUsage();
             return 1;
@@ -228,10 +233,16 @@ public class Main {
             }
         }
 
-        DogSearchClient dogSearchClient = new DogSearchSolrClient("http://dogsearch.nkk.no/dogservice/dogs");
-        DogImporter dogImporter = new DogImporter(db, dogSearchClient, breeds, ids);
+        DogImporter dogImporter = new DogImporter(executorService, db, dogSearchClient, breeds, ids);
 
-        dogImporter.runDogImport();
+        dogImporter.startDogImport();
+
+        try {
+            executorService.shutdown();
+            executorService.awaitTermination(7, TimeUnit.DAYS);
+        } catch (Exception e) {
+            LOGGER.error("", e);
+        }
 
         return 0;
     }
