@@ -35,6 +35,22 @@ public class GraphResource {
     }
 
     @GET
+    @Path("/breed")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getKnownBreeds() {
+        LOGGER.trace("getKnownBreeds()");
+
+        List<String> breeds = graphQueryService.getBreeds();
+
+        try {
+            String json = prettyPrintingObjectWriter.writeValueAsString(breeds);
+            return Response.ok(json).build();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @GET
     @Path("/breed/{breed}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getDogsForBreed(@PathParam("breed") String breed) {
