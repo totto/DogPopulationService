@@ -1,7 +1,7 @@
 package no.nkk.dogpopulation.pedigree;
 
-import no.nkk.dogpopulation.graph.Dog;
 import no.nkk.dogpopulation.graph.GraphQueryService;
+import no.nkk.dogpopulation.graph.TopLevelDog;
 import no.nkk.dogpopulation.importer.DogImporter;
 
 import java.util.concurrent.ExecutionException;
@@ -23,8 +23,8 @@ public class PedigreeService {
         this.dogImporter = dogImporter;
     }
 
-    public Dog getPedigree(String uuid) {
-        Dog dog = graphQueryService.getPedigree(uuid);
+    public TopLevelDog getPedigree(String uuid) {
+        TopLevelDog dog = graphQueryService.getPedigree(uuid);
 
         if (dog == null) {
             Future<?> future = dogImporter.importDog(uuid);

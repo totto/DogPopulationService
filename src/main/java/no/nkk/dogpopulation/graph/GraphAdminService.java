@@ -34,8 +34,23 @@ public class GraphAdminService {
      * @return the node in the graph with the provided UUID.
      */
     public Node addDog(String uuid, String name, String breed) {
+        return addDog(uuid, null, name, breed);
+    }
+
+
+    /**
+     * Add a dog the graph. If a dog with the provided UUID already exists in the graph then no new node is created,
+     * and the existing node is updated with the correct name and breed if applicable.
+     *
+     * @param uuid
+     * @param regNo
+     * @param name
+     * @param breed
+     * @return the node in the graph with the provided UUID.
+     */
+    public Node addDog(String uuid, String regNo, String name, String breed) {
         try (Transaction tx = graphDb.beginTx()) {
-            Node dogNode = createDogNode(uuid, name);
+            Node dogNode = createDogNode(uuid, name, regNo);
             connectToBreed(dogNode, breed);
             tx.success();
             return dogNode;
@@ -162,13 +177,16 @@ public class GraphAdminService {
     }
 
 
-    private Node createDogNode(String uuid, String name) {
+    private Node createDogNode(String uuid, String name, String regNo) {
 
         Node dogNode = findOrCreateNode(DogGraphLabel.DOG, DogGraphConstants.DOG_UUID, uuid);
 
         if (!dogNode.hasProperty(DogGraphConstants.DOG_NAME)) {
             // new dog
             dogNode.setProperty(DogGraphConstants.DOG_NAME, name);
+            if (regNo != null) {
+                dogNode.setProperty(DogGraphConstants.DOG_REGNO, regNo);
+            }
             LOGGER.trace("Added DOG to graph {}", uuid);
             return dogNode;
 
@@ -177,12 +195,19 @@ public class GraphAdminService {
         // existing dog
 
         String existingName = (String) dogNode.getProperty(DogGraphConstants.DOG_NAME);
-        if (existingName.equals(name)) {
-            return dogNode; // existing name in graph matches - do nothing
+        if (!existingName.equals(name)) {
+            LOGGER.warn("NAME of dog \"{}\" changed from \"{}\" to \"{}\".", uuid, existingName, name);
+            dogNode.setProperty(DogGraphConstants.DOG_NAME, name);
         }
 
-        LOGGER.warn("NAME of dog \"{}\" changed from \"{}\" to \"{}\".", uuid, existingName, name);
-        dogNode.setProperty(DogGraphConstants.DOG_NAME, name);
+        if (regNo != null) {
+            String existingRegNo = (String) dogNode.getProperty(DogGraphConstants.DOG_REGNO);
+            if (existingRegNo == null || !existingName.equals(regNo)) {
+                LOGGER.warn("NAME of dog \"{}\" changed from \"{}\" to \"{}\".", uuid, existingName, name);
+                dogNode.setProperty(DogGraphConstants.DOG_REGNO, regNo);
+            }
+        }
+
         return dogNode;
     }
 

@@ -1,5 +1,6 @@
 package no.nkk.dogpopulation.importer.dogsearch;
 
+import no.nkk.dogpopulation.graph.DogGraphConstants;
 import no.nkk.dogpopulation.graph.GraphAdminService;
 import no.nkk.dogpopulation.graph.GraphQueryService;
 import no.nkk.dogpopulation.graph.ParentRole;
@@ -162,7 +163,14 @@ public class DogSearchImporter implements DogImporter {
         } else {
             breed = dogBreed.getName();
         }
-        graphAdminService.addDog(uuid, name, breed);
+        String regNo = null;
+        for (DogId dogId : dogDetails.getIds()) {
+            if (DogGraphConstants.DOG_REGNO.equalsIgnoreCase(dogId.getType())) {
+                regNo = dogId.getValue();
+                break;
+            }
+        }
+        graphAdminService.addDog(uuid, regNo, name, breed);
 
         ts.dogCount++;
         if (depth > ts.maxDepth) {

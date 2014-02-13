@@ -69,13 +69,13 @@ public class GraphQueryService {
     }
 
 
-    public Dog getPedigree(String uuid) {
+    public TopLevelDog getPedigree(String uuid) {
         try (Transaction tx = graphDb.beginTx()) {
             Node node = findDog(uuid);
             if (node == null) {
                 return null; // dog not found
             }
-            Dog dog = recursiveGetPedigree(node);
+            TopLevelDog dog = getPedigree(node);
             double coi3 = computeCoefficientOfInbreeding(uuid, 3);
             double coi6 = computeCoefficientOfInbreeding(uuid, 6);
             dog.setInbreedingCoefficient3((int) Math.round(100 * coi3));
@@ -129,7 +129,35 @@ public class GraphQueryService {
         }
     }
 
-    private Dog recursiveGetPedigree(Node node) {
+    private TopLevelDog getPedigree(Node node) {
+        return getPedigreeOfTopLevel(node);
+    }
+
+    private TopLevelDog getPedigreeOfTopLevel(Node node) {
+        String uuid = (String) node.getProperty(DogGraphConstants.DOG_UUID);
+        String name = (String) node.getProperty(DogGraphConstants.DOG_NAME);
+        Relationship breedRelation = node.getSingleRelationship(DogGraphRelationshipType.IS_BREED, Direction.OUTGOING);
+        Node breedNode = breedRelation.getEndNode();
+        String breedName = (String) breedNode.getProperty(DogGraphConstants.BREED_BREED);
+        Breed breed = new Breed(breedName);
+        TopLevelDog dog = new TopLevelDog();
+        dog.setName(name);
+        dog.setBreed(breed);
+        dog.setUuid(uuid);
+        if (node.hasProperty(DogGraphConstants.DOG_REGNO)) {
+            String regNo = (String) node.getProperty(DogGraphConstants.DOG_REGNO);
+            dog.getIds().put(DogGraphConstants.DOG_REGNO, regNo);
+        }
+
+        Ancestry ancestry = getAncestry(node);
+        if (ancestry != null) {
+            dog.setAncestry(ancestry);
+        }
+
+        return dog;
+    }
+
+    private Dog getPedigreeOfDog(Node node) {
         String uuid = (String) node.getProperty(DogGraphConstants.DOG_UUID);
         String name = (String) node.getProperty(DogGraphConstants.DOG_NAME);
         Relationship breedRelation = node.getSingleRelationship(DogGraphRelationshipType.IS_BREED, Direction.OUTGOING);
@@ -138,7 +166,20 @@ public class GraphQueryService {
         Breed breed = new Breed(breedName);
         Dog dog = new Dog(name, breed);
         dog.setUuid(uuid);
+        if (node.hasProperty(DogGraphConstants.DOG_REGNO)) {
+            String regNo = (String) node.getProperty(DogGraphConstants.DOG_REGNO);
+            dog.getIds().put(DogGraphConstants.DOG_REGNO, regNo);
+        }
 
+        Ancestry ancestry = getAncestry(node);
+        if (ancestry != null) {
+            dog.setAncestry(ancestry);
+        }
+
+        return dog;
+    }
+
+    private Ancestry getAncestry(Node node) {
         Dog fatherDog = null;
         Dog motherDog = null;
 
@@ -169,22 +210,20 @@ public class GraphQueryService {
         }
 
         if (fatherDog == null && motherDog == null) {
-            return dog; // no known parents, do not create ancestry
+            return null; // no known parents, do not create ancestry
         }
 
         // at least one known parent in graph
 
         Ancestry ancestry = new Ancestry(fatherDog, motherDog);
-        dog.setAncestry(ancestry);
-
-        return dog;
+        return ancestry;
     }
 
     private Dog getParentDog(Node parent) {
         if (parent == null) {
             return null;
         }
-        return recursiveGetPedigree(parent);
+        return getPedigreeOfDog(parent);
     }
 
     private Dog getInvalidAncestorDog(Node parent) {

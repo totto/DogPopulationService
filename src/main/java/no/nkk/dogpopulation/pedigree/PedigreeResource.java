@@ -2,7 +2,7 @@ package no.nkk.dogpopulation.pedigree;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import no.nkk.dogpopulation.graph.Dog;
+import no.nkk.dogpopulation.graph.TopLevelDog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +39,7 @@ public class PedigreeResource {
     public Response getPedigree(@PathParam("uuid") String uuid) {
         LOGGER.trace("getPedigree for dog with uuid " + uuid);
 
-        Dog dog = pedigreeService.getPedigree(uuid);
+        TopLevelDog dog = pedigreeService.getPedigree(uuid);
 
         try {
             String json = prettyPrintingObjectWriter.writeValueAsString(dog);
