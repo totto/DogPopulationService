@@ -3,7 +3,6 @@ package no.nkk.dogpopulation.pedigree;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import no.nkk.dogpopulation.graph.Dog;
-import no.nkk.dogpopulation.graph.GraphQueryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,10 +27,10 @@ public class PedigreeResource {
 
     private final PedigreeService pedigreeService;
 
-    public PedigreeResource(GraphQueryService graphQueryService) {
+    public PedigreeResource(PedigreeService pedigreeService) {
         objectMapper = new ObjectMapper();
         prettyPrintingObjectWriter = objectMapper.writerWithDefaultPrettyPrinter();
-        this.pedigreeService = new PedigreeService(graphQueryService);
+        this.pedigreeService = pedigreeService;
     }
 
     @GET

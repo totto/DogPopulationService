@@ -2,8 +2,8 @@ package no.nkk.dogpopulation;
 
 import no.nkk.dogpopulation.graph.DogGraphConstants;
 import no.nkk.dogpopulation.graph.DogGraphLabel;
-import no.nkk.dogpopulation.importer.DogImporter;
 import no.nkk.dogpopulation.importer.dogsearch.DogSearchClient;
+import no.nkk.dogpopulation.importer.dogsearch.DogSearchImporter;
 import no.nkk.dogpopulation.importer.dogsearch.DogSearchSolrClient;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
@@ -54,9 +54,6 @@ public class Main {
     private Server server;
 
     private final GraphDatabaseService graphDb;
-
-    private final ExecutorService executorService = Executors.newFixedThreadPool(100);
-    private final DogSearchClient dogSearchClient = new DogSearchSolrClient("http://dogsearch.nkk.no/dogservice/dogs");
 
     public Main(GraphDatabaseService graphDb, ResourceConfigFactory resourceConfigFactory) {
         this(graphDb, resourceConfigFactory, DEFAULT_HTTP_PORT);
@@ -169,12 +166,15 @@ public class Main {
 
         GraphDatabaseService db = createGraphDb("data/dogdb");
         try {
-            Main main = new Main(db, new DogPopulationResourceConfigFactory(db));
+            ExecutorService executorService = Executors.newFixedThreadPool(100);
+            DogSearchClient dogSearchClient = new DogSearchSolrClient("http://dogsearch.nkk.no/dogservice/dogs");
+
+            Main main = new Main(db, new DogPopulationResourceConfigFactory(db, new DogSearchImporter(executorService, db, dogSearchClient)));
             main.start();
 
             if (args.length > 0 && args[0].equalsIgnoreCase("--import")) {
                 String[] suboptions = Arrays.copyOfRange(args, 1, args.length);
-                int statusCode = main.mainImport(db, suboptions);
+                int statusCode = main.mainImport(db, executorService, dogSearchClient, suboptions);
                 main.stop();
                 db.shutdown();
                 System.exit(statusCode);
@@ -188,7 +188,7 @@ public class Main {
     }
 
 
-    public int mainImport(GraphDatabaseService db, String... args) {
+    public static int mainImport(GraphDatabaseService db, ExecutorService executorService, DogSearchClient dogSearchClient, String... args) {
         if (args.length < 2) {
             printUsage();
             return 1;
@@ -233,9 +233,13 @@ public class Main {
             }
         }
 
-        DogImporter dogImporter = new DogImporter(executorService, db, dogSearchClient, breeds, ids);
-
-        dogImporter.startDogImport();
+        DogSearchImporter dogImporter = new DogSearchImporter(executorService, db, dogSearchClient);
+        for (final String id : ids) {
+            dogImporter.importDog(id);
+        }
+        for (final String breed : breeds) {
+            dogImporter.importBreed(breed);
+        }
 
         try {
             executorService.shutdown();

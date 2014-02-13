@@ -1,5 +1,6 @@
 package no.nkk.dogpopulation;
 
+import no.nkk.dogpopulation.importer.DogImporter;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.neo4j.graphdb.GraphDatabaseService;
 
@@ -9,13 +10,15 @@ import org.neo4j.graphdb.GraphDatabaseService;
 public class DogPopulationResourceConfigFactory implements ResourceConfigFactory {
 
     private final GraphDatabaseService graphDatabaseService;
+    private final DogImporter dogImporter;
 
-    DogPopulationResourceConfigFactory(GraphDatabaseService graphDatabaseService) {
+    DogPopulationResourceConfigFactory(GraphDatabaseService graphDatabaseService, DogImporter dogImporter) {
         this.graphDatabaseService = graphDatabaseService;
+        this.dogImporter = dogImporter;
     }
 
     @Override
     public ResourceConfig createResourceConfig() {
-        return new DogPopulationJerseyApplication(graphDatabaseService);
+        return new DogPopulationJerseyApplication(graphDatabaseService, dogImporter);
     }
 }

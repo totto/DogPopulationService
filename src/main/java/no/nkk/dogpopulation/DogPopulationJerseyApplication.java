@@ -1,8 +1,10 @@
 package no.nkk.dogpopulation;
 
 import no.nkk.dogpopulation.graph.GraphQueryService;
+import no.nkk.dogpopulation.importer.DogImporter;
 import no.nkk.dogpopulation.pedigree.GraphResource;
 import no.nkk.dogpopulation.pedigree.PedigreeResource;
+import no.nkk.dogpopulation.pedigree.PedigreeService;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.neo4j.graphdb.GraphDatabaseService;
 
@@ -13,8 +15,9 @@ import javax.ws.rs.ApplicationPath;
  */
 @ApplicationPath("dogpopulation")
 public class DogPopulationJerseyApplication extends ResourceConfig {
-    public DogPopulationJerseyApplication(GraphDatabaseService graphDb) {
+    public DogPopulationJerseyApplication(GraphDatabaseService graphDb, DogImporter dogImporter) {
         GraphQueryService graphQueryService = new GraphQueryService(graphDb);
-        registerInstances(new PedigreeResource(graphQueryService), new GraphResource(graphQueryService));
+        PedigreeService pedigreeService = new PedigreeService(graphQueryService, dogImporter);
+        registerInstances(new PedigreeResource(pedigreeService), new GraphResource(graphQueryService));
     }
 }

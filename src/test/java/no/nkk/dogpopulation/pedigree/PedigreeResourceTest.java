@@ -7,6 +7,7 @@ import no.nkk.dogpopulation.graph.Dog;
 import no.nkk.dogpopulation.graph.GraphAdminService;
 import no.nkk.dogpopulation.graph.GraphQueryService;
 import no.nkk.dogpopulation.graph.ParentRole;
+import no.nkk.dogpopulation.importer.dogsearch.DogTestImporter;
 import org.apache.commons.io.FileUtils;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -35,7 +36,7 @@ public class PedigreeResourceTest {
             @Override
             public ResourceConfig createResourceConfig() {
                 ResourceConfig resourceConfig = new ResourceConfig();
-                resourceConfig.registerInstances(new PedigreeResource(new GraphQueryService(graphDb)));
+                resourceConfig.registerInstances(new PedigreeResource(new PedigreeService(new GraphQueryService(graphDb), new DogTestImporter())));
                 return resourceConfig;
             }
         };
