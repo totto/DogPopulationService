@@ -12,11 +12,14 @@ public class DogDetails {
     private DogBreed breed;
     private String born;
     private String postalCode;
+    private String countryCode;
     private String gender;
     private String color;
     private String process;
     private DogAncestry ancestry;
+    private DogOffspring[] offspring;
     private DogId[] ids;
+    private DogHealth health;
     private int quality;
 
     public String getId() {
@@ -59,6 +62,14 @@ public class DogDetails {
         this.postalCode = postalCode;
     }
 
+    public String getCountryCode() {
+        return countryCode;
+    }
+
+    public void setCountryCode(String countryCode) {
+        this.countryCode = countryCode;
+    }
+
     public String getGender() {
         return gender;
     }
@@ -91,12 +102,28 @@ public class DogDetails {
         this.ancestry = ancestry;
     }
 
+    public DogOffspring[] getOffspring() {
+        return offspring;
+    }
+
+    public void setOffspring(DogOffspring[] offspring) {
+        this.offspring = offspring;
+    }
+
     public DogId[] getIds() {
         return ids;
     }
 
     public void setIds(DogId[] ids) {
         this.ids = ids;
+    }
+
+    public DogHealth getHealth() {
+        return health;
+    }
+
+    public void setHealth(DogHealth health) {
+        this.health = health;
     }
 
     public int getQuality() {

@@ -10,5 +10,7 @@ public enum DogGraphRelationshipType implements RelationshipType {
     HAS_PARENT,
     OWN_ANCESTOR,
     MEMBER_OF,
-    REGISTERED_IN
+    REGISTERED_IN,
+    IN_LITTER,
+    HAS_LITTER
 }

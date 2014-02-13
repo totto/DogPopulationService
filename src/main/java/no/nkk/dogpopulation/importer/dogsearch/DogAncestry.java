@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public class DogAncestry {
     private DogParent father;
     private DogParent mother;
+    private DogLitter litter;
 
     public DogParent getFather() {
         return father;
@@ -24,5 +25,13 @@ public class DogAncestry {
 
     public void setMother(DogParent mother) {
         this.mother = mother;
+    }
+
+    public DogLitter getLitter() {
+        return litter;
+    }
+
+    public void setLitter(DogLitter litter) {
+        this.litter = litter;
     }
 }

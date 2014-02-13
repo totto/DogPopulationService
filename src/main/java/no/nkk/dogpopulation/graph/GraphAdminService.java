@@ -1,5 +1,6 @@
 package no.nkk.dogpopulation.graph;
 
+import org.joda.time.LocalDate;
 import org.neo4j.graphdb.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,10 +18,12 @@ public class GraphAdminService {
 
 
     private final GraphDatabaseService graphDb;
+    private final GraphQueryService graphQueryService;
 
 
     public GraphAdminService(GraphDatabaseService graphDb) {
         this.graphDb = graphDb;
+        graphQueryService = new GraphQueryService(graphDb);
     }
 
 
@@ -38,6 +41,11 @@ public class GraphAdminService {
     }
 
 
+    public Node addDog(String uuid, String regNo, String name, String breed) {
+        return addDog(uuid, regNo, name, null, breed, null, null, null);
+    }
+
+
     /**
      * Add a dog the graph. If a dog with the provided UUID already exists in the graph then no new node is created,
      * and the existing node is updated with the correct name and breed if applicable.
@@ -45,15 +53,82 @@ public class GraphAdminService {
      * @param uuid
      * @param regNo
      * @param name
+     * @param breedId
      * @param breed
+     * @param bornLocalDate
      * @return the node in the graph with the provided UUID.
      */
-    public Node addDog(String uuid, String regNo, String name, String breed) {
+    public Node addDog(String uuid, String regNo, String name, String breedId, String breed, LocalDate bornLocalDate, String hdDiag, LocalDate hdXray) {
         try (Transaction tx = graphDb.beginTx()) {
-            Node dogNode = createDogNode(uuid, name, regNo);
-            connectToBreed(dogNode, breed);
+            Node dogNode = createDogNode(uuid, name, regNo, bornLocalDate, hdDiag, hdXray);
+            connectToBreed(dogNode, breedId, breed);
             tx.success();
             return dogNode;
+        }
+    }
+
+
+    public void addLitter(String litterId, LocalDate litterBorn, int count) {
+        try (Transaction tx = graphDb.beginTx()) {
+            Node litterNode = findOrCreateLitterNode(litterId);
+            litterNode.setProperty(DogGraphConstants.LITTER_COUNT, count);
+            litterNode.setProperty(DogGraphConstants.LITTER_YEAR, litterBorn.getYear());
+            litterNode.setProperty(DogGraphConstants.LITTER_MONTH, litterBorn.getMonthOfYear());
+            litterNode.setProperty(DogGraphConstants.LITTER_DAY, litterBorn.getDayOfMonth());
+            tx.success();
+        }
+    }
+
+
+    public void connectDogAsParentOfLitter(ParentRole parentRole, String parentUuid, String litterId) {
+        try (Transaction tx = graphDb.beginTx()) {
+            Node litter = findOrCreateLitterNode(litterId);
+            Node parent = graphQueryService.getDogNode(parentUuid);
+            for (Relationship existingHasLitter : parent.getRelationships(Direction.OUTGOING, DogGraphRelationshipType.HAS_LITTER)) {
+                Node existingLitter = existingHasLitter.getEndNode();
+                if (existingLitter.equals(litter)) {
+                    // already connected to correct litter
+                    if (parentRole != null) {
+                        if (existingHasLitter.hasProperty(DogGraphConstants.HASLITTER_ROLE)) {
+                            ParentRole existingRole = ParentRole.valueOf(((String) existingHasLitter.getProperty(DogGraphConstants.HASLITTER_ROLE)).toUpperCase());
+                            if (!existingRole.equals(parentRole)) {
+                                LOGGER.warn("Inconsistent HAS_LITTER role. Dog {} has now changed role to {}", parentUuid, parentRole.name().toLowerCase());
+                                existingHasLitter.setProperty(DogGraphConstants.HASLITTER_ROLE, parentRole.name().toLowerCase());
+                            }
+                        } else {
+                            // role was missing before
+                            existingHasLitter.setProperty(DogGraphConstants.HASLITTER_ROLE, parentRole.name().toLowerCase());
+                        }
+                    }
+                    tx.success();
+                    return;
+                }
+            }
+            Relationship hasLitter = parent.createRelationshipTo(litter, DogGraphRelationshipType.HAS_LITTER);
+            if (parentRole != null) {
+                hasLitter.setProperty(DogGraphConstants.HASLITTER_ROLE, parentRole.name().toLowerCase());
+            }
+            tx.success();
+        }
+    }
+
+
+    public void addPuppyToLitter(String puppyUuid, String litterId) {
+        try (Transaction tx = graphDb.beginTx()) {
+            Node litter = findOrCreateLitterNode(litterId);
+            Node puppy = graphQueryService.getDogNode(puppyUuid);
+            for (Relationship existingInLitter : puppy.getRelationships(Direction.OUTGOING, DogGraphRelationshipType.IN_LITTER)) {
+                Node existingLitter = existingInLitter.getEndNode();
+                if (!existingLitter.equals(litter)) {
+                    LOGGER.warn("LITTER CONFLICT: Dog {} is already in litter {} but will now be moved to litter {}.", puppyUuid, existingLitter.getProperty(DogGraphConstants.LITTER_ID), litterId);
+                    existingInLitter.delete();
+                } else {
+                    tx.success();
+                    return; // already connected to correct litter
+                }
+            }
+            puppy.createRelationshipTo(litter, DogGraphRelationshipType.IN_LITTER);
+            tx.success();
         }
     }
 
@@ -87,6 +162,7 @@ public class GraphAdminService {
         LOGGER.trace("Connected DOG with _INVALID_ {}: child:{}, parent:{}", parentRole.name(), childUuid, parentUuid);
         return connectChildToParent(DogGraphRelationshipType.OWN_ANCESTOR, childUuid, parentUuid, parentRole);
     }
+
 
     private Relationship connectChildToParent(RelationshipType relationshipType, String childUuid, String parentUuid, ParentRole parentRole) throws DogUuidUnknownException {
         try (Transaction tx = graphDb.beginTx()) {
@@ -129,8 +205,19 @@ public class GraphAdminService {
     }
 
 
-    private Node findOrCreateBreedNode(String breed) {
+    private Node findOrCreateBreedNode(String breedId, String breed) {
         Node breedNode = findOrCreateNode(DogGraphLabel.BREED, DogGraphConstants.BREED_BREED, breed);
+        if (breedId != null) {
+            if (breedNode.hasProperty(DogGraphConstants.BREED_ID)) {
+                String existingBreedId = (String) breedNode.getProperty(DogGraphConstants.BREED_ID);
+                if (!existingBreedId.equals(breedId)) {
+                    LOGGER.warn("Breed-ID conflict: ID \"{}\" (in graph) and \"{}\" are both assigned to breed \"{}\"", existingBreedId, breedId, breed);
+                }
+            } else {
+                LOGGER.trace("Added breed.id={} to \"{}\"", breedId, breed);
+                breedNode.setProperty(DogGraphConstants.BREED_ID, breedId);
+            }
+        }
         if (!breedNode.hasRelationship(DogGraphRelationshipType.MEMBER_OF, Direction.OUTGOING)) {
             breedNode.createRelationshipTo(findOrCreateBreedCategoryNode(), DogGraphRelationshipType.MEMBER_OF);
         }
@@ -177,42 +264,52 @@ public class GraphAdminService {
     }
 
 
-    private Node createDogNode(String uuid, String name, String regNo) {
+    /**
+     * Creates a new dog node in the graph. If a node already exists with the given uuid, then no changes are performed
+     * on the graph by this method.
+     *
+     * @param uuid
+     * @param name
+     * @param regNo
+     * @param bornLocalDate
+     * @param hdDiag
+     * @param hdXray
+     * @return the node of the dog with the uuid
+     */
+    private Node createDogNode(String uuid, String name, String regNo, LocalDate bornLocalDate, String hdDiag, LocalDate hdXray) {
 
         Node dogNode = findOrCreateNode(DogGraphLabel.DOG, DogGraphConstants.DOG_UUID, uuid);
 
-        if (!dogNode.hasProperty(DogGraphConstants.DOG_NAME)) {
-            // new dog
-            dogNode.setProperty(DogGraphConstants.DOG_NAME, name);
-            if (regNo != null) {
-                dogNode.setProperty(DogGraphConstants.DOG_REGNO, regNo);
-            }
-            LOGGER.trace("Added DOG to graph {}", uuid);
+        if (dogNode.hasProperty(DogGraphConstants.DOG_NAME)) {
+            LOGGER.trace("DOG already exists, properties will not be updated");
             return dogNode;
-
         }
 
-        // existing dog
+        // new dog
 
-        String existingName = (String) dogNode.getProperty(DogGraphConstants.DOG_NAME);
-        if (!existingName.equals(name)) {
-            LOGGER.warn("NAME of dog \"{}\" changed from \"{}\" to \"{}\".", uuid, existingName, name);
-            dogNode.setProperty(DogGraphConstants.DOG_NAME, name);
-        }
-
+        dogNode.setProperty(DogGraphConstants.DOG_NAME, name);
         if (regNo != null) {
-            String existingRegNo = (String) dogNode.getProperty(DogGraphConstants.DOG_REGNO);
-            if (existingRegNo == null || !existingName.equals(regNo)) {
-                LOGGER.warn("NAME of dog \"{}\" changed from \"{}\" to \"{}\".", uuid, existingName, name);
-                dogNode.setProperty(DogGraphConstants.DOG_REGNO, regNo);
-            }
+            dogNode.setProperty(DogGraphConstants.DOG_REGNO, regNo);
         }
+        if (bornLocalDate != null) {
+            dogNode.setProperty(DogGraphConstants.DOG_BORN_YEAR, bornLocalDate.getYear());
+            dogNode.setProperty(DogGraphConstants.DOG_BORN_MONTH, bornLocalDate.getMonthOfYear());
+            dogNode.setProperty(DogGraphConstants.DOG_BORN_DAY, bornLocalDate.getDayOfMonth());
+        }
+        if (hdDiag != null) {
+            dogNode.setProperty(DogGraphConstants.DOG_HDDIAG, hdDiag);
+        }
+        if (hdXray != null) {
+            dogNode.setProperty(DogGraphConstants.DOG_HDYEAR, hdXray.getYear());
+        }
+
+        LOGGER.trace("Added DOG to graph {}", uuid);
 
         return dogNode;
     }
 
 
-    private Relationship connectToBreed(Node dogNode, String breed) {
+    private Relationship connectToBreed(Node dogNode, String breedId, String breed) {
 
         if (dogNode.hasRelationship(DogGraphRelationshipType.IS_BREED, Direction.OUTGOING)) {
             // relationship already exists
@@ -229,9 +326,20 @@ public class GraphAdminService {
         }
 
         // establish new relationship to breed
-        Node breedNode = findOrCreateBreedNode(breed);
+        Node breedNode = findOrCreateBreedNode(breedId, breed);
         Relationship relationship = dogNode.createRelationshipTo(breedNode, DogGraphRelationshipType.IS_BREED);
         return relationship;
+    }
+
+
+    private Node findOrCreateLitterNode(String litterId) {
+        Node litter = graphQueryService.getSingleNode(DogGraphLabel.LITTER, DogGraphConstants.LITTER_ID, litterId);
+        if (litter != null) {
+            return litter;
+        }
+        litter = graphDb.createNode(DogGraphLabel.LITTER);
+        litter.setProperty(DogGraphConstants.LITTER_ID, litterId);
+        return litter;
     }
 
 }

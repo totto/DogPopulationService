@@ -69,9 +69,23 @@ public class GraphQueryService {
     }
 
 
+    public boolean dogExistsInGraphWithAtLeastOneParent(String uuid) {
+        try (Transaction tx = graphDb.beginTx()) {
+            Node dog = getDogNode(uuid);
+            if (dog == null) {
+                return false;
+            }
+            Iterable<Relationship> parentRelationships = dog.getRelationships(Direction.OUTGOING, DogGraphRelationshipType.HAS_PARENT);
+            boolean atLeastOneConnectedParent = parentRelationships.iterator().hasNext();
+            tx.success();
+            return atLeastOneConnectedParent;
+        }
+    }
+
+
     public TopLevelDog getPedigree(String uuid) {
         try (Transaction tx = graphDb.beginTx()) {
-            Node node = findDog(uuid);
+            Node node = getDogNode(uuid);
             if (node == null) {
                 return null; // dog not found
             }
@@ -105,7 +119,7 @@ public class GraphQueryService {
      */
     public double computeCoefficientOfInbreeding(String uuid, int generations) {
         try (Transaction tx = graphDb.beginTx()) {
-            Node dog = getSingleNode(DogGraphLabel.DOG, DogGraphConstants.DOG_UUID, uuid);
+            Node dog = getDogNode(uuid);
             double coi = new InbreedingAlgorithm(graphDb).computeSewallWrightCoefficientOfInbreeding(dog, generations);
             tx.success();
             return coi;
@@ -245,22 +259,11 @@ public class GraphQueryService {
         return dog;
     }
 
-    private Node findDog(String uuid) {
-        ResourceIterable<Node> dogIterator = graphDb.findNodesByLabelAndProperty(DogGraphLabel.DOG, DogGraphConstants.DOG_UUID, uuid);
-        try (ResourceIterator<Node> iterator = dogIterator.iterator()) {
-            if (iterator.hasNext()) {
-                // found the dog
-                return iterator.next();
-            }
-        }
-        return null;
-    }
-
     private Node getBreedNode(String breed) {
         return getSingleNode(DogGraphLabel.BREED, DogGraphConstants.BREED_BREED, breed);
     }
 
-    private Node getSingleNode(DogGraphLabel label, String property, String value) {
+    Node getSingleNode(DogGraphLabel label, String property, String value) {
         ResourceIterable<Node> breedNodeIterator = graphDb.findNodesByLabelAndProperty(label, property, value);
         try (ResourceIterator<Node> iterator = breedNodeIterator.iterator()) {
             if (!iterator.hasNext()) {
@@ -274,5 +277,9 @@ public class GraphQueryService {
             LOGGER.warn("More than one node match: label={}, property={}, value={}", label.name(), property, value);
             return firstMatch; // we could throw an exception here
         }
+    }
+
+    Node getDogNode(String uuid) {
+        return getSingleNode(DogGraphLabel.DOG, DogGraphConstants.DOG_UUID, uuid);
     }
 }
