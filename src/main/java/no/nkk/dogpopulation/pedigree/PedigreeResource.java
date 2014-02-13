@@ -41,6 +41,10 @@ public class PedigreeResource {
 
         TopLevelDog dog = pedigreeService.getPedigree(uuid);
 
+        if (dog == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
         try {
             String json = prettyPrintingObjectWriter.writeValueAsString(dog);
             return Response.ok(json).build();
