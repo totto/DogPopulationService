@@ -3,10 +3,10 @@ package no.nkk.dogpopulation.pedigree;
 import com.jayway.restassured.RestAssured;
 import no.nkk.dogpopulation.Main;
 import no.nkk.dogpopulation.ResourceConfigFactory;
-import no.nkk.dogpopulation.graph.Dog;
 import no.nkk.dogpopulation.graph.GraphAdminService;
 import no.nkk.dogpopulation.graph.GraphQueryService;
 import no.nkk.dogpopulation.graph.ParentRole;
+import no.nkk.dogpopulation.graph.TopLevelDog;
 import no.nkk.dogpopulation.importer.dogsearch.DogTestImporter;
 import org.apache.commons.io.FileUtils;
 import org.glassfish.jersey.server.ResourceConfig;
@@ -77,7 +77,7 @@ public class PedigreeResourceTest {
 
     @Test
     public void thatPedigreeIsWellFormed() throws Exception {
-        Dog dog = RestAssured.expect().statusCode(200).given().when().get("/dogpopulation/pedigree/uuid-1234567891").as(Dog.class);
+        TopLevelDog dog = RestAssured.expect().statusCode(200).given().when().get("/dogpopulation/pedigree/uuid-1234567891").as(TopLevelDog.class);
         String dogName = dog.getName();
         Assert.assertEquals(dogName, "Wicked teeth Sr. II");
     }
