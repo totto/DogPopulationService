@@ -73,6 +73,7 @@ public class DogSearchImporterTest {
         Assert.assertEquals(topLevelDog.getBorn(), "1994-04-28");
         Assert.assertEquals(topLevelDog.getHealth().getHdDiag(), "A1");
         Assert.assertEquals(topLevelDog.getHealth().getHdYear(), 1996);
-        Assert.assertEquals(topLevelDog.getOffspring().length, 6);
+        // Assert.assertEquals(topLevelDog.getOffspring().length, 6);
+        Assert.assertNull(topLevelDog.getOffspring());
     }
 }
