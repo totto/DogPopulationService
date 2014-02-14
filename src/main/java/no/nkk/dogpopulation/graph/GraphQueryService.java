@@ -260,6 +260,16 @@ public class GraphQueryService {
             dog.getIds().put(DogGraphConstants.DOG_REGNO, regNo);
         }
 
+        if (node.hasProperty(DogGraphConstants.DOG_BORN_YEAR)
+                && node.hasProperty(DogGraphConstants.DOG_BORN_MONTH)
+                && node.hasProperty(DogGraphConstants.DOG_BORN_DAY)) {
+            int year = (Integer) node.getProperty(DogGraphConstants.DOG_BORN_YEAR);
+            int month = (Integer) node.getProperty(DogGraphConstants.DOG_BORN_MONTH);
+            int day = (Integer) node.getProperty(DogGraphConstants.DOG_BORN_DAY);
+            LocalDate bornDate = new LocalDate(year, month, day);
+            dog.setBorn(DateTimeFormat.forPattern("yyyy-MM-dd").print(bornDate));
+        }
+
         if (node.hasProperty(DogGraphConstants.DOG_HDDIAG)) {
             Health health = new Health();
             String hdDiag = (String) node.getProperty(DogGraphConstants.DOG_HDDIAG);
