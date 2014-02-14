@@ -169,11 +169,9 @@ public class DogSearchImporter implements DogImporter {
             LOGGER.trace("DOG is missing ancestry {}", uuid);
         }
 
-        /*
         // add offspring, but queue up import requests on each puppy rather than adding them recursively.
         Future<Node>[] puppyTasks = addOffspring(dog, dogDetails);
         ts.dogCount.addAndGet(puppyTasks.length);
-        */
 
         return dogFuture;
     }
