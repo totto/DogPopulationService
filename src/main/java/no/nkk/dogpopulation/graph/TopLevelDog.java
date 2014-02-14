@@ -9,11 +9,14 @@ import java.util.Map;
 public class TopLevelDog {
     private String uuid;
     private String name;
+    private String born;
     private Breed breed;
     private Map<String, String> ids = new LinkedHashMap<>();
+    private Health health;
     private int inbreedingCoefficient3;
     private int inbreedingCoefficient6;
     private Ancestry ancestry;
+    private Offspring[] offspring;
 
     public String getUuid() {
         return uuid;
@@ -31,6 +34,14 @@ public class TopLevelDog {
         this.name = name;
     }
 
+    public String getBorn() {
+        return born;
+    }
+
+    public void setBorn(String born) {
+        this.born = born;
+    }
+
     public Breed getBreed() {
         return breed;
     }
@@ -45,6 +56,14 @@ public class TopLevelDog {
 
     public void setIds(Map<String, String> ids) {
         this.ids = ids;
+    }
+
+    public Health getHealth() {
+        return health;
+    }
+
+    public void setHealth(Health health) {
+        this.health = health;
     }
 
     public int getInbreedingCoefficient3() {
@@ -69,5 +88,13 @@ public class TopLevelDog {
 
     public void setAncestry(Ancestry ancestry) {
         this.ancestry = ancestry;
+    }
+
+    public Offspring[] getOffspring() {
+        return offspring;
+    }
+
+    public void setOffspring(Offspring[] offspring) {
+        this.offspring = offspring;
     }
 }

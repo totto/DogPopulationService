@@ -12,8 +12,10 @@ public class Dog {
 
     private String uuid;
     private String name;
+    private String born;
     private Breed breed;
     private Map<String, String> ids = new LinkedHashMap<>();
+    private Health health;
     private boolean ownAncestor;
     private Ancestry ancestry;
 
@@ -76,6 +78,14 @@ public class Dog {
         this.name = name;
     }
 
+    public String getBorn() {
+        return born;
+    }
+
+    public void setBorn(String born) {
+        this.born = born;
+    }
+
     public Breed getBreed() {
         return breed;
     }
@@ -90,6 +100,14 @@ public class Dog {
 
     public void setIds(Map<String, String> ids) {
         this.ids = ids;
+    }
+
+    public Health getHealth() {
+        return health;
+    }
+
+    public void setHealth(Health health) {
+        this.health = health;
     }
 
     public Ancestry getAncestry() {

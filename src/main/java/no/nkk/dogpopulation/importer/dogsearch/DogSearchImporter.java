@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import java.text.DecimalFormat;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
@@ -55,16 +56,17 @@ public class DogSearchImporter implements DogImporter {
 
 
     @Override
-    public Future<?> importDog(final String id) {
-        Future<?> future = executorService.submit(new Runnable() {
+    public Future<String> importDog(final String id) {
+        Future<String> future = executorService.submit(new Callable<String>() {
             @Override
-            public void run() {
+            public String call() {
                 final String origThreadName = Thread.currentThread().getName();
                 Thread.currentThread().setName(id);
                 try {
-                    importDogPedigree(id);
-                } catch (Throwable e) {
+                    return importDogPedigree(id);
+                } catch (RuntimeException e) {
                     LOGGER.error("", e);
+                    throw e;
                 } finally {
                     Thread.currentThread().setName(origThreadName);
                 }
@@ -114,15 +116,15 @@ public class DogSearchImporter implements DogImporter {
         return n;
     }
 
-    private int importDogPedigree(String id) {
+    private String importDogPedigree(String id) {
         long startTime = System.currentTimeMillis();
         LOGGER.info("Importing Pedigree from DogSearch for dog {}", id);
         TraversalStatistics ts = new TraversalStatistics();
         Set<String> descendants = new LinkedHashSet<>();
-        depthFirstDogImport(ts, descendants, 1, id);
+        String uuid = depthFirstDogImport(ts, descendants, 1, id);
         double duration = (System.currentTimeMillis() - startTime) / 1000;
         LOGGER.info("Imported Pedigree (dogs={}, minDepth={}, maxDepth={}) for dog {} in {} seconds", ts.dogCount, ts.minDepth, ts.maxDepth, id, new DecimalFormat("0.0").format(duration));
-        return ts.dogCount;
+        return uuid;
     }
 
     public String depthFirstDogImport(TraversalStatistics ts, Set<String> descendants, int depth, String id) {

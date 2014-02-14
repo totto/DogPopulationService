@@ -1,0 +1,72 @@
+{
+	"id":"39a02ba9-0c58-4ccc-89ef-9e2a0ea69733",
+	"ids":[{"source":"NKK","type":"RegNo","value":"AB/12345/67"}],
+	"breed":{"id":"401","name":"Border Collie"},
+	"name":"Awesomebitch",
+	"born":"1994-04-28",
+	"colorDescription":"Sort/hvit",
+	"breeders":[{"id":"8034044","name":"Breeders inc.","type":"breeder"}],
+	"ancestry":{
+		"mother":{"id":"16b27d88-6796-4212-a447-53530c979608","name":"Victoria","breed":{"id":"401","name":"Border Collie"}},
+		"father":{"id":"649b5fec-3695-4511-bb5b-069fcc9c4ea5","name":"Scott","breed":{"id":"401","name":"Border Collie"}}
+	},
+	"offspring":[
+		{"id":"970753","born":"1997-01-18","count":7,"puppies":[
+			{"id":"c08481f4-61c7-4e86-81f6-2e40af090a52","name":"Speed Bergkongen Zim","breed":{"id":"401","name":"Border Collie"}},
+			{"id":"39b7a820-9ac9-4272-ab28-d5a797eb020d","name":"Jesper","breed":{"id":"401","name":"Border Collie"}},
+			{"id":"3c0dbb32-cacf-40a8-a224-3a2e1dfeb01c","name":"Peik","breed":{"id":"401","name":"Border Collie"}},
+			{"id":"2295cb12-a97b-41d8-b018-afb2f6956267","name":"Junior","breed":{"id":"401","name":"Border Collie"}},
+			{"id":"e2191a33-2420-4fc4-9914-01d5a8948ee9","name":"Tokaj","breed":{"id":"401","name":"Border Collie"}},
+			{"id":"e0535820-7f87-40b0-bf97-dc1e36ef6051","name":"Max","breed":{"id":"401","name":"Border Collie"}},
+			{"id":"b886d9f7-3482-4479-8e2d-44bb113ae18f","name":"Dixie","breed":{"id":"401","name":"Border Collie"}}
+		]},
+		{"id":"980008","born":"1997-11-18","count":5,"puppies":[
+			{"id":"ff5e2020-be4b-4e73-8956-8a2f61c11a11","name":"Maico","breed":{"id":"401","name":"Border Collie"}},
+			{"id":"5b661051-cc93-4c2e-9886-28f85da8ea2d","name":"Arkas","breed":{"id":"401","name":"Border Collie"}},
+			{"id":"bc50cfb4-897d-4caf-99aa-dca4aae7c810","name":"Victoria","breed":{"id":"401","name":"Border Collie"}},
+			{"id":"e9503ae7-e1d0-495f-82a7-b74cf9eb79b8","name":"Ronja","breed":{"id":"401","name":"Border Collie"}},
+			{"id":"4d25a306-37b1-4d6a-85c1-a3100c0bc37a","name":"Yen","breed":{"id":"401","name":"Border Collie"}}
+		]},
+		{"id":"992323","born":"1999-04-23","count":7,"puppies":[
+			{"id":"82bf1443-548e-4f85-a6c7-e1215303935c","name":"Chicco","breed":{"id":"401","name":"Border Collie"}},
+			{"id":"36aaf717-6fec-4f42-b7f5-cbade0fc67e4","name":"Lucas","breed":{"id":"401","name":"Border Collie"}},
+			{"id":"cbc659b5-4da1-434c-b031-b96e9be676c2","name":"Zap","breed":{"id":"401","name":"Border Collie"}},
+			{"id":"a990a23a-1cdb-4495-a6ce-1a62615f8a3b","name":"Timbo","breed":{"id":"401","name":"Border Collie"}},
+			{"id":"6473b6be-cb0f-4e66-be06-68b4f51eb684","name":"Billy","breed":{"id":"401","name":"Border Collie"}},
+			{"id":"fb3d002c-9021-4d2c-b507-58c31f7ca46b","name":"Ronja","breed":{"id":"401","name":"Border Collie"}},
+			{"id":"ca41748b-3114-46da-8ce4-2d9eaecfa9b5","name":"Andromeda","breed":{"id":"401","name":"Border Collie"}}
+		]},
+		{"id":"961420","born":"1996-03-09","count":4,"puppies":[
+			{"id":"1015115a-3f90-4bdd-bdc7-24a03c4b515b","name":"Linus Timmieson","breed":{"id":"401","name":"Border Collie"}},
+			{"id":"6ea5504d-a0b7-4104-bd81-fca9130ad919","name":"Tib","breed":{"id":"401","name":"Border Collie"}},
+			{"id":"bd4e4848-ecce-4750-986d-1b7ac4705987","name":"Arja","breed":{"id":"401","name":"Border Collie"}},
+			{"id":"a2c7161d-99cb-45d9-9197-675633e73dc1","name":"Rav","breed":{"id":"401","name":"Border Collie"}}
+		]},
+		{"id":"021688","born":"2002-03-11","count":6,"puppies":[
+			{"id":"afd6b04e-8110-427f-8d8f-aa88edad6dcf","name":"Luna","breed":{"id":"401","name":"Border Collie"}},
+			{"id":"99153eea-aecb-4370-bf60-98f1547becc6","name":"Ness","breed":{"id":"401","name":"Border Collie"}},
+			{"id":"ed728228-72b3-4f94-b7cb-23351b5927f4","name":"Frøya","breed":{"id":"401","name":"Border Collie"}},
+			{"id":"30591d06-04cc-46d0-9f9c-ef2351a8cafa","name":"Mina","breed":{"id":"401","name":"Border Collie"}},
+			{"id":"3f925bd1-8b54-4b06-8ffc-27a3341fb1f3","name":"Era","breed":{"id":"401","name":"Border Collie"}},
+			{"id":"37942390-6f3c-4120-ae84-d16908adca70","name":"Kito","breed":{"id":"401","name":"Border Collie"}}
+		]},
+		{"id":"003486","born":"2000-06-24","count":7,"puppies":[
+			{"id":"5a8df981-c1a8-42b0-9d16-b8010a09d67c","name":"Trym","breed":{"id":"401","name":"Border Collie"}},
+			{"id":"0369c20d-0d49-4b37-bb8e-f7a813cd4f12","name":"Alexander Walther Sokrates","breed":{"id":"401","name":"Border Collie"}},
+			{"id":"4b9e5ce2-247e-48a9-ba36-2433b3398b0c","name":"Raskal","breed":{"id":"401","name":"Border Collie"}},
+			{"id":"d2cdf842-2dbd-40ec-8e15-d0157385e0cd","name":"Tussi","breed":{"id":"401","name":"Border Collie"}},
+			{"id":"8b5bb080-7a9c-4d48-ae32-5c2c2cb9f763","name":"Tinka","breed":{"id":"401","name":"Border Collie"}},
+			{"id":"39063052-411c-48f5-b1fb-d642853fa613","name":"Pia","breed":{"id":"401","name":"Border Collie"}},
+			{"id":"3a652d46-2925-47eb-8bdc-1a0bd74619ba","name":"Laika","breed":{"id":"401","name":"Border Collie"}}
+		]}
+	],
+	"postalCode":"1540",
+	"countryCode":"no",
+	"health":{
+		"hd":[
+			{"id":"9600149","veterinary":"Crazy vets","xray":"1996-01-04","readDate":"1996-01-09","sentToOwnerDate":"1996-01-10","diagnosis":"A1","sekLeft":"","sekRight":""}
+		]
+	},
+	"quality":60
+}
+
