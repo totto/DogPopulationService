@@ -166,7 +166,7 @@ public class Main {
 
         GraphDatabaseService db = createGraphDb("data/dogdb");
         try {
-            ExecutorService executorService = Executors.newFixedThreadPool(100);
+            ExecutorService executorService = Executors.newFixedThreadPool(200);
             DogSearchClient dogSearchClient = new DogSearchSolrClient("http://dogsearch.nkk.no/dogservice/dogs");
 
             Main main = new Main(db, new DogPopulationResourceConfigFactory(db, new DogSearchImporter(executorService, db, dogSearchClient)));

@@ -39,7 +39,7 @@ public class DogSearchImporterTest {
 
     @Test
     public void thatAllRelevantFieldsArePresentInGraph() throws InterruptedException, ExecutionException, TimeoutException {
-        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        ExecutorService executorService = Executors.newFixedThreadPool(5);
         DogSearchClient dogSearchClient = new DogSearchClient() {
             @Override
             public Set<String> listIdsForBreed(String breed) {

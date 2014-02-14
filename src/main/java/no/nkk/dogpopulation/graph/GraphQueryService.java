@@ -29,6 +29,15 @@ public class GraphQueryService {
     }
 
 
+    public Node getDog(String uuid) {
+        try (Transaction tx = graphDb.beginTx()) {
+            Node dog = getSingleNode(DogGraphLabel.DOG, DogGraphConstants.DOG_UUID, uuid);
+            tx.success();
+            return dog;
+        }
+    }
+
+
     public List<String> getBreeds() {
         try (Transaction tx = graphDb.beginTx()) {
             Node breedRoot = getSingleNode(DogGraphLabel.CATEGORY, DogGraphConstants.CATEGORY_CATEGORY, DogGraphConstants.CATEGORY_CATEGORY_BREED);
@@ -71,16 +80,19 @@ public class GraphQueryService {
     }
 
 
-    public boolean dogExistsInGraphWithAtLeastOneParent(String uuid) {
+    public Node getDogIfItHasAtLeastOneParent(String uuid) {
         try (Transaction tx = graphDb.beginTx()) {
             Node dog = getDogNode(uuid);
             if (dog == null) {
-                return false;
+                return null;
             }
             Iterable<Relationship> parentRelationships = dog.getRelationships(Direction.OUTGOING, DogGraphRelationshipType.HAS_PARENT);
             boolean atLeastOneConnectedParent = parentRelationships.iterator().hasNext();
             tx.success();
-            return atLeastOneConnectedParent;
+            if (atLeastOneConnectedParent) {
+                return dog;
+            }
+            return null; // dog exists but without parents
         }
     }
 
@@ -102,11 +114,10 @@ public class GraphQueryService {
     }
 
 
-    public void populateDescendantUuids(String uuid, Set<String> descendants) {
+    public void populateDescendantUuids(Node dog, Set<String> descendants) {
         try (Transaction tx = graphDb.beginTx()) {
-            ResourceIterable<Node> iterator = graphDb.findNodesByLabelAndProperty(DogGraphLabel.DOG, DogGraphConstants.DOG_UUID, uuid);
-            Node node = iterator.iterator().next();
-            populateDescendantUuids(node, descendants);
+            populateDescendantIds(dog, descendants);
+            tx.success();
         }
     }
 
@@ -129,7 +140,7 @@ public class GraphQueryService {
     }
 
 
-    private void populateDescendantUuids(Node dog, Collection<? super String> descendants) {
+    private void populateDescendantIds(Node dog, Collection<? super String> descendants) {
         for (Path position : graphDb.traversalDescription()
                 .depthFirst()
                 .uniqueness(Uniqueness.NODE_PATH)

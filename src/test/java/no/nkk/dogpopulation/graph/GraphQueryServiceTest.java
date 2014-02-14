@@ -3,6 +3,7 @@ package no.nkk.dogpopulation.graph;
 import no.nkk.dogpopulation.Main;
 import org.apache.commons.io.FileUtils;
 import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Node;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -36,7 +37,7 @@ public class GraphQueryServiceTest {
     public void thatPopulateDescendantsIncludesAllButItself() {
         // given
         GraphAdminService graphAdminService = new GraphAdminService(graphDb);
-        graphAdminService.addDog("A", "A", "Unit-test Breed");
+        Node A = graphAdminService.addDog("A", "A", "Unit-test Breed");
         graphAdminService.addDog("B", "B", "Unit-test Breed");
         graphAdminService.addDog("C", "C", "Unit-test Breed");
         graphAdminService.addDog("D", "D", "Unit-test Breed");
@@ -69,7 +70,7 @@ public class GraphQueryServiceTest {
 
         // when
         LinkedHashSet<String> descendants = new LinkedHashSet<>();
-        graphQueryService.populateDescendantUuids("A", descendants);
+        graphQueryService.populateDescendantUuids(A, descendants);
 
         // then
         Assert.assertEquals(descendants.size(), 14);
