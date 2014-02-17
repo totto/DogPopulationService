@@ -1,6 +1,8 @@
-package no.nkk.dogpopulation.graph;
+package no.nkk.dogpopulation.graph.inbreeding;
 
 import com.google.common.collect.Sets;
+import no.nkk.dogpopulation.graph.DogGraphConstants;
+import no.nkk.dogpopulation.graph.DogGraphRelationshipType;
 import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.traversal.Evaluation;
 import org.neo4j.graphdb.traversal.Evaluator;
@@ -49,7 +51,7 @@ public class InbreedingAlgorithm {
      * @param dog the dog for which we want the inbreeding coefficient of.
      * @return the Coefficient Of Inbreeding.
      */
-    double computeSewallWrightCoefficientOfInbreeding(Node dog) {
+    public double computeSewallWrightCoefficientOfInbreeding(Node dog) {
         return computeCoefficientOfInbreeding(dog, PEDIGREE_GENERATIONS, 0);
     }
 

@@ -1,5 +1,6 @@
 package no.nkk.dogpopulation.graph;
 
+import no.nkk.dogpopulation.graph.inbreeding.InbreedingAlgorithm;
 import no.nkk.dogpopulation.graph.pedigreecompleteness.PedigreeCompleteness;
 import no.nkk.dogpopulation.graph.pedigreecompleteness.PedigreeCompletenessAlgorithm;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;

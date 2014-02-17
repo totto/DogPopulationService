@@ -1,4 +1,6 @@
-package no.nkk.dogpopulation.graph;
+package no.nkk.dogpopulation.graph.inbreeding;
+
+import no.nkk.dogpopulation.graph.BasicStatistics;
 
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>

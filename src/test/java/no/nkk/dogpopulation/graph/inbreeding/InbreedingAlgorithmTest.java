@@ -1,6 +1,9 @@
-package no.nkk.dogpopulation.graph;
+package no.nkk.dogpopulation.graph.inbreeding;
 
 import no.nkk.dogpopulation.Main;
+import no.nkk.dogpopulation.graph.GraphAdminService;
+import no.nkk.dogpopulation.graph.GraphQueryService;
+import no.nkk.dogpopulation.graph.ParentRole;
 import org.apache.commons.io.FileUtils;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.testng.Assert;
