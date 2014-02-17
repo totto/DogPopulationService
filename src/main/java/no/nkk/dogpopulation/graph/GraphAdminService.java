@@ -141,85 +141,80 @@ public class GraphAdminService {
     }
 
 
+    /**
+     * Connect a child dog with its parent in the graph. This method assumes that both the child-UUID and the
+     * parent-UUID already exists in the graph, otherwise a runtime-exception is thrown.
+     *
+     * @param childUuid
+     * @param parentUuid
+     * @param parentRole
+     * @return
+     * @throws DogUuidUnknownException
+     */
     public Relationship connectChildToParent(String childUuid, String parentUuid, ParentRole parentRole) throws DogUuidUnknownException {
-        LOGGER.trace("Connected DOG with {}: child:{}, parent:{}", parentRole.name(), childUuid, parentUuid);
-        try (Transaction tx = graphDb.beginTx()) {
-            Relationship relationship = connectChildToParent(DogGraphRelationshipType.HAS_PARENT, childUuid, parentUuid, parentRole);
-            tx.success();
-            return relationship;
-        }
-    }
-
-    /**
-     * Connect a child dog with its parent in the graph. This method assumes that both the child-UUID and the
-     * parent-UUID already exists in the graph, otherwise a runtime-exception is thrown.
-     *
-     * @param childUuid
-     * @param parentUuid
-     * @param parentRole
-     * @return
-     * @throws DogUuidUnknownException
-     */
-    public Relationship connectChildToParent(Node child, String childUuid, Node parent, String parentUuid, ParentRole parentRole) throws DogUuidUnknownException {
-        LOGGER.trace("Connected DOG with {}: child:{}, parent:{}", parentRole.name(), childUuid, parentUuid);
-        try (Transaction tx = graphDb.beginTx()) {
-            Relationship relationship = connectChildToParent(DogGraphRelationshipType.HAS_PARENT, childUuid, parentUuid, parentRole);
-            tx.success();
-            return relationship;
-        }
-    }
-
-    public Relationship connectChildAsOwnAncestor(String childUuid, String parentUuid, ParentRole parentRole) throws DogUuidUnknownException {
-        LOGGER.trace("Connected DOG with _INVALID_ {}: child:{}, parent:{}", parentRole.name(), childUuid, parentUuid);
-        try (Transaction tx = graphDb.beginTx()) {
-            Relationship relationship = connectChildToParent(DogGraphRelationshipType.OWN_ANCESTOR, childUuid, parentUuid, parentRole);
-            tx.success();
-            return relationship;
-        }
-    }
-
-    /**
-     * Connect a child dog with its parent in the graph. This method assumes that both the child-UUID and the
-     * parent-UUID already exists in the graph, otherwise a runtime-exception is thrown.
-     *
-     * @param childUuid
-     * @param parentUuid
-     * @param parentRole
-     * @return
-     * @throws DogUuidUnknownException
-     */
-    public Relationship connectChildAsOwnAncestor(Node child, String childUuid, Node parent, String parentUuid, ParentRole parentRole) throws DogUuidUnknownException {
-        LOGGER.trace("Connected DOG with _INVALID_ {}: child:{}, parent:{}", parentRole.name(), childUuid, parentUuid);
-        try (Transaction tx = graphDb.beginTx()) {
-            Relationship relationship = connectChildToParent(DogGraphRelationshipType.OWN_ANCESTOR, childUuid, parentUuid, parentRole);
-            tx.success();
-            return relationship;
-        }
-    }
-
-
-    private Relationship connectChildToParent(RelationshipType relationshipType, String childUuid, String parentUuid, ParentRole parentRole) throws DogUuidUnknownException {
         Node child = findDog(childUuid);
-        if (child == null) {
-            throw new DogUuidUnknownException("Dog (child) with uuid " + childUuid + " does not exist in graph.");
+        Node parent = findDog(parentUuid);
+        LOGGER.trace("Connected DOG with {}: child:{}, parent:{}", parentRole.name(), childUuid, parentUuid);
+        try (Transaction tx = graphDb.beginTx()) {
+            Relationship relationship = connectChildToParent(DogGraphRelationshipType.HAS_PARENT, child, parent, parentRole);
+            tx.success();
+            return relationship;
         }
+    }
+
+
+    /**
+     * Connect a child dog with its parent in the graph. This method assumes that both the child-UUID and the
+     * parent-UUID already exists in the graph, otherwise a runtime-exception is thrown.
+     *
+     * @param child
+     * @param parent
+     * @param parentRole
+     * @return
+     * @throws DogUuidUnknownException
+     */
+    public Relationship connectChildToParent(Node child, Node parent, ParentRole parentRole) throws DogUuidUnknownException {
+        try (Transaction tx = graphDb.beginTx()) {
+            Relationship relationship = connectChildToParent(DogGraphRelationshipType.HAS_PARENT, child, parent, parentRole);
+            tx.success();
+            return relationship;
+        }
+    }
+
+
+    /**
+     * Connect a child dog with its parent in the graph. This method assumes that both the child-UUID and the
+     * parent-UUID already exists in the graph, otherwise a runtime-exception is thrown.
+     *
+     * @param child
+     * @param parent
+     * @param parentRole
+     * @return
+     * @throws DogUuidUnknownException
+     */
+    public Relationship connectChildAsOwnAncestor(Node child, Node parent, ParentRole parentRole) throws DogUuidUnknownException {
+        try (Transaction tx = graphDb.beginTx()) {
+            Relationship relationship = connectChildToParent(DogGraphRelationshipType.OWN_ANCESTOR, child, parent, parentRole);
+            tx.success();
+            return relationship;
+        }
+    }
+
+
+    private Relationship connectChildToParent(RelationshipType relationshipType, Node child, Node parent, ParentRole parentRole) throws DogUuidUnknownException {
         Iterable<Relationship> parentRelationshipIterator = child.getRelationships(relationshipType, Direction.OUTGOING);
         for (Relationship relationship : parentRelationshipIterator) {
             // iterate through parents already known by graph
             ParentRole existingParentRole = ParentRole.valueOf(((String) relationship.getProperty(DogGraphConstants.HASPARENT_ROLE)).toUpperCase());
             if (parentRole.equals(existingParentRole)) {
                 Node existingParent = relationship.getEndNode();
-                if (existingParent.getProperty(DogGraphConstants.DOG_UUID).equals(parentUuid)) {
+                if (existingParent.equals(parent)) {
                     return relationship; // the child and parent is already connected
                 }
                 // child-parent relationship in graph is wrong
                 relationship.delete();
                 break;
             }
-        }
-        Node parent = findDog(parentUuid);
-        if (parent == null) {
-            throw new DogUuidUnknownException("Dog (parent) with uuid " + parentUuid + " does not exist in graph.");
         }
         Relationship relationship = child.createRelationshipTo(parent, relationshipType);
         relationship.setProperty(DogGraphConstants.HASPARENT_ROLE, parentRole.name().toLowerCase());
@@ -238,7 +233,7 @@ public class GraphAdminService {
 
     private Node findOrCreateBreedNode(String breedId, String breed) {
         Node breedNode = findOrCreateNode(DogGraphLabel.BREED, DogGraphConstants.BREED_BREED, breed);
-        if (breedId != null) {
+        if (breedId != null && breedId.trim().length() > 0) {
             if (breedNode.hasProperty(DogGraphConstants.BREED_ID)) {
                 String existingBreedId = (String) breedNode.getProperty(DogGraphConstants.BREED_ID);
                 if (!existingBreedId.equals(breedId)) {

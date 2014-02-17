@@ -72,7 +72,11 @@ public class DogSearchImporter implements DogImporter {
                 final String origThreadName = Thread.currentThread().getName();
                 Thread.currentThread().setName(id);
                 try {
-                    return importDogPedigree(id).id;
+                    TraversalStatistics ts = importDogPedigree(id);
+                    if (ts == null) {
+                        return null;
+                    }
+                    return ts.id;
                 } catch (RuntimeException e) {
                     LOGGER.error("", e);
                     throw e;
@@ -124,7 +128,7 @@ public class DogSearchImporter implements DogImporter {
 
     private TraversalStatistics importDogPedigree(String id) {
         long startTime = System.currentTimeMillis();
-        LOGGER.info("Importing Pedigree from DogSearch for dog {}", id);
+        LOGGER.trace("Importing Pedigree from DogSearch for dog {}", id);
         Set<String> descendants = new LinkedHashSet<>();
         DogDetails dogDetails = dogSearchClient.findDog(id);
         if (dogDetails == null) {
@@ -132,6 +136,9 @@ public class DogSearchImporter implements DogImporter {
             return null;
         }
         String uuid = dogDetails.getId();
+        if (uuid == null) {
+            throw new RuntimeException("uuid for " + id + " is null");
+        }
         Node dog = graphQueryService.getDog(uuid);
         if (dog != null) {
             graphQueryService.populateDescendantUuids(dog, descendants);
@@ -140,7 +147,7 @@ public class DogSearchImporter implements DogImporter {
         DogFuture dogFuture = depthFirstDogImport(ts, descendants, 1, dogDetails);
         dogFuture.waitForPedigreeImportToComplete();
         double duration = (System.currentTimeMillis() - startTime) / 1000;
-        LOGGER.info("Imported Pedigree (dogs={}, minDepth={}, maxDepth={}) for dog {} in {} seconds", ts.dogCount, ts.minDepth, ts.maxDepth, id, new DecimalFormat("0.0").format(duration));
+        LOGGER.trace("Imported Pedigree (dogs={}, minDepth={}, maxDepth={}) for dog {} in {} seconds", ts.dogCount, ts.minDepth, ts.maxDepth, id, new DecimalFormat("0.0").format(duration));
         return ts;
     }
 
@@ -219,7 +226,10 @@ public class DogSearchImporter implements DogImporter {
         LocalDate bornLocalDate = null;
         String born = dogDetails.getBorn();
         if (born != null) {
-            bornLocalDate = LocalDate.parse(born);
+            try {
+                bornLocalDate = LocalDate.parse(born.substring(0, 10));
+            } catch (RuntimeException ignore) {
+            }
         }
 
         String hdDiag = null;
@@ -230,7 +240,11 @@ public class DogSearchImporter implements DogImporter {
             if (hdArr != null && hdArr.length > 0) {
                 DogHealthHD hd = hdArr[0]; // TODO choose HD diagnosis more wisely than just picking the first one.
                 hdDiag = hd.getDiagnosis();
-                hdXray = LocalDate.parse(hd.getXray());
+                String xray = hd.getXray();
+                try {
+                    hdXray = LocalDate.parse(xray.substring(0, 10));
+                } catch (RuntimeException ignore) {
+                }
             }
         }
 
@@ -295,11 +309,11 @@ public class DogSearchImporter implements DogImporter {
 
                     if (descendants.contains(parentId)) {
                         DOGSEARCH.info("DOG cannot be its own ancestor {}: {}", parentRole, uuid);
-                        graphAdminService.connectChildAsOwnAncestor(dog, uuid, parent, parentId, parentRole);
+                        graphAdminService.connectChildAsOwnAncestor(dog, parent, parentRole);
                         return dogFuture;
                     }
 
-                    graphAdminService.connectChildToParent(dog, uuid, parent, parentId, parentRole);
+                    graphAdminService.connectChildToParent(dog, parent, parentRole);
 
                     return dogFuture;
 

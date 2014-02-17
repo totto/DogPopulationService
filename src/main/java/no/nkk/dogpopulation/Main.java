@@ -26,12 +26,10 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URL;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -233,17 +231,27 @@ public class Main {
             }
         }
 
+        List<Future<?>> importCompleteFuture = new ArrayList<>();
         DogSearchImporter dogImporter = new DogSearchImporter(executorService, db, dogSearchClient);
         for (final String id : ids) {
-            dogImporter.importDog(id);
+            importCompleteFuture.add(dogImporter.importDog(id));
         }
         for (final String breed : breeds) {
-            dogImporter.importBreed(breed);
+            importCompleteFuture.add(dogImporter.importBreed(breed));
+        }
+
+        // wait for all imports to complete
+        for (Future<?> f : importCompleteFuture) {
+            try {
+                f.get();
+            } catch (Exception e) {
+                LOGGER.error("", e);
+            }
         }
 
         try {
             executorService.shutdown();
-            executorService.awaitTermination(7, TimeUnit.DAYS);
+            executorService.awaitTermination(1, TimeUnit.MINUTES);
         } catch (Exception e) {
             LOGGER.error("", e);
         }

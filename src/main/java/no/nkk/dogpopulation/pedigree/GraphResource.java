@@ -11,6 +11,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 
@@ -52,9 +53,21 @@ public class GraphResource {
     @GET
     @Path("/pedigreecompleteness")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getPedigreeCompletenessOfDogGroup(@QueryParam("generations") int generations, @QueryParam("breed") List<String> breed, @QueryParam("minYear") int minYear, @QueryParam("maxYear") int maxYear) {
+    public Response getPedigreeCompletenessOfDogGroup(@QueryParam("generations") Integer generations, @QueryParam("breed") List<String> breed, @QueryParam("minYear") Integer minYear, @QueryParam("maxYear") Integer maxYear) {
         LOGGER.trace("getPedigreeCompletenessOfDogGroup({})", breed);
 
+        if (generations == null) {
+            generations = 6;
+        }
+        if (breed == null) {
+            breed = new ArrayList<>();
+        }
+        if (minYear == null) {
+            minYear = 0;
+        }
+        if (maxYear == null) {
+            maxYear = Integer.MAX_VALUE;
+        }
         PedigreeCompleteness breedOverview = graphQueryService.getPedigreeCompletenessOfGroup(generations, new LinkedHashSet<>(breed), minYear, maxYear);
 
         try {
