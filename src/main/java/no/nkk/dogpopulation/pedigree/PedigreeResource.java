@@ -2,7 +2,7 @@ package no.nkk.dogpopulation.pedigree;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import no.nkk.dogpopulation.graph.TopLevelDog;
+import no.nkk.dogpopulation.graph.pedigree.TopLevelDog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

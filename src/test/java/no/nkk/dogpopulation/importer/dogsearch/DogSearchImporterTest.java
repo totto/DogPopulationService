@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import no.nkk.dogpopulation.Main;
 import no.nkk.dogpopulation.graph.DogGraphConstants;
 import no.nkk.dogpopulation.graph.GraphQueryService;
-import no.nkk.dogpopulation.graph.TopLevelDog;
+import no.nkk.dogpopulation.graph.pedigree.TopLevelDog;
 import org.apache.commons.io.FileUtils;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.testng.Assert;

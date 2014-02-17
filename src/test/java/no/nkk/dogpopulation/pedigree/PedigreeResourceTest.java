@@ -6,7 +6,7 @@ import no.nkk.dogpopulation.ResourceConfigFactory;
 import no.nkk.dogpopulation.graph.GraphAdminService;
 import no.nkk.dogpopulation.graph.GraphQueryService;
 import no.nkk.dogpopulation.graph.ParentRole;
-import no.nkk.dogpopulation.graph.TopLevelDog;
+import no.nkk.dogpopulation.graph.pedigree.TopLevelDog;
 import no.nkk.dogpopulation.importer.dogsearch.DogTestImporter;
 import org.apache.commons.io.FileUtils;
 import org.glassfish.jersey.server.ResourceConfig;

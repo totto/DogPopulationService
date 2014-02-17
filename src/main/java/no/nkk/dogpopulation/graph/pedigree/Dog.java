@@ -1,4 +1,4 @@
-package no.nkk.dogpopulation.graph;
+package no.nkk.dogpopulation.graph.pedigree;
 
 import no.nkk.dogpopulation.importer.dogsearch.*;
 

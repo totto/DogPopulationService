@@ -1,7 +1,7 @@
 package no.nkk.dogpopulation.pedigree;
 
 import no.nkk.dogpopulation.graph.GraphQueryService;
-import no.nkk.dogpopulation.graph.TopLevelDog;
+import no.nkk.dogpopulation.graph.pedigree.TopLevelDog;
 import no.nkk.dogpopulation.importer.DogImporter;
 
 import java.util.concurrent.ExecutionException;

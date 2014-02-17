@@ -1,4 +1,4 @@
-package no.nkk.dogpopulation.graph;
+package no.nkk.dogpopulation.graph.pedigree;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
