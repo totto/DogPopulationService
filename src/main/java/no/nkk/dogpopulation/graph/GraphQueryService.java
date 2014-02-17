@@ -133,7 +133,7 @@ public class GraphQueryService {
     public double computeCoefficientOfInbreeding(String uuid, int generations) {
         try (Transaction tx = graphDb.beginTx()) {
             Node dog = getDogNode(uuid);
-            double coi = new InbreedingAlgorithm(graphDb).computeSewallWrightCoefficientOfInbreeding(dog, generations);
+            double coi = new InbreedingAlgorithm(graphDb, generations).computeSewallWrightCoefficientOfInbreeding(dog);
             tx.success();
             return coi;
         }

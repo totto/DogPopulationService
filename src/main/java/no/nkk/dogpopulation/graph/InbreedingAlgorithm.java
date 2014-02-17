@@ -26,9 +26,20 @@ public class InbreedingAlgorithm {
 
     private final GraphDatabaseService graphDb;
 
+    private final int PEDIGREE_GENERATIONS;
 
-    public InbreedingAlgorithm(GraphDatabaseService graphDb) {
+
+    /**
+     * Create an algorithm that will work on a specific graph using a fixed number of generations when computing
+     * inbreeding coefficient. The number of generations will be used recursively, i.e. if we use 6 generations, then
+     * an ancestor's inbreeding contribution must also use 6 "new" generations.
+     *
+     * @param graphDb
+     * @param pedigreeGenerations
+     */
+    public InbreedingAlgorithm(GraphDatabaseService graphDb, int pedigreeGenerations) {
         this.graphDb = graphDb;
+        PEDIGREE_GENERATIONS = pedigreeGenerations;
     }
 
 
@@ -36,11 +47,10 @@ public class InbreedingAlgorithm {
      * Compute the "Coefficient Of Inbreeding" using the method by geneticist Sewall Wright.
      *
      * @param dog the dog for which we want the inbreeding coefficient of.
-     * @param toDepth how many generations to use from the pedigree.
      * @return the Coefficient Of Inbreeding.
      */
-    double computeSewallWrightCoefficientOfInbreeding(Node dog, int toDepth) {
-        return computeCoefficientOfInbreeding(dog, toDepth, 0);
+    double computeSewallWrightCoefficientOfInbreeding(Node dog) {
+        return computeCoefficientOfInbreeding(dog, PEDIGREE_GENERATIONS, 0);
     }
 
 
@@ -102,7 +112,7 @@ public class InbreedingAlgorithm {
 
                 double contribution = Math.pow(0.5, n + 1);
 
-                double ancestorCoi = computeCoefficientOfInbreeding(commonAncestor, toDepth - secondParentPath.length(), recursionLevel + 1);
+                double ancestorCoi = computeCoefficientOfInbreeding(commonAncestor, PEDIGREE_GENERATIONS, recursionLevel + 1);
 
                 coi += contribution * (1 + ancestorCoi);
 
@@ -176,7 +186,7 @@ public class InbreedingAlgorithm {
         }
         if (ancestorCoi > 0) {
             String formattedAncestorCoi = new DecimalFormat("0.00").format(ancestorCoi);
-            LOGGER.trace("{}F({},{}) = 0.5^{}(1+{})   {}", indentation, inbredDogId, ancestorDogId, contributingRelations, formattedAncestorCoi, sb.toString());
+            LOGGER.trace("{}F({},{}) = (0.5^{})(1+{})   {}", indentation, inbredDogId, ancestorDogId, contributingRelations, formattedAncestorCoi, sb.toString());
         } else {
             LOGGER.trace("{}F({},{}) = 0.5^{}           {}", indentation, inbredDogId, ancestorDogId, contributingRelations, sb.toString());
         }
