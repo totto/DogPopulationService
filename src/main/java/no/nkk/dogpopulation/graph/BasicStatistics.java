@@ -38,8 +38,20 @@ public class BasicStatistics {
         return descriptiveStatistics.getStandardDeviation();
     }
 
+    public double getPercentile10() {
+        return descriptiveStatistics.getPercentile(10);
+    }
+
+    public double getPercentile25() {
+        return descriptiveStatistics.getPercentile(25);
+    }
+
     public double getPercentile50() {
         return descriptiveStatistics.getPercentile(50);
+    }
+
+    public double getPercentile75() {
+        return descriptiveStatistics.getPercentile(75);
     }
 
     public double getPercentile90() {

@@ -188,14 +188,14 @@ public class PedigreeCompletenessAlgorithmTest {
         // then
         Assert.assertEquals(completeness.getGenerations(), 4);
         Assert.assertEquals(completeness.getCompletePedigreeSize(), 30); // 2^(4+1) - 2
-        Assert.assertEquals(completeness.getStatistics().getN(), 3); // A, F, H
+        Assert.assertEquals(completeness.getPedigreeSizeStatistics().getN(), 3); // A, F, H
         double delta = 0.001;
-        Assert.assertEquals(completeness.getStatistics().getMin(), 1, delta); // F
-        Assert.assertEquals(completeness.getStatistics().getMax(), 3, delta); // A, H
-        Assert.assertEquals(completeness.getStatistics().getSum(), 7, delta); // 3 + 1 + 3
-        Assert.assertEquals(completeness.getStatistics().getMean(), 2.333, delta); // Sum/N = 7/3
-        Assert.assertEquals(completeness.getStatistics().getPercentile50(), 3, delta); // median
-        Assert.assertEquals(completeness.getStatistics().getPercentile90(), 3, delta);
-        Assert.assertEquals(completeness.getStatistics().getStandardDeviation(), 1.155, delta);
+        Assert.assertEquals(completeness.getPedigreeSizeStatistics().getMin(), 1, delta); // F
+        Assert.assertEquals(completeness.getPedigreeSizeStatistics().getMax(), 3, delta); // A, H
+        Assert.assertEquals(completeness.getPedigreeSizeStatistics().getSum(), 7, delta); // 3 + 1 + 3
+        Assert.assertEquals(completeness.getPedigreeSizeStatistics().getMean(), 2.333, delta); // Sum/N = 7/3
+        Assert.assertEquals(completeness.getPedigreeSizeStatistics().getPercentile50(), 3, delta); // median
+        Assert.assertEquals(completeness.getPedigreeSizeStatistics().getPercentile90(), 3, delta);
+        Assert.assertEquals(completeness.getPedigreeSizeStatistics().getStandardDeviation(), 1.155, delta);
     }
 }

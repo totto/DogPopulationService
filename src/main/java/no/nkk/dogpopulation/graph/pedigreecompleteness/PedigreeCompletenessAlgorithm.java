@@ -29,15 +29,18 @@ public class PedigreeCompletenessAlgorithm {
     }
 
     public PedigreeCompleteness getPedigreeCompletenessOfGroup(Node categoryBreedNode, final Set<String> breedSet, final int minYear, final int maxYear) {
-        DescriptiveStatistics statistics = new DescriptiveStatistics();
+        DescriptiveStatistics pedigreeSizeStat = new DescriptiveStatistics();
+        DescriptiveStatistics completenessStat = new DescriptiveStatistics();
+        int N = PedigreeCompleteness.getCompletePedigreeSize(PEDIGREE_GENERATIONS);
         for (Path breedMemberPath : traverseBreedInSet(categoryBreedNode, breedSet)) {
             for (Path dogPath : traverseDogOfBreedBornBetween(breedMemberPath.endNode(), minYear, maxYear)) {
                 Node dogNode = dogPath.endNode();
                 int pedigreeSize = computePedigreeSize(dogNode);
-                statistics.addValue(pedigreeSize);
+                pedigreeSizeStat.addValue(pedigreeSize);
+                completenessStat.addValue(100.0 * pedigreeSize / N);
             }
         }
-        return new PedigreeCompleteness(PEDIGREE_GENERATIONS, new BasicStatistics(statistics));
+        return new PedigreeCompleteness(PEDIGREE_GENERATIONS, breedSet, minYear, maxYear, new BasicStatistics(pedigreeSizeStat), new BasicStatistics(completenessStat));
     }
 
     public int computePedigreeSize(Node dogNode) {
