@@ -40,12 +40,12 @@ public class GraphAdminService {
      * @return the node in the graph with the provided UUID.
      */
     public Node addDog(String uuid, String name, String breed) {
-        return addDog(uuid, null, name, breed);
+        return addDog(uuid, name, breed, null);
     }
 
 
-    public Node addDog(String uuid, String regNo, String name, String breed) {
-        return addDog(uuid, regNo, name, null, breed, null, null, null);
+    public Node addDog(String uuid, String name, String breed, LocalDate bornLocalDate) {
+        return addDog(uuid, null, name, null, breed, bornLocalDate, null, null);
     }
 
 

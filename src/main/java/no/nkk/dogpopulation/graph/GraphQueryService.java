@@ -1,5 +1,8 @@
 package no.nkk.dogpopulation.graph;
 
+import no.nkk.dogpopulation.graph.pedigreecompleteness.PedigreeCompleteness;
+import no.nkk.dogpopulation.graph.pedigreecompleteness.PedigreeCompletenessAlgorithm;
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.joda.time.LocalDate;
 import org.joda.time.format.DateTimeFormat;
 import org.neo4j.graphdb.*;
@@ -136,6 +139,18 @@ public class GraphQueryService {
             double coi = new InbreedingAlgorithm(graphDb, generations).computeSewallWrightCoefficientOfInbreeding(dog);
             tx.success();
             return coi;
+        }
+    }
+
+
+    public PedigreeCompleteness getPedigreeCompletenessOfGroup(int generations, Set<String> breedSet, int minYear, int maxYear) {
+        DescriptiveStatistics statistics = new DescriptiveStatistics();
+        try (Transaction tx = graphDb.beginTx()) {
+            Node categoryBreedNode = getSingleNode(DogGraphLabel.CATEGORY, DogGraphConstants.CATEGORY_CATEGORY, DogGraphConstants.CATEGORY_CATEGORY_BREED);
+            PedigreeCompletenessAlgorithm algorithm = new PedigreeCompletenessAlgorithm(graphDb, generations);
+            PedigreeCompleteness pedigreeCompletenessOfGroup = algorithm.getPedigreeCompletenessOfGroup(categoryBreedNode, breedSet, minYear, maxYear);
+            tx.success();
+            return pedigreeCompletenessOfGroup;
         }
     }
 
