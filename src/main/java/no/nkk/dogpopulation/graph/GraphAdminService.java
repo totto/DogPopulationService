@@ -152,10 +152,10 @@ public class GraphAdminService {
      * @throws DogUuidUnknownException
      */
     public Relationship connectChildToParent(String childUuid, String parentUuid, ParentRole parentRole) throws DogUuidUnknownException {
-        Node child = findDog(childUuid);
-        Node parent = findDog(parentUuid);
         LOGGER.trace("Connected DOG with {}: child:{}, parent:{}", parentRole.name(), childUuid, parentUuid);
         try (Transaction tx = graphDb.beginTx()) {
+            Node child = findDog(childUuid);
+            Node parent = findDog(parentUuid);
             Relationship relationship = connectChildToParent(DogGraphRelationshipType.HAS_PARENT, child, parent, parentRole);
             tx.success();
             return relationship;
