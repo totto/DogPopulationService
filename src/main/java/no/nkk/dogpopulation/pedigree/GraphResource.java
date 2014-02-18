@@ -3,6 +3,7 @@ package no.nkk.dogpopulation.pedigree;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import no.nkk.dogpopulation.graph.GraphQueryService;
+import no.nkk.dogpopulation.graph.hdindex.DmuFiles;
 import no.nkk.dogpopulation.graph.pedigreecompleteness.PedigreeCompleteness;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,4 +95,19 @@ public class GraphResource {
         }
     }
 
+    @GET
+    @Path("/breed/{breed}/hddata")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getDmuHdDataForBreed(@PathParam("breed") String breed) {
+        LOGGER.trace("getDmuHdDataForBreed({})", breed);
+
+        DmuFiles dmuFiles = graphQueryService.getDmuFiles(breed);
+
+        try {
+            String json = prettyPrintingObjectWriter.writeValueAsString(dmuFiles);
+            return Response.ok(json).build();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

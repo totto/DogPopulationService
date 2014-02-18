@@ -1,5 +1,7 @@
 package no.nkk.dogpopulation.graph;
 
+import no.nkk.dogpopulation.graph.hdindex.DmuFiles;
+import no.nkk.dogpopulation.graph.hdindex.DmuHdIndexAlgorithm;
 import no.nkk.dogpopulation.graph.inbreeding.InbreedingAlgorithm;
 import no.nkk.dogpopulation.graph.pedigree.PedigreeAlgorithm;
 import no.nkk.dogpopulation.graph.pedigree.TopLevelDog;
@@ -41,6 +43,13 @@ public class GraphQueryService {
         }
     }
 
+    public DmuFiles getDmuFiles(String breed) {
+        try (Transaction tx = graphDb.beginTx()) {
+            DmuFiles dmuFiles = new DmuHdIndexAlgorithm(graphDb).getDmuFiles(breed);
+            tx.success();
+            return dmuFiles;
+        }
+    }
 
     public List<String> getBreeds() {
         try (Transaction tx = graphDb.beginTx()) {
@@ -177,19 +186,7 @@ public class GraphQueryService {
     }
 
     Node getSingleNode(DogGraphLabel label, String property, String value) {
-        ResourceIterable<Node> breedNodeIterator = graphDb.findNodesByLabelAndProperty(label, property, value);
-        try (ResourceIterator<Node> iterator = breedNodeIterator.iterator()) {
-            if (!iterator.hasNext()) {
-                return null; // node not found
-            }
-            Node firstMatch = iterator.next();
-            if (!iterator.hasNext()) {
-                return firstMatch; // only match
-            }
-            // more than one node match
-            LOGGER.warn("More than one node match: label={}, property={}, value={}", label.name(), property, value);
-            return firstMatch; // we could throw an exception here
-        }
+        return GraphUtils.getSingleNode(graphDb, label, property, value);
     }
 
     Node getDogNode(String uuid) {
