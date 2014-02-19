@@ -1,9 +1,6 @@
 package no.nkk.dogpopulation.graph.dogbuilder;
 
-import no.nkk.dogpopulation.graph.DogGraphConstants;
-import no.nkk.dogpopulation.graph.DogGraphLabel;
-import no.nkk.dogpopulation.graph.DogGraphRelationshipType;
-import no.nkk.dogpopulation.graph.GraphUtils;
+import no.nkk.dogpopulation.graph.*;
 import no.nkk.dogpopulation.importer.dogsearch.*;
 import org.joda.time.LocalDate;
 import org.neo4j.graphdb.Direction;
@@ -16,7 +13,7 @@ import org.slf4j.LoggerFactory;
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
-public class DogNodeBuilder extends AbstractNodeBuilder {
+public class DogNodeBuilder extends AbstractNodeBuilder implements PostStepBuilder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DogNodeBuilder.class);
 
@@ -29,10 +26,20 @@ public class DogNodeBuilder extends AbstractNodeBuilder {
     private LocalDate bornLocalDate;
     private String hdDiag;
     private LocalDate hdXray;
-    private Runnable cleanup;
+    private Runnable task;
 
     DogNodeBuilder(CommonNodes commonNodes) {
         this.commonNodes = commonNodes;
+    }
+
+    @Override
+    public void setPostBuildTask(Runnable task) {
+        this.task = task;
+    }
+
+    @Override
+    public Runnable getPostBuildTask() {
+        return task;
     }
 
     @Override
@@ -202,9 +209,4 @@ public class DogNodeBuilder extends AbstractNodeBuilder {
         this.hdXray = hdXray;
         return this;
     }
-    public DogNodeBuilder cleanup(Runnable cleanup) {
-        this.cleanup = cleanup;
-        return this;
-    }
-
 }

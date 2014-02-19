@@ -42,7 +42,7 @@
 
     <logger name="org.glassfish.jersey" level="INFO"/>
 
-    <logger name="no.nkk.dogpopulation" level="DEBUG"/>
+    <logger name="no.nkk.dogpopulation" level="INFO"/>
 
     <logger name="dogsearch" additivity="false" level="INFO">
         <appender-ref ref="dogsearch" />

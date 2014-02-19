@@ -1,9 +1,12 @@
 package no.nkk.dogpopulation.graph.bulkwrite;
 
 import no.nkk.dogpopulation.graph.Builder;
+import no.nkk.dogpopulation.graph.PostStepBuilder;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -13,6 +16,8 @@ import java.util.concurrent.Future;
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
 public class BulkWriteService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(BulkWriteService.class);
 
     private final GraphDatabaseService graphDb;
 
@@ -50,16 +55,31 @@ public class BulkWriteService {
      * @param builder
      * @return
      */
-    public ConcurrentProgress build(String key, Builder<Node> builder) {
+    public ConcurrentProgress build(final String key, Builder<Node> builder) {
+        if (!(builder instanceof PostStepBuilder)) {
+            throw new IllegalArgumentException("builder must be an instance of " + PostStepBuilder.class.getName());
+        }
         synchronized (inProgress) {
             Future<Node> existingFuture = inProgress.get(key);
             if (existingFuture != null) {
                 return new ConcurrentProgress(true, existingFuture);
             }
+            ((PostStepBuilder) builder).setPostBuildTask(createInProgressCleanupTask(key));
             Future<Node> future = build(builder);
             inProgress.put(key, future);
             return new ConcurrentProgress(false, future);
         }
+    }
+
+    private Runnable createInProgressCleanupTask(final String key) {
+        return new Runnable() {
+            @Override
+            public void run() {
+                synchronized (inProgress) {
+                    inProgress.remove(key);
+                }
+            }
+        };
     }
 
 
@@ -90,10 +110,22 @@ public class BulkWriteService {
         List<WriteTask<?>> tasks = new LinkedList<>();
         CountDownLatch countDownLatch = populateTaskList(tasks);
 
+        long startTime = System.currentTimeMillis();
+
         bulkWriteToGraph(tasks);
 
         // signal that all pieces are completed
         countDownLatch.countDown();
+
+        runTaskPoststeps(tasks);
+
+        if (LOGGER.isTraceEnabled()) {
+            int size;
+            synchronized (inProgress) {
+                size = inProgress.size();
+            }
+            LOGGER.trace("Completed bulk write of {} tasks in {} ms. There are now {} tasks in-progress", tasks.size(), System.currentTimeMillis() - startTime, size);
+        }
     }
 
 
@@ -161,6 +193,12 @@ public class BulkWriteService {
 
             // commit in single transaction
             tx.success();
+        }
+    }
+
+    private void runTaskPoststeps(List<WriteTask<?>> tasks) {
+        for (WriteTask<?> task : tasks) {
+            task.runPostStep();
         }
     }
 }

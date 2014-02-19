@@ -77,11 +77,11 @@ public class DogSearchPedigreeImporter implements PedigreeImporter {
 
     TraversalStatistics importDogPedigree(String id) {
         long startTime = System.currentTimeMillis();
-        LOGGER.trace("Importing Pedigree from DogSearch for dog {}", id);
+        LOGGER.debug("Importing Pedigree from DogSearch for dog {}", id);
         Set<String> descendants = new LinkedHashSet<>();
         DogDetails dogDetails = dogSearchClient.findDog(id);
         if (dogDetails == null) {
-            LOGGER.info("Dog does not exist on DogSearch {}", id);
+            LOGGER.debug("Dog does not exist on DogSearch {}", id);
             return null;
         }
         String uuid = dogDetails.getId();
@@ -95,8 +95,10 @@ public class DogSearchPedigreeImporter implements PedigreeImporter {
         TraversalStatistics ts = new TraversalStatistics(uuid);
         DogFuture dogFuture = depthFirstDogImport(dogs.dog().all(dogDetails), ts, descendants, 1, dogDetails);
         dogFuture.waitForPedigreeImportToComplete();
-        double duration = (System.currentTimeMillis() - startTime) / 1000;
-        LOGGER.trace("Imported Pedigree (dogs={}, minDepth={}, maxDepth={}) for dog {} in {} seconds", ts.dogCount, ts.minDepth, ts.maxDepth, id, new DecimalFormat("0.0").format(duration));
+        long durationMs = System.currentTimeMillis() - startTime;
+        double duration = durationMs / 1000;
+        DecimalFormat decimalFormat = new DecimalFormat("0.0");
+        LOGGER.debug("Imported Pedigree (dogs={}, minDepth={}, maxDepth={}) for dog {} in {} seconds, {} Dogs/sec", ts.dogCount, ts.minDepth, ts.maxDepth, id, decimalFormat.format(duration), decimalFormat.format(1000.0 * ts.dogCount.get() / durationMs));
         return ts;
     }
 

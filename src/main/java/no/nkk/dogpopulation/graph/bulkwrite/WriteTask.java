@@ -1,6 +1,7 @@
 package no.nkk.dogpopulation.graph.bulkwrite;
 
 import no.nkk.dogpopulation.graph.Builder;
+import no.nkk.dogpopulation.graph.PostStepBuilder;
 import org.neo4j.graphdb.GraphDatabaseService;
 
 import java.util.concurrent.*;
@@ -23,6 +24,17 @@ public class WriteTask<V> implements Future<V> {
         V value = builder.build(graphDb);
         // Value is dirty and must be unavailable until graph-database transaction is committed, signalled with count-down-latch.
         this.value = value;
+    }
+
+    public void runPostStep() {
+        if (!(builder instanceof PostStepBuilder)) {
+            return;
+        }
+        Runnable postStep = ((PostStepBuilder) builder).getPostBuildTask();
+        if (postStep == null) {
+            return;
+        }
+        postStep.run();
     }
 
     @Override
