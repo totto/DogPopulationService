@@ -4,10 +4,7 @@ import no.nkk.dogpopulation.graph.DogGraphConstants;
 import no.nkk.dogpopulation.graph.DogGraphLabel;
 import no.nkk.dogpopulation.graph.dogbuilder.CommonNodes;
 import no.nkk.dogpopulation.graph.dogbuilder.Dogs;
-import no.nkk.dogpopulation.importer.dogsearch.DogSearchBreedImporter;
-import no.nkk.dogpopulation.importer.dogsearch.DogSearchClient;
-import no.nkk.dogpopulation.importer.dogsearch.DogSearchPedigreeImporter;
-import no.nkk.dogpopulation.importer.dogsearch.DogSearchSolrClient;
+import no.nkk.dogpopulation.importer.dogsearch.*;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.glassfish.jersey.jetty.JettyHttpContainerFactory;
@@ -173,7 +170,7 @@ public class Main {
             CommonNodes commonNodes = new CommonNodes(db);
             Dogs dogs = new Dogs(commonNodes);
             DogSearchPedigreeImporter dogImporter = new DogSearchPedigreeImporter(executorService, db, dogSearchClient, dogs);
-            Main main = new Main(db, new DogPopulationResourceConfigFactory(db, dogImporter));
+            Main main = new Main(db, new DogPopulationResourceConfigFactory(db, dogImporter, executorService, dogSearchClient));
             main.start();
 
             if (args.length > 0 && args[0].equalsIgnoreCase("--import")) {
@@ -243,7 +240,7 @@ public class Main {
         }
         DogSearchBreedImporter breedImporter = new DogSearchBreedImporter(executorService, pedigreeImporter, dogSearchClient);
         for (final String breed : breeds) {
-            importCompleteFuture.add(breedImporter.importBreed(breed));
+            importCompleteFuture.add(breedImporter.importBreed(breed, new BreedImportStatus(breed)));
         }
 
         // wait for all imports to complete

@@ -1,5 +1,7 @@
 package no.nkk.dogpopulation.importer;
 
+import no.nkk.dogpopulation.importer.dogsearch.TraversalStatistics;
+
 import java.util.concurrent.Future;
 
 /**
@@ -8,4 +10,6 @@ import java.util.concurrent.Future;
 public interface PedigreeImporter {
 
     Future<String> importPedigree(final String id);
+
+    TraversalStatistics importDogPedigree(String id);
 }

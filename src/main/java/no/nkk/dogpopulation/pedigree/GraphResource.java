@@ -5,6 +5,10 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import no.nkk.dogpopulation.graph.GraphQueryService;
 import no.nkk.dogpopulation.graph.hdindex.DmuFiles;
 import no.nkk.dogpopulation.graph.pedigreecompleteness.PedigreeCompleteness;
+import no.nkk.dogpopulation.importer.PedigreeImporter;
+import no.nkk.dogpopulation.importer.dogsearch.BreedImportStatus;
+import no.nkk.dogpopulation.importer.dogsearch.DogSearchBreedImporter;
+import no.nkk.dogpopulation.importer.dogsearch.DogSearchClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,9 +16,8 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
 
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
@@ -29,10 +32,65 @@ public class GraphResource {
 
     private final GraphQueryService graphQueryService;
 
-    public GraphResource(GraphQueryService graphQueryService) {
+    private final Map<String, BreedImportStatus> breedImportStatus = new LinkedHashMap<>(); // keep references forever
+
+    private final DogSearchBreedImporter dogSearchBreedImporter;
+
+    public GraphResource(GraphQueryService graphQueryService, ExecutorService executorService, PedigreeImporter pedigreeImporter, DogSearchClient dogSearchClient) {
         objectMapper = new ObjectMapper();
         prettyPrintingObjectWriter = objectMapper.writerWithDefaultPrettyPrinter();
         this.graphQueryService = graphQueryService;
+        dogSearchBreedImporter = new DogSearchBreedImporter(executorService, pedigreeImporter, dogSearchClient);
+    }
+
+    @GET
+    @Path("/breed/import")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getImportStatus() {
+        LOGGER.trace("getImportStatus()");
+
+        List<BreedImportStatus> statusList;
+        synchronized (breedImportStatus) {
+            statusList = new ArrayList<>(breedImportStatus.values());
+        }
+
+        BreedImportStatusAggregate statusAggregate = new BreedImportStatusAggregate(statusList);
+
+        try {
+            String json = prettyPrintingObjectWriter.writeValueAsString(statusAggregate);
+            return Response.ok(json).build();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @GET
+    @Path("/breed/import/{breed}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response importBreedFromDogSearch(@PathParam("breed") String breed) {
+        LOGGER.trace("importBreedFromDogSearch()");
+
+        BreedImportStatus progress;
+        boolean shouldImport = false;
+        synchronized (breedImportStatus) {
+            progress = breedImportStatus.get(breed);
+            if (progress == null) {
+                shouldImport = true;
+                progress = new BreedImportStatus(breed);
+                breedImportStatus.put(breed, progress);
+            }
+        }
+
+        if (shouldImport) {
+            dogSearchBreedImporter.importBreed(breed, progress);
+        }
+
+        try {
+            String json = prettyPrintingObjectWriter.writeValueAsString(progress);
+            return Response.ok(json).build();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @GET
