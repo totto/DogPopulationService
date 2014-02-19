@@ -1,71 +1,51 @@
 package no.nkk.dogpopulation.graph;
 
-import no.nkk.dogpopulation.Main;
-import org.apache.commons.io.FileUtils;
-import org.neo4j.graphdb.GraphDatabaseService;
+import no.nkk.dogpopulation.AbstractGraphTest;
 import org.neo4j.graphdb.Node;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.File;
 import java.util.LinkedHashSet;
 import java.util.List;
 
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
-public class GraphQueryServiceTest {
-
-    GraphDatabaseService graphDb;
-
-    @BeforeMethod
-    public void initGraph() {
-        String dbPath = "target/unittestdogdb";
-        File dbFolder = new File(dbPath);
-        FileUtils.deleteQuietly(dbFolder);
-        graphDb = Main.createGraphDb(dbPath);
-    }
-
-    @AfterMethod
-    public void closeGraph() {
-        graphDb.shutdown();
-    }
+public class GraphQueryServiceTest extends AbstractGraphTest {
 
     @Test
     public void thatPopulateDescendantsIncludesAllButItself() {
         // given
-        GraphAdminService graphAdminService = new GraphAdminService(graphDb);
-        Node A = graphAdminService.addDog("A", "A", "Unit-test Breed");
-        graphAdminService.addDog("B", "B", "Unit-test Breed");
-        graphAdminService.addDog("C", "C", "Unit-test Breed");
-        graphAdminService.addDog("D", "D", "Unit-test Breed");
-        graphAdminService.addDog("E", "E", "Unit-test Breed");
-        graphAdminService.addDog("F", "F", "Unit-test Breed");
-        graphAdminService.addDog("G", "G", "Unit-test Breed");
-        graphAdminService.addDog("H", "H", "Unit-test Breed");
-        graphAdminService.addDog("I", "I", "Unit-test Breed");
-        graphAdminService.addDog("J", "J", "Unit-test Breed");
-        graphAdminService.addDog("K", "K", "Unit-test Breed");
-        graphAdminService.addDog("L", "L", "Unit-test Breed");
-        graphAdminService.addDog("M", "M", "Unit-test Breed");
-        graphAdminService.addDog("N", "N", "Unit-test Breed");
-        graphAdminService.addDog("O", "O", "Unit-test Breed");
-        graphAdminService.connectChildToParent("B", "A", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("C", "B", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("D", "C", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("E", "C", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("F", "B", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("G", "F", ParentRole.MOTHER);
-        graphAdminService.connectChildToParent("H", "F", ParentRole.MOTHER);
-        graphAdminService.connectChildToParent("I", "A", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("J", "I", ParentRole.MOTHER);
-        graphAdminService.connectChildToParent("K", "J", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("L", "J", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("M", "I", ParentRole.MOTHER);
-        graphAdminService.connectChildToParent("N", "M", ParentRole.MOTHER);
-        graphAdminService.connectChildToParent("O", "M", ParentRole.MOTHER);
+        Node breedNode = breed("Unit-test Breed", "1");
+        Node A = addDog("A", breedNode);
+        addDog("B", breedNode);
+        addDog("C", breedNode);
+        addDog("D", breedNode);
+        addDog("E", breedNode);
+        addDog("F", breedNode);
+        addDog("G", breedNode);
+        addDog("H", breedNode);
+        addDog("I", breedNode);
+        addDog("J", breedNode);
+        addDog("K", breedNode);
+        addDog("L", breedNode);
+        addDog("M", breedNode);
+        addDog("N", breedNode);
+        addDog("O", breedNode);
+        connectChildToFather("B", "A");
+        connectChildToFather("C", "B");
+        connectChildToFather("D", "C");
+        connectChildToFather("E", "C");
+        connectChildToFather("F", "B");
+        connectChildToMother("G", "F");
+        connectChildToMother("H", "F");
+        connectChildToFather("I", "A");
+        connectChildToMother("J", "I");
+        connectChildToFather("K", "J");
+        connectChildToFather("L", "J");
+        connectChildToMother("M", "I");
+        connectChildToMother("N", "M");
+        connectChildToMother("O", "M");
         GraphQueryService graphQueryService = new GraphQueryService(graphDb);
 
         // when
@@ -94,16 +74,16 @@ public class GraphQueryServiceTest {
     @Test
     public void thatGetBreedDogsWorks() {
         // given
-        GraphAdminService graphAdminService = new GraphAdminService(graphDb);
-        graphAdminService.addDog("A", "A", "Unwanted Breed");
-        graphAdminService.addDog("B", "B", "Unit-test Breed");
-        graphAdminService.addDog("C", "C", "Unit-test Breed");
-        graphAdminService.addDog("D", "D", "Unit-test Breed");
-        graphAdminService.addDog("E", "E", "Unit-test Breed");
-        graphAdminService.connectChildToParent("B", "A", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("C", "B", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("D", "C", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("E", "C", ParentRole.FATHER);
+        Node breedNode = breed("Unit-test Breed", "1");
+        addDog("A", breed("Unwanted Breed"));
+        addDog("B", breedNode);
+        addDog("C", breedNode);
+        addDog("D", breedNode);
+        addDog("E", breedNode);
+        connectChildToFather("B", "A");
+        connectChildToFather("C", "B");
+        connectChildToFather("D", "C");
+        connectChildToFather("E", "C");
         GraphQueryService graphQueryService = new GraphQueryService(graphDb);
 
         // when

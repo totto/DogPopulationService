@@ -3,14 +3,18 @@ package no.nkk.dogpopulation.pedigree;
 import com.jayway.restassured.RestAssured;
 import no.nkk.dogpopulation.Main;
 import no.nkk.dogpopulation.ResourceConfigFactory;
-import no.nkk.dogpopulation.graph.GraphAdminService;
 import no.nkk.dogpopulation.graph.GraphQueryService;
-import no.nkk.dogpopulation.graph.ParentRole;
+import no.nkk.dogpopulation.graph.dogbuilder.CommonNodes;
+import no.nkk.dogpopulation.graph.dogbuilder.Dogs;
 import no.nkk.dogpopulation.graph.pedigree.TopLevelDog;
 import no.nkk.dogpopulation.importer.dogsearch.DogTestImporter;
 import org.apache.commons.io.FileUtils;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.joda.time.LocalDate;
 import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.Transaction;
 import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
@@ -23,7 +27,10 @@ import java.io.File;
  */
 public class PedigreeResourceTest {
 
-    private Main main;
+    Main main;
+    GraphDatabaseService graphDb;
+    CommonNodes commonNodes;
+    Dogs dogs;
 
     @BeforeClass
     public void startServer() {
@@ -31,7 +38,7 @@ public class PedigreeResourceTest {
         String dbPath = "target/unittestdogdb";
         File dbFolder = new File(dbPath);
         FileUtils.deleteQuietly(dbFolder);
-        final GraphDatabaseService graphDb = Main.createGraphDb(dbPath);
+        graphDb = Main.createGraphDb(dbPath);
         ResourceConfigFactory resourceConfigFactory = new ResourceConfigFactory() {
             @Override
             public ResourceConfig createResourceConfig() {
@@ -40,6 +47,8 @@ public class PedigreeResourceTest {
                 return resourceConfig;
             }
         };
+        commonNodes = new CommonNodes(graphDb);
+        dogs = new Dogs(commonNodes);
         main = new Main(graphDb, resourceConfigFactory, httpPort);
         main.start();
         RestAssured.port = httpPort;
@@ -56,16 +65,18 @@ public class PedigreeResourceTest {
         String motherUuid = "uuid-1234567894";
         String motherName = "Tigerclaws";
 
-        GraphAdminService graphAdminService = new GraphAdminService(graphDb);
-        graphAdminService.addDog(childUuid, childName, breed);
-        graphAdminService.addDog(fatherUuid, fatherName, breed);
-        graphAdminService.connectChildToParent(childUuid, fatherUuid, ParentRole.FATHER);
-        graphAdminService.addDog(fathersFatherUuid, fathersFatherName, breed);
-        graphAdminService.connectChildToParent(fatherUuid, fathersFatherUuid, ParentRole.FATHER);
-        graphAdminService.addDog(fathersMotherUuid, fathersMotherName, breed);
-        graphAdminService.connectChildToParent(fatherUuid, fathersMotherUuid, ParentRole.MOTHER);
-        graphAdminService.addDog(motherUuid, motherName, breed);
-        graphAdminService.connectChildToParent(childUuid, motherUuid, ParentRole.MOTHER);
+        CommonNodes commonNodes = new CommonNodes(graphDb);
+        Dogs dogs = new Dogs(commonNodes);
+        Node breedNode = commonNodes.getBreed(breed, null);
+        addDog(childUuid, childName, breedNode);
+        addDog(fatherUuid, fatherName, breedNode);
+        connectChildToFather(childUuid, fatherUuid);
+        addDog(fathersFatherUuid, fathersFatherName, breedNode);
+        connectChildToFather(fatherUuid, fathersFatherUuid);
+        addDog(fathersMotherUuid, fathersMotherName, breedNode);
+        connectChildToMother(fatherUuid, fathersMotherUuid);
+        addDog(motherUuid, motherName, breedNode);
+        connectChildToMother(childUuid, motherUuid);
     }
 
     @AfterClass
@@ -82,4 +93,47 @@ public class PedigreeResourceTest {
         Assert.assertEquals(dogName, "Wicked teeth Sr. II");
     }
 
+    protected Node breed(String breedName) {
+        return commonNodes.getBreed(breedName, null);
+    }
+
+    protected Node breed(String breedName, String breedId) {
+        return commonNodes.getBreed(breedName, breedId);
+    }
+
+    protected Node addDog(String uuid, Node breedNode) {
+        return addDog(uuid, uuid, breedNode);
+    }
+
+    protected Node addDog(String uuid, String name, Node breedNode) {
+        try (Transaction tx = graphDb.beginTx()) {
+            Node dog = dogs.dog().uuid(uuid).name(name).breed(breedNode).build(graphDb);
+            tx.success();
+            return dog;
+        }
+    }
+
+    protected Node addDog(String uuid, Node breedNode, LocalDate born) {
+        try (Transaction tx = graphDb.beginTx()) {
+            Node dog = dogs.dog().uuid(uuid).name(uuid).breed(breedNode).born(born).build(graphDb);
+            tx.success();
+            return dog;
+        }
+    }
+
+    protected Relationship connectChildToFather(String childUuid, String fatherUuid) {
+        try (Transaction tx = graphDb.beginTx()) {
+            Relationship hasFather = dogs.hasParent().child(childUuid).father(fatherUuid).build(graphDb);
+            tx.success();
+            return hasFather;
+        }
+    }
+
+    protected Relationship connectChildToMother(String childUuid, String fatherUuid) {
+        try (Transaction tx = graphDb.beginTx()) {
+            Relationship hasMother = dogs.hasParent().child(childUuid).mother(fatherUuid).build(graphDb);
+            tx.success();
+            return hasMother;
+        }
+    }
 }

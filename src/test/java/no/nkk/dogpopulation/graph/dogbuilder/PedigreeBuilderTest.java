@@ -1,46 +1,31 @@
-package no.nkk.dogpopulation.graph;
+package no.nkk.dogpopulation.graph.dogbuilder;
 
-import no.nkk.dogpopulation.Main;
-import org.apache.commons.io.FileUtils;
+import no.nkk.dogpopulation.AbstractGraphTest;
+import no.nkk.dogpopulation.graph.DogGraphConstants;
+import no.nkk.dogpopulation.graph.DogGraphLabel;
+import no.nkk.dogpopulation.graph.DogGraphRelationshipType;
+import no.nkk.dogpopulation.graph.ParentRole;
 import org.neo4j.graphdb.*;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.File;
 import java.util.Iterator;
 
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
-public class GraphAdminServiceTest {
-
-    GraphDatabaseService graphDb;
-
-    @BeforeMethod
-    public void initGraph() {
-        String dbPath = "target/unittestdogdb";
-        File dbFolder = new File(dbPath);
-        FileUtils.deleteQuietly(dbFolder);
-        graphDb = Main.createGraphDb(dbPath);
-    }
-
-    @AfterMethod
-    public void closeGraph() {
-        graphDb.shutdown();
-    }
+public class PedigreeBuilderTest extends AbstractGraphTest {
 
     @Test
     public void thatAddDogOnEmptyGraphCreatesCorrectLineageToRoot() throws InterruptedException {
         // given
-        GraphAdminService graphAdminService = new GraphAdminService(graphDb);
         String uuid = "uuid-1234567890";
         String name = "Wicked teeth Jr.";
         String breed = "Rottweiler";
 
         // when
-        graphAdminService.addDog(uuid, name, breed);
+
+        addDog(uuid, name, breed(breed));
 
         // then
         validateCorrectBreedLineage(uuid, name, breed);
@@ -49,14 +34,14 @@ public class GraphAdminServiceTest {
     @Test
     public void thatAddDogTwiceDoesNotGenerateAdditionalNodes() throws InterruptedException {
         // given
-        GraphAdminService graphAdminService = new GraphAdminService(graphDb);
         String uuid = "uuid-1234567890";
         String name = "Wicked teeth Jr.";
         String breed = "Rottweiler";
 
         // when
-        Node testDog = graphAdminService.addDog(uuid, name, breed);
-        Node testDogDuplicate = graphAdminService.addDog(uuid, name, breed);
+        Node breedNode = breed(breed);
+        Node testDog = addDog(uuid, name, breedNode);
+        Node testDogDuplicate = addDog(uuid, name, breedNode);
 
         // then
         Assert.assertEquals(testDogDuplicate, testDog);
@@ -66,7 +51,6 @@ public class GraphAdminServiceTest {
     @Test
     public void thatAddDogAndConnectParentGeneratesCorrectPedigree() throws InterruptedException {
         // given
-        GraphAdminService graphAdminService = new GraphAdminService(graphDb);
         String breed = "Rottweiler";
         String childUuid = "uuid-1234567890";
         String childName = "Wicked teeth Jr. III";
@@ -80,15 +64,16 @@ public class GraphAdminServiceTest {
         String motherName = "Tigerclaws";
 
         // when
-        graphAdminService.addDog(childUuid, childName, breed);
-        graphAdminService.addDog(fatherUuid, fatherName, breed);
-        graphAdminService.connectChildToParent(childUuid, fatherUuid, ParentRole.FATHER);
-        graphAdminService.addDog(fathersFatherUuid, fathersFatherName, breed);
-        graphAdminService.connectChildToParent(fatherUuid, fathersFatherUuid, ParentRole.FATHER);
-        graphAdminService.addDog(fathersMotherUuid, fathersMotherName, breed);
-        graphAdminService.connectChildToParent(fatherUuid, fathersMotherUuid, ParentRole.MOTHER);
-        graphAdminService.addDog(motherUuid, motherName, breed);
-        graphAdminService.connectChildToParent(childUuid, motherUuid, ParentRole.MOTHER);
+        Node breedNode = breed(breed);
+        addDog(childUuid, childName, breedNode);
+        addDog(fatherUuid, fatherName, breedNode);
+        connectChildToFather(childUuid, fatherUuid);
+        addDog(fathersFatherUuid, fathersFatherName, breedNode);
+        connectChildToFather(fatherUuid, fathersFatherUuid);
+        addDog(fathersMotherUuid, fathersMotherName, breedNode);
+        connectChildToMother(fatherUuid, fathersMotherUuid);
+        addDog(motherUuid, motherName, breedNode);
+        connectChildToMother(childUuid, motherUuid);
 
         // then
         validateCorrectBreedLineage(childUuid, childName, breed);
@@ -152,5 +137,4 @@ public class GraphAdminServiceTest {
         Assert.assertFalse(iterator.hasNext()); // only one dog with given UUID
         return dogNode;
     }
-
 }

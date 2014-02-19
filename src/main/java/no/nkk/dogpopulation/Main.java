@@ -2,8 +2,11 @@ package no.nkk.dogpopulation;
 
 import no.nkk.dogpopulation.graph.DogGraphConstants;
 import no.nkk.dogpopulation.graph.DogGraphLabel;
+import no.nkk.dogpopulation.graph.dogbuilder.CommonNodes;
+import no.nkk.dogpopulation.graph.dogbuilder.Dogs;
+import no.nkk.dogpopulation.importer.dogsearch.DogSearchBreedImporter;
 import no.nkk.dogpopulation.importer.dogsearch.DogSearchClient;
-import no.nkk.dogpopulation.importer.dogsearch.DogSearchImporter;
+import no.nkk.dogpopulation.importer.dogsearch.DogSearchPedigreeImporter;
 import no.nkk.dogpopulation.importer.dogsearch.DogSearchSolrClient;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
@@ -167,12 +170,15 @@ public class Main {
             ExecutorService executorService = Executors.newFixedThreadPool(200);
             DogSearchClient dogSearchClient = new DogSearchSolrClient("http://dogsearch.nkk.no/dogservice/dogs");
 
-            Main main = new Main(db, new DogPopulationResourceConfigFactory(db, new DogSearchImporter(executorService, db, dogSearchClient)));
+            CommonNodes commonNodes = new CommonNodes(db);
+            Dogs dogs = new Dogs(commonNodes);
+            DogSearchPedigreeImporter dogImporter = new DogSearchPedigreeImporter(executorService, db, dogSearchClient, dogs);
+            Main main = new Main(db, new DogPopulationResourceConfigFactory(db, dogImporter));
             main.start();
 
             if (args.length > 0 && args[0].equalsIgnoreCase("--import")) {
                 String[] suboptions = Arrays.copyOfRange(args, 1, args.length);
-                int statusCode = main.mainImport(db, executorService, dogSearchClient, suboptions);
+                int statusCode = main.mainImport(executorService, dogSearchClient, dogImporter, suboptions);
                 main.stop();
                 db.shutdown();
                 System.exit(statusCode);
@@ -186,7 +192,7 @@ public class Main {
     }
 
 
-    public static int mainImport(GraphDatabaseService db, ExecutorService executorService, DogSearchClient dogSearchClient, String... args) {
+    public static int mainImport(ExecutorService executorService, DogSearchClient dogSearchClient, DogSearchPedigreeImporter pedigreeImporter, String... args) {
         if (args.length < 2) {
             printUsage();
             return 1;
@@ -232,12 +238,12 @@ public class Main {
         }
 
         List<Future<?>> importCompleteFuture = new ArrayList<>();
-        DogSearchImporter dogImporter = new DogSearchImporter(executorService, db, dogSearchClient);
         for (final String id : ids) {
-            importCompleteFuture.add(dogImporter.importDog(id));
+            importCompleteFuture.add(pedigreeImporter.importPedigree(id));
         }
+        DogSearchBreedImporter breedImporter = new DogSearchBreedImporter(executorService, pedigreeImporter, dogSearchClient);
         for (final String breed : breeds) {
-            importCompleteFuture.add(dogImporter.importBreed(breed));
+            importCompleteFuture.add(breedImporter.importBreed(breed));
         }
 
         // wait for all imports to complete

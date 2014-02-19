@@ -1,37 +1,15 @@
 package no.nkk.dogpopulation.graph.inbreeding;
 
-import no.nkk.dogpopulation.Main;
-import no.nkk.dogpopulation.graph.GraphAdminService;
+import no.nkk.dogpopulation.AbstractGraphTest;
 import no.nkk.dogpopulation.graph.GraphQueryService;
-import no.nkk.dogpopulation.graph.ParentRole;
-import org.apache.commons.io.FileUtils;
-import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Node;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import java.io.File;
 
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
-public class InbreedingAlgorithmTest {
-
-    GraphDatabaseService graphDb;
-
-    @BeforeMethod
-    public void initGraph() {
-        String dbPath = "target/unittestdogdb";
-        File dbFolder = new File(dbPath);
-        FileUtils.deleteQuietly(dbFolder);
-        graphDb = Main.createGraphDb(dbPath);
-    }
-
-    @AfterMethod
-    public void closeGraph() {
-        graphDb.shutdown();
-    }
+public class InbreedingAlgorithmTest extends AbstractGraphTest {
 
     @Test
     public void thatCoefficientOfInbreedingIsCorrectForOffspringOfAFatherWithDaughterMatingUsingPedigreeOfThreeGenerations() {
@@ -60,37 +38,38 @@ public class InbreedingAlgorithmTest {
          * This gives COI = (0.5)^2 = 0.25 = 25%
          */
 
-        GraphAdminService graphAdminService = new GraphAdminService(graphDb);
-        graphAdminService.addDog("A", "A", "Unit-test Breed");
-        graphAdminService.addDog("B", "B", "Unit-test Breed");
-        graphAdminService.addDog("C", "C", "Unit-test Breed");
-        graphAdminService.addDog("D", "D", "Unit-test Breed");
-        graphAdminService.addDog("E", "E", "Unit-test Breed");
-        graphAdminService.addDog("F", "F", "Unit-test Breed");
-        graphAdminService.addDog("G", "G", "Unit-test Breed");
-        graphAdminService.addDog("H", "H", "Unit-test Breed");
-        graphAdminService.addDog("I", "I", "Unit-test Breed");
-        graphAdminService.addDog("J", "J", "Unit-test Breed");
-        graphAdminService.addDog("X", "X", "Unit-test Breed");
-        graphAdminService.addDog("Y", "Y", "Unit-test Breed");
+        Node breedNode = breed("Unit-test Breed", "1");
+        addDog("A", breedNode);
+        addDog("B", breedNode);
+        addDog("C", breedNode);
+        addDog("D", breedNode);
+        addDog("E", breedNode);
+        addDog("F", breedNode);
+        addDog("G", breedNode);
+        addDog("H", breedNode);
+        addDog("I", breedNode);
+        addDog("J", breedNode);
+        addDog("X", breedNode);
+        addDog("Y", breedNode);
 
         // 1st gen
-        graphAdminService.connectChildToParent("A", "B", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("A", "C", ParentRole.MOTHER);
+        connectChildToFather("A", "B");
+
+        connectChildToMother("A", "C");
         // 2nd gen
-        graphAdminService.connectChildToParent("B", "X", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("B", "Y", ParentRole.MOTHER);
-        graphAdminService.connectChildToParent("C", "B", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("C", "D", ParentRole.MOTHER);
+        connectChildToFather("B", "X");
+        connectChildToMother("B", "Y");
+        connectChildToFather("C", "B");
+        connectChildToMother("C", "D");
         // 3rd gen
-        graphAdminService.connectChildToParent("X", "G", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("X", "H", ParentRole.MOTHER);
-        graphAdminService.connectChildToParent("Y", "I", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("Y", "J", ParentRole.MOTHER);
+        connectChildToFather("X", "G");
+        connectChildToMother("X", "H");
+        connectChildToFather("Y", "I");
+        connectChildToMother("Y", "J");
         // no need to repeat inbreed X father of B
         // no need to repeat inbreed Y mother of B
-        graphAdminService.connectChildToParent("D", "E", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("D", "F", ParentRole.MOTHER);
+        connectChildToFather("D", "E");
+        connectChildToMother("D", "F");
 
         GraphQueryService graphQueryService = new GraphQueryService(graphDb);
 
@@ -144,57 +123,57 @@ public class InbreedingAlgorithmTest {
          * This gives COI = (0.5)^2 = 0.25 = 25%
          */
 
-        GraphAdminService graphAdminService = new GraphAdminService(graphDb);
-        graphAdminService.addDog("A", "A", "Unit-test Breed");
-        graphAdminService.addDog("B", "B", "Unit-test Breed");
-        graphAdminService.addDog("C", "C", "Unit-test Breed");
-        graphAdminService.addDog("D", "D", "Unit-test Breed");
-        graphAdminService.addDog("E", "E", "Unit-test Breed");
-        graphAdminService.addDog("F", "F", "Unit-test Breed");
-        graphAdminService.addDog("G", "G", "Unit-test Breed");
-        graphAdminService.addDog("H", "H", "Unit-test Breed");
-        graphAdminService.addDog("I", "I", "Unit-test Breed");
-        graphAdminService.addDog("J", "J", "Unit-test Breed");
-        graphAdminService.addDog("K", "K", "Unit-test Breed");
-        graphAdminService.addDog("L", "L", "Unit-test Breed");
-        graphAdminService.addDog("M", "M", "Unit-test Breed");
-        graphAdminService.addDog("X", "X", "Unit-test Breed");
-        graphAdminService.addDog("Y", "Y", "Unit-test Breed");
+        Node breedNode = breed("Unit-test Breed", "1");
+        addDog("A", breedNode);
+        addDog("B", breedNode);
+        addDog("C", breedNode);
+        addDog("D", breedNode);
+        addDog("E", breedNode);
+        addDog("F", breedNode);
+        addDog("G", breedNode);
+        addDog("H", breedNode);
+        addDog("I", breedNode);
+        addDog("J", breedNode);
+        addDog("K", breedNode);
+        addDog("L", breedNode);
+        addDog("M", breedNode);
+        addDog("X", breedNode);
+        addDog("Y", breedNode);
 
         // 1st gen
-        graphAdminService.connectChildToParent("A", "B", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("A", "C", ParentRole.MOTHER);
+        connectChildToFather("A", "B");
+        connectChildToMother("A", "C");
         // 2nd gen
-        graphAdminService.connectChildToParent("B", "X", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("B", "Y", ParentRole.MOTHER);
-        graphAdminService.connectChildToParent("C", "X", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("C", "M", ParentRole.MOTHER);
+        connectChildToFather("B", "X");
+        connectChildToMother("B", "Y");
+        connectChildToFather("C", "X");
+        connectChildToMother("C", "M");
         // 3rd gen
-        graphAdminService.connectChildToParent("X", "G", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("X", "H", ParentRole.MOTHER);
-        graphAdminService.connectChildToParent("Y", "I", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("Y", "J", ParentRole.MOTHER);
+        connectChildToFather("X", "G");
+        connectChildToMother("X", "H");
+        connectChildToFather("Y", "I");
+        connectChildToMother("Y", "J");
         // no need to repeat inbreed G father of X
         // no need to repeat inbreed H mother of X
-        graphAdminService.connectChildToParent("M", "I", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("M", "K", ParentRole.MOTHER);
+        connectChildToFather("M", "I");
+        connectChildToMother("M", "K");
         // 4th gen
-        graphAdminService.connectChildToParent("G", "L", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("G", "H", ParentRole.MOTHER);
+        connectChildToFather("G", "L");
+        connectChildToMother("G", "H");
         // unknown father of H
         // unknown mother of H
-        graphAdminService.connectChildToParent("I", "G", ParentRole.FATHER);
+        connectChildToFather("I", "G");
         // unknown mother of I
-        graphAdminService.connectChildToParent("J", "G", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("J", "H", ParentRole.MOTHER);
+        connectChildToFather("J", "G");
+        connectChildToMother("J", "H");
         // no need to repeat inbreed L father of G
         // no need to repeat inbreed H mother of G
         // no need to repeat inbreed father of H
         // no need to repeat inbreed mother of H
         // no need to repeat inbreed G father of I
         // no need to repeat inbreed mother of I
-        graphAdminService.connectChildToParent("K", "I", ParentRole.FATHER);
-        graphAdminService.connectChildToParent("K", "H", ParentRole.MOTHER);
+        connectChildToFather("K", "I");
+        connectChildToMother("K", "H");
 
         GraphQueryService graphQueryService = new GraphQueryService(graphDb);
 

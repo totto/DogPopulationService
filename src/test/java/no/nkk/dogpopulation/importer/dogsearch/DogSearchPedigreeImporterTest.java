@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import no.nkk.dogpopulation.Main;
 import no.nkk.dogpopulation.graph.DogGraphConstants;
 import no.nkk.dogpopulation.graph.GraphQueryService;
+import no.nkk.dogpopulation.graph.dogbuilder.CommonNodes;
+import no.nkk.dogpopulation.graph.dogbuilder.Dogs;
 import no.nkk.dogpopulation.graph.pedigree.TopLevelDog;
 import org.apache.commons.io.FileUtils;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -20,7 +22,7 @@ import java.util.concurrent.*;
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
-public class DogSearchImporterTest {
+public class DogSearchPedigreeImporterTest {
 
     GraphDatabaseService graphDb;
 
@@ -60,8 +62,9 @@ public class DogSearchImporterTest {
             }
         };
 
-        DogSearchImporter importer = new DogSearchImporter(executorService, graphDb, dogSearchClient);
-        Future<String> future = importer.importDog("AB/12345/67");
+        Dogs dogs = new Dogs(new CommonNodes(graphDb));
+        DogSearchPedigreeImporter importer = new DogSearchPedigreeImporter(executorService, graphDb, dogSearchClient, dogs);
+        Future<String> future = importer.importPedigree("AB/12345/67");
         String uuid = future.get(30, TimeUnit.SECONDS);
 
         GraphQueryService graphQueryService = new GraphQueryService(graphDb);

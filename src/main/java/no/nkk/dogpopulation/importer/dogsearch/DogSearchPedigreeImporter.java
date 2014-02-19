@@ -1,13 +1,14 @@
 package no.nkk.dogpopulation.importer.dogsearch;
 
-import no.nkk.dogpopulation.graph.DogGraphConstants;
-import no.nkk.dogpopulation.graph.GraphAdminService;
 import no.nkk.dogpopulation.graph.GraphQueryService;
 import no.nkk.dogpopulation.graph.ParentRole;
-import no.nkk.dogpopulation.importer.DogImporter;
+import no.nkk.dogpopulation.graph.dogbuilder.*;
+import no.nkk.dogpopulation.importer.PedigreeImporter;
 import org.joda.time.LocalDate;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,54 +20,41 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
-public class DogSearchImporter implements DogImporter {
+public class DogSearchPedigreeImporter implements PedigreeImporter {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(DogSearchImporter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(DogSearchPedigreeImporter.class);
     private static final Logger DOGSEARCH = LoggerFactory.getLogger("dogsearch");
 
-    static class TraversalStatistics {
-        final String id;
-        final AtomicInteger dogCount = new AtomicInteger();
-        final AtomicInteger maxDepth = new AtomicInteger();
-        final AtomicInteger minDepth = new AtomicInteger(Integer.MAX_VALUE);
-
-        private TraversalStatistics(String id) {
-            this.id = id;
-        }
-
-        @Override
-        public String toString() {
-            return "TraversalStatistics{" +
-                    "dogCount=" + dogCount.get() +
-                    ", maxDepth=" + maxDepth.get() +
-                    ", minDepth=" + minDepth.get() +
-                    '}';
-        }
-    }
-
-    private final GraphAdminService graphAdminService;
+    private final GraphDatabaseService graphDb;
     private final GraphQueryService graphQueryService;
     private final DogSearchClient dogSearchClient;
 
+    private final Dogs dogs;
+    private final CommonNodes commonNodes;
+
     private final ExecutorService executorService;
 
-
-    public DogSearchImporter(ExecutorService executorService, GraphDatabaseService graphDb, DogSearchClient dogSearchClient) {
+    public DogSearchPedigreeImporter(ExecutorService executorService, GraphDatabaseService graphDb, DogSearchClient dogSearchClient, Dogs dogs) {
         this.executorService = executorService;
-        this.graphAdminService = new GraphAdminService(graphDb);
+        this.graphDb = graphDb;
         this.graphQueryService = new GraphQueryService(graphDb);
         this.dogSearchClient = dogSearchClient;
+        this.dogs = dogs;
+        this.commonNodes = new CommonNodes(graphDb);
     }
 
 
     @Override
-    public Future<String> importDog(final String id) {
-        Future<String> future = executorService.submit(new Callable<String>() {
+    public Future<String> importPedigree(final String id) {
+        return executorService.submit(pedigreeImportTaskFor(id));
+    }
+
+    Callable<String> pedigreeImportTaskFor(final String id) {
+        return new Callable<String>() {
             @Override
             public String call() {
                 final String origThreadName = Thread.currentThread().getName();
@@ -77,56 +65,14 @@ public class DogSearchImporter implements DogImporter {
                         return null;
                     }
                     return ts.id;
-                } catch (RuntimeException e) {
-                    LOGGER.error("", e);
-                    throw e;
                 } finally {
                     Thread.currentThread().setName(origThreadName);
                 }
             }
-        });
-        return future;
+        };
     }
 
-    @Override
-    public Future<?> importBreed(final String breed) {
-        Future<?> future = executorService.submit(new Runnable() {
-            @Override
-            public void run() {
-                final String origThreadName = Thread.currentThread().getName();
-                Thread.currentThread().setName(breed);
-                try {
-                    importBreedPedigree(breed);
-                } catch (Throwable e) {
-                    LOGGER.error("", e);
-                } finally {
-                    Thread.currentThread().setName(origThreadName);
-                }
-            }
-        });
-        return future;
-    }
-
-    private int importBreedPedigree(String breed) {
-        int n = 0;
-        LOGGER.info("Looking up all UUIDs on dogsearch for breed {}", breed);
-        Set<String> breedIds = dogSearchClient.listIdsForBreed(breed);
-        LOGGER.info("Found {} {} dogs on dogsearch, importing pedigrees...", breedIds.size(), breed);
-        int i=0;
-        for (String id : breedIds) {
-            TraversalStatistics ts = importDogPedigree(id);
-            LOGGER.trace("Imported pedigree({} new dogs) for {}", ts.dogCount, id);
-            n += ts.dogCount.get();
-            i++;
-            if (i%100 == 0) {
-                LOGGER.debug("Progress: {} of {} -- {}%", i, breedIds.size(), 100 * i / breedIds.size());
-            }
-        }
-        LOGGER.info("Completed pedigree import of {} {} dogs from dogsearch to graph.", n, breed);
-        return n;
-    }
-
-    private TraversalStatistics importDogPedigree(String id) {
+    TraversalStatistics importDogPedigree(String id) {
         long startTime = System.currentTimeMillis();
         LOGGER.trace("Importing Pedigree from DogSearch for dog {}", id);
         Set<String> descendants = new LinkedHashSet<>();
@@ -152,6 +98,22 @@ public class DogSearchImporter implements DogImporter {
     }
 
 
+    private Node build(NodeBuilder builder) {
+        try (Transaction tx = graphDb.beginTx()) {
+            Node node = builder.build(graphDb);
+            tx.success();
+            return node;
+        }
+    }
+
+    private Relationship build(RelationshipBuilder builder) {
+        try (Transaction tx = graphDb.beginTx()) {
+            Relationship relationship = builder.build(graphDb);
+            tx.success();
+            return relationship;
+        }
+    }
+
     public DogFuture depthFirstDogImport(TraversalStatistics ts, Set<String> descendants, int depth, DogDetails dogDetails) {
         String uuid = dogDetails.getId();
 
@@ -160,7 +122,7 @@ public class DogSearchImporter implements DogImporter {
             return new DogFuture(dog, null, null); // parents already being/been traversed
         }
 
-        dog = addDogToGraph(dogDetails);
+        dog = build(dogs.dog().all(dogDetails));
 
         ts.dogCount.addAndGet(1);
         if (depth > ts.maxDepth.get()) {
@@ -185,80 +147,13 @@ public class DogSearchImporter implements DogImporter {
         return dogFuture;
     }
 
-    /**
-     * Will add a dog node to the graph. No relationships will be added by this method, only the dog node itself. The
-     * added node will also be populated with relevant available properties.
-     *
-     * @param dogDetails
-     * @return
-     */
-    private Node addDogToGraph(DogDetails dogDetails) {
-        String uuid = dogDetails.getId();
-        String name = dogDetails.getName();
-        if (name == null) {
-            name = "";
-            DOGSEARCH.warn("UNKNOWN name of dog, using empty name. {}.", uuid);
-        }
-        DogBreed dogBreed = dogDetails.getBreed();
-        String breed;
-        String breedId = null;
-        if (dogBreed == null) {
-            DOGSEARCH.warn("UNKNOWN breed of dog {}.", uuid);
-            breed = "UNKNOWN";
-        } else {
-            breedId = dogBreed.getId();
-            if (dogBreed.getName().trim().isEmpty()) {
-                DOGSEARCH.warn("UNKNOWN breed of dog {}.", uuid);
-                breed = "UNKNOWN";
-            } else {
-                breed = dogBreed.getName();
-            }
-        }
-
-        String regNo = null;
-        for (DogId dogId : dogDetails.getIds()) {
-            if (DogGraphConstants.DOG_REGNO.equalsIgnoreCase(dogId.getType())) {
-                regNo = dogId.getValue();
-                break;
-            }
-        }
-
-        LocalDate bornLocalDate = null;
-        String born = dogDetails.getBorn();
-        if (born != null) {
-            try {
-                bornLocalDate = LocalDate.parse(born.substring(0, 10));
-            } catch (RuntimeException ignore) {
-            }
-        }
-
-        String hdDiag = null;
-        LocalDate hdXray = null;
-        DogHealth health = dogDetails.getHealth();
-        if (health != null) {
-            DogHealthHD[] hdArr = health.getHd();
-            if (hdArr != null && hdArr.length > 0) {
-                DogHealthHD hd = hdArr[0]; // TODO choose HD diagnosis more wisely than just picking the first one.
-                hdDiag = hd.getDiagnosis();
-                String xray = hd.getXray();
-                try {
-                    hdXray = LocalDate.parse(xray.substring(0, 10));
-                } catch (RuntimeException ignore) {
-                }
-            }
-        }
-
-        Node node = graphAdminService.addDog(uuid, regNo, name, breedId, breed, bornLocalDate, hdDiag, hdXray);
-
-        return node;
-    }
-
     private DogFuture addAncestry(Node dog, TraversalStatistics ts, Set<String> descendants, int depth, String id, DogAncestry dogAncestry, String uuid) {
         DogLitter litter = dogAncestry.getLitter();
         if (litter != null) {
             String litterId = litter.getId();
             if (litterId != null) {
-                graphAdminService.addPuppyToLitter(dog, litterId);
+                Node litterNode = build(dogs.litter().id(litterId));
+                build(dogs.inLitter().litter(litterNode).puppy(dog));
             }
         }
 
@@ -307,13 +202,14 @@ public class DogSearchImporter implements DogImporter {
 
                     Node parent = dogFuture.getDog();
 
+                    HasParentRelationshipBuilder hasParentBuilder = dogs.hasParent().child(dog).parent(parent).role(parentRole);
+
                     if (descendants.contains(parentId)) {
                         DOGSEARCH.info("DOG cannot be its own ancestor {}: {}", parentRole, uuid);
-                        graphAdminService.connectChildAsOwnAncestor(dog, parent, parentRole);
-                        return dogFuture;
+                        hasParentBuilder.ownAncestor();
                     }
 
-                    graphAdminService.connectChildToParent(dog, parent, parentRole);
+                    build(hasParentBuilder);
 
                     return dogFuture;
 
@@ -347,11 +243,10 @@ public class DogSearchImporter implements DogImporter {
                 String litterId = offspring.getId();
                 LocalDate litterBorn = LocalDate.parse(offspring.getBorn());
                 int count = offspring.getCount();
-                Node litter = graphAdminService.addLitter(litterId, litterBorn, count);
-                graphAdminService.connectDogAsParentOfLitter(parentRole, parent, litter);
-                // TODO find puppies on dogsearch in parallel.
+                Node litter = build(dogs.litter().id(litterId).born(litterBorn).count(count));
+                build(dogs.hasLitter().litter(litter).parent(parent).role(parentRole));
                 for (DogPuppy dogPuppy : offspring.getPuppies()) {
-                    Callable<Node> puppyTask = createPuppyTask(dogDetails, litterId, dogPuppy);
+                    Callable<Node> puppyTask = createPuppyTask(dogDetails, litter, dogPuppy);
                     puppyFutureList.add(executorService.submit(puppyTask));
                 }
             }
@@ -361,7 +256,7 @@ public class DogSearchImporter implements DogImporter {
         return puppyFutures;
     }
 
-    private Callable<Node> createPuppyTask(final DogDetails dogDetails, final String litterId, final DogPuppy dogPuppy) {
+    private Callable<Node> createPuppyTask(final DogDetails dogDetails, final Node litter, final DogPuppy dogPuppy) {
         return new Callable<Node>() {
             @Override
             public Node call() throws Exception {
@@ -371,9 +266,9 @@ public class DogSearchImporter implements DogImporter {
                     LOGGER.warn("Puppy {} cannot be found on dogsearch. Registered as puppy of dog {}", dogPuppy.getId(), uuid);
                     return null;
                 }
-                Node puppyNode = addDogToGraph(puppyDetails);
-                graphAdminService.addPuppyToLitter(puppyNode, litterId);
-                return null;
+                Node puppyNode = build(dogs.dog().all(puppyDetails));
+                build(dogs.inLitter().puppy(puppyNode).litter(litter));
+                return puppyNode;
             }
         };
     }

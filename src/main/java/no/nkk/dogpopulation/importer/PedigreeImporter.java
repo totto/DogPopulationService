@@ -5,8 +5,7 @@ import java.util.concurrent.Future;
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
-public interface DogImporter {
-    Future<?> importDog(String id);
+public interface PedigreeImporter {
 
-    Future<?> importBreed(String breed);
+    Future<String> importPedigree(final String id);
 }
