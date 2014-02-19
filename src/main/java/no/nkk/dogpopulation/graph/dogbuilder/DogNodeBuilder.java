@@ -29,6 +29,7 @@ public class DogNodeBuilder extends AbstractNodeBuilder {
     private LocalDate bornLocalDate;
     private String hdDiag;
     private LocalDate hdXray;
+    private Runnable cleanup;
 
     DogNodeBuilder(CommonNodes commonNodes) {
         this.commonNodes = commonNodes;
@@ -199,6 +200,10 @@ public class DogNodeBuilder extends AbstractNodeBuilder {
     }
     public DogNodeBuilder hdXray(LocalDate hdXray) {
         this.hdXray = hdXray;
+        return this;
+    }
+    public DogNodeBuilder cleanup(Runnable cleanup) {
+        this.cleanup = cleanup;
         return this;
     }
 

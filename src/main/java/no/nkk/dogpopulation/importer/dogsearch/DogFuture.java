@@ -11,21 +11,17 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class DogFuture {
 
-    private final Node dog;
+    private final Future<Node> dog;
 
     private final Future<DogFuture> fatherFuture;
     private final Future<DogFuture> motherFuture;
 
     private AtomicReference<Future<Node>[]> puppyFuturesRef = new AtomicReference<Future<Node>[]>(new Future[0]);
 
-    DogFuture(Node dog, Future<DogFuture> fatherFuture, Future<DogFuture> motherFuture) {
+    DogFuture(Future<Node> dog, Future<DogFuture> fatherFuture, Future<DogFuture> motherFuture) {
         this.dog = dog;
         this.fatherFuture = fatherFuture;
         this.motherFuture = motherFuture;
-    }
-
-    Node getDog() {
-        return dog;
     }
 
     private Future<Node>[] getPuppyFutures() {
@@ -52,7 +48,7 @@ public class DogFuture {
             nodeFuture.getFather(); // wait recursively
             nodeFuture.getMother(); // wait recursively
             nodeFuture.waitOnPuppies();
-            return nodeFuture.getDog();
+            return nodeFuture.waitForPedigreeImportToComplete();
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         } catch (ExecutionException e) {
@@ -86,9 +82,20 @@ public class DogFuture {
         }
     }
 
-    public void waitForPedigreeImportToComplete() {
+    public Node waitForPedigreeImportToComplete() {
         getFather();
         getMother();
         waitOnPuppies();
+        return waitOnDog();
+    }
+
+    private Node waitOnDog() {
+        try {
+            return dog.get();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

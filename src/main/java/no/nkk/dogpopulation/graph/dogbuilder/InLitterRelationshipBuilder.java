@@ -16,6 +16,8 @@ public class InLitterRelationshipBuilder extends AbstractRelationshipBuilder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(InLitterRelationshipBuilder.class);
 
+    private LitterNodeBuilder litterBuilder;
+    private DogNodeBuilder puppyBuilder;
     private Node litter;
     private Node puppy;
 
@@ -24,18 +26,24 @@ public class InLitterRelationshipBuilder extends AbstractRelationshipBuilder {
 
     @Override
     protected Relationship doBuild(GraphDatabaseService graphDb) {
+        if (litter == null) {
+            litter = litterBuilder.build(graphDb);
+        }
+        if (puppy == null) {
+            puppy = puppyBuilder.build(graphDb);
+        }
         for (Relationship existingInLitter : puppy.getRelationships(Direction.OUTGOING, DogGraphRelationshipType.IN_LITTER)) {
             Node existingLitter = existingInLitter.getEndNode();
-            if (existingLitter.equals(litter)) {
+            if (existingLitter.equals(this.litter)) {
                 return existingInLitter; // already connected to correct litter
             }
             String puppyUuid = (String) puppy.getProperty(DogGraphConstants.DOG_UUID);
             String existingLitterId = (String) existingLitter.getProperty(DogGraphConstants.LITTER_ID);
-            String litterId = (String) litter.getProperty(DogGraphConstants.LITTER_ID);
+            String litterId = (String) this.litter.getProperty(DogGraphConstants.LITTER_ID);
             LOGGER.warn("LITTER CONFLICT: Dog {} is already in litter {} but will now be moved to litter {}.", puppyUuid, existingLitterId, litterId);
             existingInLitter.delete();
         }
-        return puppy.createRelationshipTo(litter, DogGraphRelationshipType.IN_LITTER);
+        return puppy.createRelationshipTo(this.litter, DogGraphRelationshipType.IN_LITTER);
     }
 
 
@@ -47,5 +55,12 @@ public class InLitterRelationshipBuilder extends AbstractRelationshipBuilder {
         this.puppy = puppy;
         return this;
     }
-
+    public InLitterRelationshipBuilder litter(LitterNodeBuilder litterBuilder) {
+        this.litterBuilder = litterBuilder;
+        return this;
+    }
+    public InLitterRelationshipBuilder puppy(DogNodeBuilder puppyBuilder) {
+        this.puppyBuilder = puppyBuilder;
+        return this;
+    }
 }

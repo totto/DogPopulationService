@@ -20,12 +20,16 @@ public class HasLitterRelationshipBuilder extends AbstractRelationshipBuilder {
     private ParentRole parentRole;
     private Node parent;
     private Node litter;
+    private LitterNodeBuilder litterBuilder;
 
     HasLitterRelationshipBuilder() {
     }
 
     @Override
     protected Relationship doBuild(GraphDatabaseService graphDb) {
+        if (litter == null) {
+            litter = litterBuilder.build(graphDb);
+        }
         for (Relationship existingHasLitter : parent.getRelationships(Direction.OUTGOING, DogGraphRelationshipType.HAS_LITTER)) {
             Node existingLitter = existingHasLitter.getEndNode();
             if (existingLitter.equals(litter)) {
@@ -64,6 +68,10 @@ public class HasLitterRelationshipBuilder extends AbstractRelationshipBuilder {
     }
     public HasLitterRelationshipBuilder litter(Node litter) {
         this.litter = litter;
+        return this;
+    }
+    public HasLitterRelationshipBuilder litter(LitterNodeBuilder litterBuilder) {
+        this.litterBuilder = litterBuilder;
         return this;
     }
 

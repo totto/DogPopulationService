@@ -12,6 +12,8 @@ public class HasParentRelationshipBuilder extends AbstractRelationshipBuilder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HasParentRelationshipBuilder.class);
 
+    private DogNodeBuilder childBuilder;
+    private DogNodeBuilder parentBuilder;
     private Node child;
     private Node parent;
     private String childUuid;
@@ -25,16 +27,24 @@ public class HasParentRelationshipBuilder extends AbstractRelationshipBuilder {
     @Override
     protected Relationship doBuild(GraphDatabaseService graphDb) {
         if (child == null) {
-            if (childUuid == null) {
-                throw new MissingFieldException("child/uuid");
+            if (childBuilder != null) {
+                child = childBuilder.build(graphDb);
+            } else {
+                if (childUuid == null) {
+                    throw new MissingFieldException("child/uuid");
+                }
+                child = GraphUtils.getSingleNode(graphDb, DogGraphLabel.DOG, DogGraphConstants.DOG_UUID, childUuid);
             }
-            child = GraphUtils.getSingleNode(graphDb, DogGraphLabel.DOG, DogGraphConstants.DOG_UUID, childUuid);
         }
         if (parent == null) {
-            if (parentUuid == null) {
-                throw new MissingFieldException("parent/uuid");
+            if (parentBuilder != null) {
+                parent = parentBuilder.build(graphDb);
+            } else {
+                if (parentUuid == null) {
+                    throw new MissingFieldException("parent/uuid");
+                }
+                parent = GraphUtils.getSingleNode(graphDb, DogGraphLabel.DOG, DogGraphConstants.DOG_UUID, parentUuid);
             }
-            parent = GraphUtils.getSingleNode(graphDb, DogGraphLabel.DOG, DogGraphConstants.DOG_UUID, parentUuid);
         }
 
         if (LOGGER.isTraceEnabled()) {
@@ -101,5 +111,12 @@ public class HasParentRelationshipBuilder extends AbstractRelationshipBuilder {
         relationshipType = DogGraphRelationshipType.OWN_ANCESTOR;
         return this;
     }
-
+    public HasParentRelationshipBuilder child(DogNodeBuilder childBuilder) {
+        this.childBuilder = childBuilder;
+        return this;
+    }
+    public HasParentRelationshipBuilder parent(DogNodeBuilder parentBuilder) {
+        this.parentBuilder = parentBuilder;
+        return this;
+    }
 }
