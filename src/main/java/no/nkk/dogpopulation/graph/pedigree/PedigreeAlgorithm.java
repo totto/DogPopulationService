@@ -134,6 +134,10 @@ public class PedigreeAlgorithm {
             String regNo = (String) node.getProperty(DogGraphConstants.DOG_REGNO);
             dog.getIds().put(DogGraphConstants.DOG_REGNO, regNo);
         }
+        if (node.hasProperty(DogGraphConstants.DOG_CHIPNO)) {
+            String chipNo = (String) node.getProperty(DogGraphConstants.DOG_CHIPNO);
+            dog.getIds().put(DogGraphConstants.DOG_CHIPNO, chipNo);
+        }
 
         if (node.hasProperty(DogGraphConstants.DOG_BORN_YEAR)
                 && node.hasProperty(DogGraphConstants.DOG_BORN_MONTH)
