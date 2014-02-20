@@ -53,6 +53,7 @@ public class GraphResource {
         synchronized (breedImportStatus) {
             statusList = new ArrayList<>(breedImportStatus.values());
         }
+        Collections.reverse(statusList); // order by newest entry first in list
 
         BreedImportStatusAggregate statusAggregate = new BreedImportStatusAggregate(statusList);
 

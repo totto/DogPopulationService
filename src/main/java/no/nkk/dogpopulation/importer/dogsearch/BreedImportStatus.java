@@ -1,5 +1,7 @@
 package no.nkk.dogpopulation.importer.dogsearch;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import java.text.DecimalFormat;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -8,6 +10,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
+@JsonPropertyOrder({"breed", "active", "", "progress", "tasksCompleted", "originalPedigreeCount", "dogsAddedToGraph", "elapsedSeconds", "dogsPerSecond"})
 public class BreedImportStatus {
 
     private final AtomicInteger originalPedigreeCount = new AtomicInteger();
@@ -15,7 +18,7 @@ public class BreedImportStatus {
     private final String breed;
     private final AtomicLong startTimeMs = new AtomicLong();
     private final AtomicLong elapsedTimeMs = new AtomicLong();
-    private final AtomicBoolean active = new AtomicBoolean(false);
+    private final AtomicBoolean active = new AtomicBoolean(true);
 
     private final AtomicInteger count = new AtomicInteger();
 
@@ -32,7 +35,6 @@ public class BreedImportStatus {
     }
 
     public void updateStartTime() {
-        active.set(true);
         startTimeMs.set(System.currentTimeMillis());
     }
 
@@ -54,7 +56,7 @@ public class BreedImportStatus {
         updateReferenceTime();
     }
 
-    public int getCount() {
+    public int getDogsAddedToGraph() {
         return count.get();
     }
 

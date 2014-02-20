@@ -1,5 +1,6 @@
 package no.nkk.dogpopulation.pedigree;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import no.nkk.dogpopulation.importer.dogsearch.BreedImportStatus;
 
 import java.text.DecimalFormat;
@@ -9,6 +10,7 @@ import java.util.List;
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
+@JsonPropertyOrder({"numberOfActiveImports", "activeList", "dogsPerSecond", "breedList"})
 public class BreedImportStatusAggregate {
 
     private final List<BreedImportStatus> breedList;
