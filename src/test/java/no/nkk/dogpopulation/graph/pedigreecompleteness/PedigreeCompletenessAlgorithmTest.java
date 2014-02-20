@@ -169,7 +169,7 @@ public class PedigreeCompletenessAlgorithmTest extends AbstractGraphTest {
 
         // then
         Assert.assertEquals(completeness.getGenerations(), 5);
-        Assert.assertEquals(completeness.getCompletePedigreeSize(), 30); // 2^(4+1) - 2
+        Assert.assertEquals(completeness.getSizeOfCompletePedigree(), 30); // 2^(4+1) - 2
         Assert.assertEquals(completeness.getPedigreeSizeStatistics().getN(), 3); // A, F, H
         double delta = 0.001;
         Assert.assertEquals(completeness.getPedigreeSizeStatistics().getMin(), 1, delta); // F
