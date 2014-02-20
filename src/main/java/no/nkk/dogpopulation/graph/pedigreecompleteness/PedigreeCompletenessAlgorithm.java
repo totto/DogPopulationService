@@ -56,7 +56,7 @@ public class PedigreeCompletenessAlgorithm {
                 .depthFirst()
                 .uniqueness(Uniqueness.NONE)
                 .relationships(DogGraphRelationshipType.HAS_PARENT, Direction.OUTGOING)
-                .evaluator(Evaluators.includingDepths(1, PEDIGREE_GENERATIONS))
+                .evaluator(Evaluators.includingDepths(1, PEDIGREE_GENERATIONS - 1))
                 .traverse(dogNode);
     }
 

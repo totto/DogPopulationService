@@ -35,7 +35,7 @@ public class PedigreeCompleteness {
     }
 
     public static int getCompletePedigreeSize(int generations) {
-        return ((int) Math.pow(2, generations + 1)) - 2;
+        return ((int) Math.pow(2, generations)) - 2;
     }
 
     public BasicStatistics getPedigreeSizeStatistics() {

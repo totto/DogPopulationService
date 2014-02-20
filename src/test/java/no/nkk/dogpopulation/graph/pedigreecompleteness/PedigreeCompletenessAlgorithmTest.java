@@ -116,7 +116,7 @@ public class PedigreeCompletenessAlgorithmTest extends AbstractGraphTest {
         // no need to repeat inbreed mother of I
 
         // when
-        PedigreeCompletenessAlgorithm algorithm = new PedigreeCompletenessAlgorithm(graphDb, 4);
+        PedigreeCompletenessAlgorithm algorithm = new PedigreeCompletenessAlgorithm(graphDb, 5);
         int pedigreeSize;
         try (Transaction tx = graphDb.beginTx()) {
             pedigreeSize = algorithm.computePedigreeSize(A);
@@ -165,10 +165,10 @@ public class PedigreeCompletenessAlgorithmTest extends AbstractGraphTest {
         Set<String> breedSet = new LinkedHashSet<>();
         breedSet.add("Rottweiler");
         breedSet.add("Pointer");
-        PedigreeCompleteness completeness = graphQueryService.getPedigreeCompletenessOfGroup(4, breedSet, 1999, 2000);
+        PedigreeCompleteness completeness = graphQueryService.getPedigreeCompletenessOfGroup(5, breedSet, 1999, 2000);
 
         // then
-        Assert.assertEquals(completeness.getGenerations(), 4);
+        Assert.assertEquals(completeness.getGenerations(), 5);
         Assert.assertEquals(completeness.getCompletePedigreeSize(), 30); // 2^(4+1) - 2
         Assert.assertEquals(completeness.getPedigreeSizeStatistics().getN(), 3); // A, F, H
         double delta = 0.001;

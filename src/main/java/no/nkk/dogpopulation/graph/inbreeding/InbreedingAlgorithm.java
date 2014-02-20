@@ -82,7 +82,7 @@ public class InbreedingAlgorithm {
     }
 
 
-    private double computeInbreedingCoefficient(Relationship secondParent, Map<String, List<Path>> firstParentPathsByUuid, int toDepth, int recursionLevel) {
+    private double computeInbreedingCoefficient(Relationship secondParent, Map<String, List<Path>> firstParentPathsByUuid, int generations, int recursionLevel) {
         CommonAncestorEvaluator commonAncestorEvaluator = new CommonAncestorEvaluator(firstParentPathsByUuid, recursionLevel);
 
         double coi = 0;
@@ -91,7 +91,7 @@ public class InbreedingAlgorithm {
                 .depthFirst()
                 .uniqueness(Uniqueness.NODE_PATH)
                 .relationships(DogGraphRelationshipType.HAS_PARENT, Direction.OUTGOING)
-                .evaluator(Evaluators.toDepth(toDepth))
+                .evaluator(Evaluators.toDepth(generations - 1))
                 .evaluator(commonAncestorEvaluator)
                 .traverse(secondParent.getEndNode())){
 
@@ -125,13 +125,13 @@ public class InbreedingAlgorithm {
     }
 
 
-    private Map<String, List<Path>> mapAncestryPathsByAncestorUuid(Node startNode, int toDepth, int recursionLevel) {
+    private Map<String, List<Path>> mapAncestryPathsByAncestorUuid(Node startNode, int generations, int recursionLevel) {
         Map<String, List<Path>> visited = new LinkedHashMap<>();
         for (Path path : graphDb.traversalDescription()
                 .depthFirst()
                 .uniqueness(Uniqueness.NONE)
                 .relationships(DogGraphRelationshipType.HAS_PARENT, Direction.OUTGOING)
-                .evaluator(Evaluators.toDepth(toDepth))
+                .evaluator(Evaluators.toDepth(generations - 1))
                 .traverse(startNode)) {
             Node endNode = path.endNode();
             String endNodeUuid = (String) endNode.getProperty(DogGraphConstants.DOG_UUID);
