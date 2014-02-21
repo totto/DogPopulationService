@@ -2,6 +2,7 @@ package no.nkk.dogpopulation.graph.pedigreecompleteness;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import no.nkk.dogpopulation.graph.BasicStatistics;
+import no.nkk.dogpopulation.graph.UuidAndRegNo;
 
 import java.util.List;
 import java.util.Set;

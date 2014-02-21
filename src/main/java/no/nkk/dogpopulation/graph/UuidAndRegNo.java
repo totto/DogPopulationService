@@ -1,6 +1,5 @@
-package no.nkk.dogpopulation.graph.pedigreecompleteness;
+package no.nkk.dogpopulation.graph;
 
-import no.nkk.dogpopulation.graph.DogGraphConstants;
 import org.neo4j.graphdb.Node;
 
 /**

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import no.nkk.dogpopulation.graph.GraphQueryService;
 import no.nkk.dogpopulation.graph.hdindex.DmuFiles;
+import no.nkk.dogpopulation.graph.inbreeding.InbreedingOfGroup;
 import no.nkk.dogpopulation.graph.pedigreecompleteness.PedigreeCompleteness;
 import no.nkk.dogpopulation.importer.PedigreeImporter;
 import no.nkk.dogpopulation.importer.dogsearch.BreedImportStatus;
@@ -132,6 +133,34 @@ public class GraphResource {
 
         try {
             String json = prettyPrintingObjectWriter.writeValueAsString(breedOverview);
+            return Response.ok(json).build();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @GET
+    @Path("/inbreeding")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getInbreedingOfDogGroup(@QueryParam("generations") Integer generations, @QueryParam("breed") List<String> breed, @QueryParam("minYear") Integer minYear, @QueryParam("maxYear") Integer maxYear) {
+        LOGGER.trace("getInbreedingOfDogGroup({})", breed);
+
+        if (generations == null) {
+            generations = 6;
+        }
+        if (breed == null) {
+            breed = new ArrayList<>();
+        }
+        if (minYear == null) {
+            minYear = 0;
+        }
+        if (maxYear == null) {
+            maxYear = Integer.MAX_VALUE;
+        }
+        InbreedingOfGroup inbreedingOfGroup = graphQueryService.getInbreedingOfGroup(generations, new LinkedHashSet<>(breed), minYear, maxYear);
+
+        try {
+            String json = prettyPrintingObjectWriter.writeValueAsString(inbreedingOfGroup);
             return Response.ok(json).build();
         } catch (IOException e) {
             throw new RuntimeException(e);
