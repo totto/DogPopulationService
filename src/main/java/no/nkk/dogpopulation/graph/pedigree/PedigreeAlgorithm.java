@@ -33,7 +33,7 @@ public class PedigreeAlgorithm {
         return graphDb.traversalDescription()
                 .depthFirst()
                 .uniqueness(Uniqueness.RELATIONSHIP_PATH)
-                .evaluator(Evaluators.toDepth(8))
+                .evaluator(Evaluators.toDepth(9))
                 .expand(new PedigreePathExpander(), new InitialBranchState.State<>(initialState, null))
                 .traverse(node);
     }
