@@ -20,10 +20,10 @@ public class PedigreeCompleteness {
     private final BasicStatistics pedigreeSizeStatistics;
     private final BasicStatistics pedigreeCompletenessStatistics;
     private final int[] pedigreeSizeHistogram;
-    private final String[] dogsWithEmptyPedigree;
-    private final String[] dogsWithJustOneParent;
+    private final UuidAndRegNo[] dogsWithEmptyPedigree;
+    private final UuidAndRegNo[] dogsWithJustOneParent;
 
-    public PedigreeCompleteness(int generations, Set<String> breed, int minYear, int maxYear, BasicStatistics pedigreeSizeStatistics, BasicStatistics pedigreeCompletenessStatistics, int[] pedigreeSizeHistogram, List<String> dogsWithEmptyPedigree, List<String> dogsWithJustOneParent) {
+    public PedigreeCompleteness(int generations, Set<String> breed, int minYear, int maxYear, BasicStatistics pedigreeSizeStatistics, BasicStatistics pedigreeCompletenessStatistics, int[] pedigreeSizeHistogram, List<UuidAndRegNo> dogsWithEmptyPedigree, List<UuidAndRegNo> dogsWithJustOneParent) {
         this.generations = generations;
         this.pedigreeSizeStatistics = pedigreeSizeStatistics;
         this.pedigreeCompletenessStatistics = pedigreeCompletenessStatistics;
@@ -31,8 +31,8 @@ public class PedigreeCompleteness {
         this.minYear = minYear;
         this.maxYear =  maxYear;
         this.pedigreeSizeHistogram = pedigreeSizeHistogram;
-        this.dogsWithEmptyPedigree = dogsWithEmptyPedigree.toArray(new String[dogsWithEmptyPedigree.size()]);
-        this.dogsWithJustOneParent = dogsWithJustOneParent.toArray(new String[dogsWithJustOneParent.size()]);
+        this.dogsWithEmptyPedigree = dogsWithEmptyPedigree.toArray(new UuidAndRegNo[dogsWithEmptyPedigree.size()]);
+        this.dogsWithJustOneParent = dogsWithJustOneParent.toArray(new UuidAndRegNo[dogsWithJustOneParent.size()]);
     }
 
     public int getGenerations() {
@@ -83,11 +83,11 @@ public class PedigreeCompleteness {
         return pedigreeSizeHistogram;
     }
 
-    public String[] getDogsWithEmptyPedigree() {
+    public UuidAndRegNo[] getDogsWithEmptyPedigree() {
         return dogsWithEmptyPedigree;
     }
 
-    public String[] getDogsWithJustOneParent() {
+    public UuidAndRegNo[] getDogsWithJustOneParent() {
         return dogsWithJustOneParent;
     }
 }

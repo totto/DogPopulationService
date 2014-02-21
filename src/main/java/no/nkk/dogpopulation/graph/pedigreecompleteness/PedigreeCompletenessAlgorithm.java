@@ -33,8 +33,8 @@ public class PedigreeCompletenessAlgorithm {
         DescriptiveStatistics completenessStat = new DescriptiveStatistics();
         int N = PedigreeCompleteness.getSizeOfCompletePedigree(PEDIGREE_GENERATIONS);
         int[] pedigreeSizeHistogram = new int[N + 1];
-        List<String> dogsWithEmptyPedigree = new ArrayList<>();
-        List<String> dogsWithJustOneParent = new ArrayList<>();
+        List<UuidAndRegNo> dogsWithEmptyPedigree = new ArrayList<>();
+        List<UuidAndRegNo> dogsWithJustOneParent = new ArrayList<>();
         for (Path breedMemberPath : traverseBreedInSet(categoryBreedNode, breedSet)) {
             for (Path dogPath : traverseDogOfBreedBornBetween(breedMemberPath.endNode(), minYear, maxYear)) {
                 Node dogNode = dogPath.endNode();
@@ -43,14 +43,14 @@ public class PedigreeCompletenessAlgorithm {
                 completenessStat.addValue(100.0 * pedigreeSize / N);
                 pedigreeSizeHistogram[pedigreeSize]++; // update histogram
                 if (pedigreeSize == 0) {
-                    dogsWithEmptyPedigree.add((String) dogNode.getProperty(DogGraphConstants.DOG_UUID));
+                    dogsWithEmptyPedigree.add(new UuidAndRegNo(dogNode));
                 }
                 int parents = 0;
                 for (Relationship hasParent : dogNode.getRelationships(DogGraphRelationshipType.HAS_PARENT, Direction.OUTGOING)) {
                     parents++;
                 }
                 if (parents == 1) {
-                    dogsWithJustOneParent.add((String) dogNode.getProperty(DogGraphConstants.DOG_UUID));
+                    dogsWithJustOneParent.add(new UuidAndRegNo(dogNode));
                 }
             }
         }
