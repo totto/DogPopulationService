@@ -116,7 +116,7 @@ public class GraphQueryService {
             if (node == null) {
                 return null; // dog not found
             }
-            TopLevelDog dog = new PedigreeAlgorithm().getPedigree(node);
+            TopLevelDog dog = new PedigreeAlgorithm(graphDb).getPedigree(node);
             double coi3 = computeCoefficientOfInbreeding(uuid, 3);
             double coi6 = computeCoefficientOfInbreeding(uuid, 6);
             dog.setInbreedingCoefficient3((int) Math.round(10000 * coi3));
