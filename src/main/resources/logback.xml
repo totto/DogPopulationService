@@ -1,5 +1,5 @@
 <configuration scan="true" scanPeriod="60 seconds">
-    <property name="LOG_DIR" value="data" />
+    <property name="LOG_DIR" value="logs" />
     <property name="APP_NAME" value="dogpopulation" />
 
     <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
