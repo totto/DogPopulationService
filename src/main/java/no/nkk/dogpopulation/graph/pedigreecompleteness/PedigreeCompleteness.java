@@ -3,6 +3,7 @@ package no.nkk.dogpopulation.graph.pedigreecompleteness;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import no.nkk.dogpopulation.graph.BasicStatistics;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -10,7 +11,7 @@ import java.util.Set;
  *
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
-@JsonPropertyOrder({"generations", "breed", "minYear", "maxYear", "numberOfDogs", "sizeOfCompletePedigree", "numberOfDogsWithCompletePedigree", "numberOfDogsWithEmptyPedigree", "pedigreeCompletenessStatistics", "pedigreeSizeStatistics", "pedigreeSizeHistogram"})
+@JsonPropertyOrder({"generations", "breed", "minYear", "maxYear", "numberOfDogs", "sizeOfCompletePedigree", "numberOfDogsWithCompletePedigree", "numberOfDogsWithEmptyPedigree", "pedigreeCompletenessStatistics", "pedigreeSizeStatistics", "pedigreeSizeHistogram", "dogsWithEmptyPedigree", "dogsWithJustOneParent"})
 public class PedigreeCompleteness {
     private final int generations; // typically 3 or 6
     private final Set<String> breed;
@@ -19,8 +20,10 @@ public class PedigreeCompleteness {
     private final BasicStatistics pedigreeSizeStatistics;
     private final BasicStatistics pedigreeCompletenessStatistics;
     private final int[] pedigreeSizeHistogram;
+    private final String[] dogsWithEmptyPedigree;
+    private final String[] dogsWithJustOneParent;
 
-    public PedigreeCompleteness(int generations, Set<String> breed, int minYear, int maxYear, BasicStatistics pedigreeSizeStatistics, BasicStatistics pedigreeCompletenessStatistics, int[] pedigreeSizeHistogram) {
+    public PedigreeCompleteness(int generations, Set<String> breed, int minYear, int maxYear, BasicStatistics pedigreeSizeStatistics, BasicStatistics pedigreeCompletenessStatistics, int[] pedigreeSizeHistogram, List<String> dogsWithEmptyPedigree, List<String> dogsWithJustOneParent) {
         this.generations = generations;
         this.pedigreeSizeStatistics = pedigreeSizeStatistics;
         this.pedigreeCompletenessStatistics = pedigreeCompletenessStatistics;
@@ -28,6 +31,8 @@ public class PedigreeCompleteness {
         this.minYear = minYear;
         this.maxYear =  maxYear;
         this.pedigreeSizeHistogram = pedigreeSizeHistogram;
+        this.dogsWithEmptyPedigree = dogsWithEmptyPedigree.toArray(new String[dogsWithEmptyPedigree.size()]);
+        this.dogsWithJustOneParent = dogsWithJustOneParent.toArray(new String[dogsWithJustOneParent.size()]);
     }
 
     public int getGenerations() {
@@ -76,5 +81,13 @@ public class PedigreeCompleteness {
 
     public int[] getPedigreeSizeHistogram() {
         return pedigreeSizeHistogram;
+    }
+
+    public String[] getDogsWithEmptyPedigree() {
+        return dogsWithEmptyPedigree;
+    }
+
+    public String[] getDogsWithJustOneParent() {
+        return dogsWithJustOneParent;
     }
 }
