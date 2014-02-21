@@ -1,5 +1,6 @@
 package no.nkk.dogpopulation.graph.pedigree;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import no.nkk.dogpopulation.importer.dogsearch.*;
 
 import java.util.LinkedHashMap;
@@ -8,6 +9,7 @@ import java.util.Map;
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
+@JsonPropertyOrder({"uuid", "name", "born", "breed", "ids", "inbreedingCoefficient3", "inbreedingCoefficient6", "ownAncestor", "health", "ancestry"})
 public class Dog {
 
     private String uuid;
@@ -16,6 +18,8 @@ public class Dog {
     private Breed breed;
     private Map<String, String> ids = new LinkedHashMap<>();
     private Health health;
+    private Integer inbreedingCoefficient3;
+    private Integer inbreedingCoefficient6;
     private boolean ownAncestor;
     private Ancestry ancestry;
 
@@ -116,6 +120,22 @@ public class Dog {
 
     public void setAncestry(Ancestry ancestry) {
         this.ancestry = ancestry;
+    }
+
+    public Integer getInbreedingCoefficient3() {
+        return inbreedingCoefficient3;
+    }
+
+    public void setInbreedingCoefficient3(Integer inbreedingCoefficient3) {
+        this.inbreedingCoefficient3 = inbreedingCoefficient3;
+    }
+
+    public Integer getInbreedingCoefficient6() {
+        return inbreedingCoefficient6;
+    }
+
+    public void setInbreedingCoefficient6(Integer inbreedingCoefficient6) {
+        this.inbreedingCoefficient6 = inbreedingCoefficient6;
     }
 
     public boolean isOwnAncestor() {
