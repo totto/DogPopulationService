@@ -120,8 +120,8 @@ public class GraphQueryService {
             TopLevelDog dog = new PedigreeAlgorithm(graphDb).getPedigree(node);
             double coi3 = computeCoefficientOfInbreeding(uuid, 3);
             double coi6 = computeCoefficientOfInbreeding(uuid, 6);
-            dog.setInbreedingCoefficient3((int) Math.round(10000 * coi3));
-            dog.setInbreedingCoefficient6((int) Math.round(10000 * coi6));
+            dog.setInbreedingCoefficient3(100 * coi3);
+            dog.setInbreedingCoefficient6(100 * coi6);
             tx.success();
             return dog;
         }

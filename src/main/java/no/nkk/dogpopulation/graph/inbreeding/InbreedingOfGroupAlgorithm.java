@@ -52,7 +52,7 @@ public class InbreedingOfGroupAlgorithm {
                 } else if (percentageTimes100 >= 1250) {
                     dogsWithCoefficientAbove1250.add(new UuidAndRegNo(dogNode));
                 }
-                coefficientStatistics.addValue(percentageTimes100);
+                coefficientStatistics.addValue(percentage);
             }
         }
         return new InbreedingOfGroup(breedSet, minYear, maxYear, PEDIGREE_GENERATIONS, new BasicStatistics(coefficientStatistics), frequency, dogsWithCoefficientAbove1250, dogsWithCoefficientAbove2500, dogsWithCoefficientAbove3000);
