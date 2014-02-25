@@ -4,7 +4,9 @@ import no.nkk.dogpopulation.graph.DogGraphConstants;
 import no.nkk.dogpopulation.graph.DogGraphLabel;
 import no.nkk.dogpopulation.graph.dogbuilder.CommonNodes;
 import no.nkk.dogpopulation.graph.dogbuilder.Dogs;
-import no.nkk.dogpopulation.importer.dogsearch.*;
+import no.nkk.dogpopulation.importer.dogsearch.DogSearchClient;
+import no.nkk.dogpopulation.importer.dogsearch.DogSearchPedigreeImporter;
+import no.nkk.dogpopulation.importer.dogsearch.DogSearchSolrClient;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.glassfish.jersey.jetty.JettyHttpContainerFactory;
@@ -21,15 +23,12 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import javax.ws.rs.core.UriBuilder;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.URL;
-import java.util.*;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -172,119 +171,10 @@ public class Main {
             DogSearchPedigreeImporter dogImporter = new DogSearchPedigreeImporter(executorService, db, dogSearchClient, dogs);
             Main main = new Main(db, new DogPopulationResourceConfigFactory(db, dogImporter, executorService, dogSearchClient));
             main.start();
-
-            if (args.length > 0 && args[0].equalsIgnoreCase("--import")) {
-                String[] suboptions = Arrays.copyOfRange(args, 1, args.length);
-                int statusCode = main.mainImport(executorService, dogSearchClient, dogImporter, suboptions);
-                main.stop();
-                db.shutdown();
-                System.exit(statusCode);
-                return; // always exit after import
-            }
-
             main.join();
         } finally {
             db.shutdown();
         }
     }
 
-
-    public static int mainImport(ExecutorService executorService, DogSearchClient dogSearchClient, DogSearchPedigreeImporter pedigreeImporter, String... args) {
-        if (args.length < 2) {
-            printUsage();
-            return 1;
-        }
-
-        Set<String> breeds = new LinkedHashSet<>();
-        Set<String> ids = new LinkedHashSet<>();
-
-        for (int i=0; i<args.length; i++) {
-            String arg = args[i];
-            if (arg.equalsIgnoreCase("--id") || arg.equalsIgnoreCase("--ids")) {
-                if ((i+1) >= args.length) {
-                    System.out.println("At least one argument must follow option: " + arg);
-                    printUsage();
-                    return 1;
-                }
-                String nextArg = args[i+1];
-                if (nextArg.equals("--")) {
-                    ids.addAll(readAndTrimLinesFromStandardInput());
-                } else {
-                    for (int j=i+1; j<args.length; j++) {
-                        ids.add(args[j].trim());
-                    }
-                }
-                break;
-            }
-            if (arg.equalsIgnoreCase("--breed") | arg.equalsIgnoreCase("--breeds")) {
-                if ((i+1) >= args.length) {
-                    System.out.println("At least one argument must follow option: " + arg);
-                    printUsage();
-                    return 1;
-                }
-                String nextArg = args[i+1];
-                if (nextArg.equals("--")) {
-                    breeds.addAll(readAndTrimLinesFromStandardInput());
-                } else {
-                    for (int j=i+1; j<args.length; j++) {
-                        breeds.add(args[j].trim());
-                    }
-                }
-                break;
-            }
-        }
-
-        List<Future<?>> importCompleteFuture = new ArrayList<>();
-        for (final String id : ids) {
-            importCompleteFuture.add(pedigreeImporter.importPedigree(id));
-        }
-        DogSearchBreedImporter breedImporter = new DogSearchBreedImporter(executorService, pedigreeImporter, dogSearchClient);
-        for (final String breed : breeds) {
-            importCompleteFuture.add(breedImporter.importBreed(breed, new BreedImportStatus(breed)));
-        }
-
-        // wait for all imports to complete
-        for (Future<?> f : importCompleteFuture) {
-            try {
-                f.get();
-            } catch (Exception e) {
-                LOGGER.error("", e);
-            }
-        }
-
-        try {
-            executorService.shutdown();
-            executorService.awaitTermination(1, TimeUnit.MINUTES);
-        } catch (Exception e) {
-            LOGGER.error("", e);
-        }
-
-        return 0;
-    }
-
-    private static Collection<? extends String> readAndTrimLinesFromStandardInput() {
-        Set<String> result = new LinkedHashSet<>();
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String trimmedLine = line.trim();
-                if (trimmedLine.isEmpty()) {
-                    continue; // ignore empty lines
-                }
-                result.add(trimmedLine);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return result;
-    }
-
-    private static void printUsage() {
-        System.out.println("DogPopulationService was invoked with --import. This will start the service and import the pedigree(s) of specific dog(s) or breed(s) from dogsearch into a graph-database.");
-        System.out.println("Import SUB-OPTIONS:");
-        System.out.println("    --id --                  Import a line separated list of dogs from standard input. Each line will be matched against UUID and RegNo in dogsearch.");
-        System.out.println("    --id <UUID|RegNo>...     Import a list of dogs supplied as arguments. Each argument will be matched against UUID and RegNo in dogsearch.");
-        System.out.println("    --breed --               Import all dogs known to dogsearch within a line separated list of breeds from standard input.");
-        System.out.println("    --breed <breed>...       Import all dogs known to dogsearch within a list of breeds supplied as arguments");
-    }
 }
