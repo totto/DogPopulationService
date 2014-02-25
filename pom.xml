@@ -65,7 +65,10 @@
     </distributionManagement>
 
     <scm>
-        <connection>scm:git:git@github.com:NKK-IT-Utvikling/DogPopulationService.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/NKK-IT-Utvikling/DogPopulationService.git</developerConnection>
+        <connection>scm:git:https://github.com/NKK-IT-Utvikling/DogPopulationService.git</connection>
+        <url>https://github.com:NKK-IT-Utvikling/DogPopulationService.git</url>
+        <tag>HEAD</tag>
     </scm>
 
     <build>
