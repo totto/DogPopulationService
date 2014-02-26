@@ -6,11 +6,15 @@ import no.nkk.dogpopulation.graph.GraphUtils;
 import org.joda.time.LocalDate;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
 public class LitterNodeBuilder extends AbstractNodeBuilder {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(LitterNodeBuilder.class);
 
     private String id;
     private LocalDate born;
@@ -32,7 +36,14 @@ public class LitterNodeBuilder extends AbstractNodeBuilder {
             litterNode.setProperty(DogGraphConstants.LITTER_ID, "");
         } else {
             // assume id is a globally unique (within the context of the graph) litter-id.
-            litterNode = findOrCreateLitterNode(graphDb, id);
+            litterNode = GraphUtils.getSingleNode(graphDb, DogGraphLabel.LITTER, DogGraphConstants.LITTER_ID, id);
+            if (litterNode == null) {
+                litterNode = graphDb.createNode(DogGraphLabel.LITTER);
+                litterNode.setProperty(DogGraphConstants.LITTER_ID, id);
+            } else {
+                // possible conflict
+                detectAndLogConflict(litterNode);
+            }
         }
 
         if (count != null) {
@@ -47,14 +58,33 @@ public class LitterNodeBuilder extends AbstractNodeBuilder {
 
     }
 
-    private Node findOrCreateLitterNode(GraphDatabaseService graphDb, String litterId) {
-        Node litter = GraphUtils.getSingleNode(graphDb, DogGraphLabel.LITTER, DogGraphConstants.LITTER_ID, litterId);
-        if (litter != null) {
-            return litter;
+    private void detectAndLogConflict(Node alreadyExistingLitterNode) {
+        boolean conflict = false;
+        if (count != null && alreadyExistingLitterNode.hasProperty(DogGraphConstants.LITTER_COUNT)) {
+            int existingCount = (Integer) alreadyExistingLitterNode.getProperty(DogGraphConstants.LITTER_COUNT);
+            if (existingCount != count) {
+                conflict = true;
+            }
         }
-        litter = graphDb.createNode(DogGraphLabel.LITTER);
-        litter.setProperty(DogGraphConstants.LITTER_ID, litterId);
-        return litter;
+        if (born != null && alreadyExistingLitterNode.hasProperty(DogGraphConstants.LITTER_YEAR)
+                && alreadyExistingLitterNode.hasProperty(DogGraphConstants.LITTER_MONTH)
+                && alreadyExistingLitterNode.hasProperty(DogGraphConstants.LITTER_DAY)) {
+            int existingYear = (Integer) alreadyExistingLitterNode.getProperty(DogGraphConstants.LITTER_YEAR);
+            if (existingYear != born.getYear()) {
+                conflict = true;
+            }
+            int existingMonth = (Integer) alreadyExistingLitterNode.getProperty(DogGraphConstants.LITTER_MONTH);
+            if (existingMonth != born.getMonthOfYear()) {
+                conflict = true;
+            }
+            int existingDay = (Integer) alreadyExistingLitterNode.getProperty(DogGraphConstants.LITTER_DAY);
+            if (existingDay!= born.getDayOfMonth()) {
+                conflict = true;
+            }
+        }
+        if (conflict) {
+            LOGGER.warn("LITTER conflict on id {}", id);
+        }
     }
 
 
