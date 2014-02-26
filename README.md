@@ -9,4 +9,4 @@ Some quick pointers to the REST services
   Inbreeding coefficients are measured in 100 * percentage-of-inbreeding. The "frequency" property counts the number of dogs within ranges of inbreeding.
   i.e. frequncy[0] are all dogs with 0% inbreeding, frequency[1] are dogs in range [0,1)%, frequency[2] in range [1,2)%, etc.
 * Force import, pointers  http://dogid.nkk.no/dogpopulation/graph/breed/import/Pointer
-* HD uttrekk  http://dogid.nkk.no/dogpopulation/graph/breed/Dalmatiner/hdddata 
+* HD uttrekk  http://dogid.nkk.no/dogpopulation/graph/breed/Dalmatiner/hddata
