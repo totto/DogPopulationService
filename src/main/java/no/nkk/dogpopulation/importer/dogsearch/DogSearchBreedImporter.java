@@ -67,13 +67,13 @@ public class DogSearchBreedImporter {
         }
         try {
             breedExecutor.shutdown();
-            breedExecutor.awaitTermination(24, TimeUnit.HOURS);
+            breedExecutor.awaitTermination(3, TimeUnit.DAYS);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
         progress.updateComplete();
         try {
-            Thread.sleep(60 * 1000); // wait for bulk-writer to complete
+            Thread.sleep(5 * 60 * 1000); // wait for bulk-writer to complete
         } catch (InterruptedException ignore) {
         }
         pedigreeImporter.stop();
