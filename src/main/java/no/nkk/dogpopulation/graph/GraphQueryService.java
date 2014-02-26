@@ -5,6 +5,8 @@ import no.nkk.dogpopulation.graph.hdindex.DmuHdIndexAlgorithm;
 import no.nkk.dogpopulation.graph.inbreeding.InbreedingAlgorithm;
 import no.nkk.dogpopulation.graph.inbreeding.InbreedingOfGroup;
 import no.nkk.dogpopulation.graph.inbreeding.InbreedingOfGroupAlgorithm;
+import no.nkk.dogpopulation.graph.litter.LitterStatistics;
+import no.nkk.dogpopulation.graph.litter.LitterStatisticsAlgorithm;
 import no.nkk.dogpopulation.graph.pedigree.PedigreeAlgorithm;
 import no.nkk.dogpopulation.graph.pedigree.TopLevelDog;
 import no.nkk.dogpopulation.graph.pedigreecompleteness.PedigreeCompleteness;
@@ -189,6 +191,17 @@ public class GraphQueryService {
             InbreedingOfGroup inbreedingOfGroup = algorithm.getInbreedingOfGroup(categoryBreedNode, breedSet, minYear, maxYear);
             tx.success();
             return inbreedingOfGroup;
+        }
+    }
+
+
+    public LitterStatistics getLitterStatisticsOfGroup(Set<String> breed, int minYear, int maxYear) {
+        try (Transaction tx = graphDb.beginTx()) {
+            Node categoryBreedNode = getSingleNode(DogGraphLabel.CATEGORY, DogGraphConstants.CATEGORY_CATEGORY, DogGraphConstants.CATEGORY_CATEGORY_BREED);
+            LitterStatisticsAlgorithm algorithm = new LitterStatisticsAlgorithm(graphDb, breed, minYear, maxYear, categoryBreedNode);
+            LitterStatistics litterStatistics = algorithm.execute();
+            tx.success();
+            return litterStatistics;
         }
     }
 

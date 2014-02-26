@@ -6,6 +6,7 @@ import no.nkk.dogpopulation.graph.GraphQueryService;
 import no.nkk.dogpopulation.graph.bulkwrite.BulkWriteService;
 import no.nkk.dogpopulation.graph.hdindex.DmuFiles;
 import no.nkk.dogpopulation.graph.inbreeding.InbreedingOfGroup;
+import no.nkk.dogpopulation.graph.litter.LitterStatistics;
 import no.nkk.dogpopulation.graph.pedigreecompleteness.PedigreeCompleteness;
 import no.nkk.dogpopulation.importer.PedigreeImporter;
 import no.nkk.dogpopulation.importer.PedigreeImporterFactory;
@@ -210,4 +211,30 @@ public class GraphResource {
             throw new RuntimeException(e);
         }
     }
+
+    @GET
+    @Path("/litter")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getLitterOfDogGroup(@QueryParam("breed") List<String> breed, @QueryParam("minYear") Integer minYear, @QueryParam("maxYear") Integer maxYear) {
+        LOGGER.trace("getInbreedingOfDogGroup({})", breed);
+
+        if (breed == null || breed.isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+        if (minYear == null) {
+            minYear = 0;
+        }
+        if (maxYear == null) {
+            maxYear = 9999;
+        }
+        LitterStatistics litterStatistics = graphQueryService.getLitterStatisticsOfGroup(new LinkedHashSet<>(breed), minYear, maxYear);
+
+        try {
+            String json = prettyPrintingObjectWriter.writeValueAsString(litterStatistics);
+            return Response.ok(json).build();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 }
