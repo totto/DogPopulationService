@@ -25,7 +25,16 @@ public class LitterNodeBuilder extends AbstractNodeBuilder {
             throw new MissingFieldException("id");
         }
 
-        Node litterNode = findOrCreateLitterNode(graphDb, id);
+        Node litterNode;
+        if (id.trim().isEmpty()) {
+            // create a new litter node as we don't know the id of the litter
+            litterNode = graphDb.createNode(DogGraphLabel.LITTER);
+            litterNode.setProperty(DogGraphConstants.LITTER_ID, "");
+        } else {
+            // assume id is a globally unique (within the context of the graph) litter-id.
+            litterNode = findOrCreateLitterNode(graphDb, id);
+        }
+
         if (count != null) {
             litterNode.setProperty(DogGraphConstants.LITTER_COUNT, count);
         }

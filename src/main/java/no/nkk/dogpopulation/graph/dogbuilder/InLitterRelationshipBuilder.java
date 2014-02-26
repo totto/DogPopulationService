@@ -1,7 +1,6 @@
 package no.nkk.dogpopulation.graph.dogbuilder;
 
 import no.nkk.dogpopulation.graph.Builder;
-import no.nkk.dogpopulation.graph.DogGraphConstants;
 import no.nkk.dogpopulation.graph.DogGraphRelationshipType;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -38,14 +37,6 @@ public class InLitterRelationshipBuilder extends AbstractRelationshipBuilder {
             if (existingLitter.equals(this.litter)) {
                 return existingInLitter; // already connected to correct litter
             }
-            String litterId = (String) this.litter.getProperty(DogGraphConstants.LITTER_ID);
-            if (litterId.trim().isEmpty()) {
-                return existingInLitter;
-            }
-            String puppyUuid = (String) puppy.getProperty(DogGraphConstants.DOG_UUID);
-            String existingLitterId = (String) existingLitter.getProperty(DogGraphConstants.LITTER_ID);
-            LOGGER.warn("LITTER CONFLICT: Dog {} is already in litter {} but will now be moved to litter {}.", puppyUuid, existingLitterId, litterId);
-            existingInLitter.delete();
         }
         return puppy.createRelationshipTo(this.litter, DogGraphRelationshipType.IN_LITTER);
     }
