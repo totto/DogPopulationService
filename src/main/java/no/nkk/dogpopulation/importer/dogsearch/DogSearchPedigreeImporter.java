@@ -240,7 +240,9 @@ public class DogSearchPedigreeImporter implements PedigreeImporter {
         if (litterId == null) {
             return;
         }
-        bulkWriteService.build(dogs.inLitter().litter(dogs.litter().id(litterId)).puppy(dogBuilder));
+        // TODO Disable this linking for now, as it creates way to many dogs connected to some litter nodes.
+        // This indicates that there are problems with duplicate litter-ids.
+        // bulkWriteService.build(dogs.inLitter().litter(dogs.litter().id(litterId)).puppy(dogBuilder));
     }
 
     private void recordMinimumDepth(TraversalStatistics ts, int depth) {
