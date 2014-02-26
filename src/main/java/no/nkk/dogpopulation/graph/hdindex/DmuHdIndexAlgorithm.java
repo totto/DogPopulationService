@@ -84,7 +84,7 @@ public class DmuHdIndexAlgorithm {
                 Node litterNode = inLitter.getEndNode();
                 try {
                     litterId = Integer.parseInt((String) litterNode.getProperty(DogGraphConstants.LITTER_ID));
-                } catch (Exception ignore) {
+                } catch (RuntimeException ignore) {
                 }
             }
 
