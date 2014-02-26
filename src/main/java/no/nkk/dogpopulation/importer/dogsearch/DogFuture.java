@@ -1,31 +1,39 @@
 package no.nkk.dogpopulation.importer.dogsearch;
 
+import no.nkk.dogpopulation.graph.Builder;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
 public class DogFuture {
 
+    private final Builder<Node> dogBuilder;
     private final Future<Node> dog;
 
     private final Future<DogFuture> fatherFuture;
     private final Future<DogFuture> motherFuture;
 
-    private AtomicReference<Future<Node>[]> puppyFuturesRef = new AtomicReference<Future<Node>[]>(new Future[0]);
+    private final Future<Future<Relationship>>[] puppyFutures;
 
-    DogFuture(Future<Node> dog, Future<DogFuture> fatherFuture, Future<DogFuture> motherFuture) {
+    DogFuture(Builder<Node> dogBuilder, Future<Node> dog) {
+        this(dogBuilder, dog, null, null, null);
+    }
+
+    DogFuture(Builder<Node> dogBuilder, Future<Node> dog, Future<DogFuture> fatherFuture, Future<DogFuture> motherFuture, Future<Future<Relationship>>[] puppyFutures) {
+        this.dogBuilder = dogBuilder;
         this.dog = dog;
         this.fatherFuture = fatherFuture;
         this.motherFuture = motherFuture;
+        this.puppyFutures = puppyFutures;
     }
 
-    private Future<Node>[] getPuppyFutures() {
-        return puppyFuturesRef.get();
+    public Builder<Node> getDogBuilder() {
+        return dogBuilder;
     }
 
     private Node getFather() {
@@ -48,7 +56,7 @@ public class DogFuture {
             nodeFuture.getFather(); // wait recursively
             nodeFuture.getMother(); // wait recursively
             nodeFuture.waitOnPuppies();
-            return nodeFuture.waitForPedigreeImportToComplete();
+            return nodeFuture.waitOnDog();
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         } catch (ExecutionException e) {
@@ -64,9 +72,16 @@ public class DogFuture {
     }
 
     private void waitOnPuppies() {
-        for (Future<Node> puppyFuture : getPuppyFutures()) {
+        if (puppyFutures == null) {
+            return;
+        }
+        for (Future<Future<Relationship>> puppyFuture : puppyFutures) {
             try {
-                puppyFuture.get(); // wait on all puppies
+                Future<Relationship> nodeFuture = puppyFuture.get(); // wait on external-search
+                if (nodeFuture == null) {
+                    continue;
+                }
+                nodeFuture.get(); // wait on graph bulk-write operation
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             } catch (ExecutionException e) {

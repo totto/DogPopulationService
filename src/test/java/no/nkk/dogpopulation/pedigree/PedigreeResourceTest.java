@@ -7,7 +7,7 @@ import no.nkk.dogpopulation.graph.GraphQueryService;
 import no.nkk.dogpopulation.graph.dogbuilder.CommonNodes;
 import no.nkk.dogpopulation.graph.dogbuilder.Dogs;
 import no.nkk.dogpopulation.graph.pedigree.TopLevelDog;
-import no.nkk.dogpopulation.importer.dogsearch.DogTestImporter;
+import no.nkk.dogpopulation.importer.dogsearch.DogTestImporterFactory;
 import org.apache.commons.io.FileUtils;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.joda.time.LocalDate;
@@ -43,7 +43,7 @@ public class PedigreeResourceTest {
             @Override
             public ResourceConfig createResourceConfig() {
                 ResourceConfig resourceConfig = new ResourceConfig();
-                resourceConfig.registerInstances(new PedigreeResource(new PedigreeService(new GraphQueryService(graphDb), new DogTestImporter())));
+                resourceConfig.registerInstances(new PedigreeResource(new PedigreeService(graphDb, new GraphQueryService(graphDb), new DogTestImporterFactory())));
                 return resourceConfig;
             }
         };

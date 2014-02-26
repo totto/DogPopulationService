@@ -26,6 +26,11 @@ public class WriteTask<V> implements Future<V> {
         this.value = value;
     }
 
+    void rollback() {
+        builder.reset();
+        this.value = null;
+    }
+
     public void runPostStep() {
         if (!(builder instanceof PostStepBuilder)) {
             return;

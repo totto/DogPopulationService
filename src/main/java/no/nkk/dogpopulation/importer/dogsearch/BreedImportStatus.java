@@ -1,5 +1,6 @@
 package no.nkk.dogpopulation.importer.dogsearch;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.text.DecimalFormat;
@@ -10,28 +11,32 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
-@JsonPropertyOrder({"breed", "active", "", "progress", "tasksCompleted", "originalPedigreeCount", "dogsAddedToGraph", "elapsedSeconds", "dogsPerSecond"})
+@JsonPropertyOrder({"breed", "active", "progress", "tasksCompleted", "totalTasks", "dogsAddedToGraph", "elapsedSeconds", "dogsPerSecond",
+        "dogsAdded", "dogsUpdated", "litterCount", "puppiesAdded", "dogsearchHit", "dogsearchMiss", "graphHit", "graphMiss", "fathersAdded", "mothersAdded"})
 public class BreedImportStatus {
 
-    private final AtomicInteger originalPedigreeCount = new AtomicInteger();
+    private final AtomicInteger totalTasks = new AtomicInteger();
     private final AtomicInteger tasksCompleted = new AtomicInteger();
     private final String breed;
     private final AtomicLong startTimeMs = new AtomicLong();
     private final AtomicLong elapsedTimeMs = new AtomicLong();
     private final AtomicBoolean active = new AtomicBoolean(true);
 
-    private final AtomicInteger count = new AtomicInteger();
+    @JsonIgnore
+    private final TraversalStatistics ts;
 
+    
     public BreedImportStatus(String breed) {
         this.breed = breed;
+        this.ts = new TraversalStatistics(breed);
     }
 
-    public void setOriginalPedigreeCount(int originalPedigreeCount) {
-        this.originalPedigreeCount.set(originalPedigreeCount);
+    public void setTotalTasks(int totalTasks) {
+        this.totalTasks.set(totalTasks);
     }
 
-    public int getOriginalPedigreeCount() {
-        return originalPedigreeCount.get();
+    public int getTotalTasks() {
+        return totalTasks.get();
     }
 
     public void updateStartTime() {
@@ -50,14 +55,9 @@ public class BreedImportStatus {
         return active.get();
     }
 
-    public void updateWith(TraversalStatistics ts) {
-        count.addAndGet(ts.dogCount.get());
+    public void recordTaskComplete() {
         tasksCompleted.incrementAndGet();
         updateReferenceTime();
-    }
-
-    public int getDogsAddedToGraph() {
-        return count.get();
     }
 
     public String getBreed() {
@@ -73,7 +73,7 @@ public class BreedImportStatus {
         if (elapsedSeconds <= 0) {
             return 0;
         }
-        return (double) count.get() / elapsedSeconds;
+        return (double) (ts.dogsAdded.get() + ts.puppiesAdded.get()) / elapsedSeconds;
     }
 
     public String getDogsPerSecond() {
@@ -84,10 +84,71 @@ public class BreedImportStatus {
         if (tasksCompleted.get() == 0) {
             return "0.00";
         }
-        return new DecimalFormat("0.00").format(100.0 * tasksCompleted.get() / originalPedigreeCount.get());
+        return new DecimalFormat("0.00").format(100.0 * tasksCompleted.get() / totalTasks.get());
+    }
+
+    @JsonIgnore
+    public TraversalStatistics getTraversalStatistics() {
+        return ts;
     }
 
     public int getTasksCompleted() {
         return tasksCompleted.get();
+    }
+
+    public int getDogsAdded() {
+        return ts.dogsAdded.get();
+    }
+
+    public int getDogsUpdated() {
+        return ts.dogsUpdated.get();
+    }
+
+    public int getLitterCount() {
+        return ts.litterCount.get();
+    }
+
+    public int getPuppiesAdded() {
+        return ts.puppiesAdded.get();
+    }
+
+    public int getDogsearchHit() {
+        return ts.dogsearchHit.get();
+    }
+
+    public int getDogsearchMiss() {
+        return ts.dogsearchMiss.get();
+    }
+
+    public int getGraphHit() {
+        return ts.graphHit.get();
+    }
+
+    public int getGraphMiss() {
+        return ts.graphMiss.get();
+    }
+
+    public int getFathersAdded() {
+        return ts.fathersAdded.get();
+    }
+
+    public int getMothersAdded() {
+        return ts.mothersAdded.get();
+    }
+
+    public int getDogsearchPuppyHit() {
+        return ts.dogsearchPuppyHit.get();
+    }
+
+    public int getDogsearchPuppyMiss() {
+        return ts.dogsearchPuppyMiss.get();
+    }
+
+    public int getGraphPuppyHit() {
+        return ts.graphPuppyHit.get();
+    }
+
+    public int getGraphPuppyMiss() {
+        return ts.graphPuppyMiss.get();
     }
 }

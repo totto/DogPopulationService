@@ -8,4 +8,6 @@ import org.neo4j.graphdb.GraphDatabaseService;
 public interface Builder<V> {
 
     V build(GraphDatabaseService graphDb);
+
+    void reset();
 }

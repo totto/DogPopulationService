@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import no.nkk.dogpopulation.Main;
 import no.nkk.dogpopulation.graph.DogGraphConstants;
 import no.nkk.dogpopulation.graph.GraphQueryService;
+import no.nkk.dogpopulation.graph.bulkwrite.BulkWriteService;
 import no.nkk.dogpopulation.graph.dogbuilder.CommonNodes;
 import no.nkk.dogpopulation.graph.dogbuilder.Dogs;
 import no.nkk.dogpopulation.graph.pedigree.TopLevelDog;
@@ -62,10 +63,14 @@ public class DogSearchPedigreeImporterTest {
             }
         };
 
-        Dogs dogs = new Dogs(new CommonNodes(graphDb));
-        DogSearchPedigreeImporter importer = new DogSearchPedigreeImporter(executorService, graphDb, dogSearchClient, dogs);
+        CommonNodes commonNodes = new CommonNodes(graphDb);
+        Dogs dogs = new Dogs(commonNodes);
+        BulkWriteService bulkWriteService = new BulkWriteService(graphDb);
+
+        DogSearchPedigreeImporter importer = new DogSearchPedigreeImporter(executorService, graphDb, dogSearchClient, dogs, commonNodes, bulkWriteService);
         Future<String> future = importer.importPedigree("AB/12345/67");
         String uuid = future.get(30, TimeUnit.SECONDS);
+        importer.stop();
 
         GraphQueryService graphQueryService = new GraphQueryService(graphDb);
         TopLevelDog topLevelDog = graphQueryService.getPedigree(uuid);
@@ -76,7 +81,6 @@ public class DogSearchPedigreeImporterTest {
         Assert.assertEquals(topLevelDog.getBorn(), "1994-04-28");
         Assert.assertEquals(topLevelDog.getHealth().getHdDiag(), "A1");
         Assert.assertEquals(topLevelDog.getHealth().getHdYear(), 1996);
-        // Assert.assertEquals(topLevelDog.getOffspring().length, 6);
-        Assert.assertNull(topLevelDog.getOffspring());
+        Assert.assertEquals(topLevelDog.getOffspring().length, 6);
     }
 }

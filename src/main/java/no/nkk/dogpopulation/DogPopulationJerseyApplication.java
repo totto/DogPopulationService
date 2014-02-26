@@ -1,7 +1,7 @@
 package no.nkk.dogpopulation;
 
 import no.nkk.dogpopulation.graph.GraphQueryService;
-import no.nkk.dogpopulation.importer.PedigreeImporter;
+import no.nkk.dogpopulation.importer.PedigreeImporterFactory;
 import no.nkk.dogpopulation.importer.dogsearch.DogSearchClient;
 import no.nkk.dogpopulation.pedigree.GraphResource;
 import no.nkk.dogpopulation.pedigree.PedigreeResource;
@@ -17,10 +17,10 @@ import java.util.concurrent.ExecutorService;
  */
 @ApplicationPath("dogpopulation")
 public class DogPopulationJerseyApplication extends ResourceConfig {
-    public DogPopulationJerseyApplication(GraphDatabaseService graphDb, PedigreeImporter pedigreeImporter, ExecutorService executorService, DogSearchClient dogSearchClient) {
+    public DogPopulationJerseyApplication(GraphDatabaseService graphDb, ExecutorService executorService, DogSearchClient dogSearchClient, PedigreeImporterFactory pedigreeImporterFactory) {
         GraphQueryService graphQueryService = new GraphQueryService(graphDb);
-        PedigreeService pedigreeService = new PedigreeService(graphQueryService, pedigreeImporter);
+        PedigreeService pedigreeService = new PedigreeService(graphDb, graphQueryService, pedigreeImporterFactory);
 
-        registerInstances(new PedigreeResource(pedigreeService), new GraphResource(graphQueryService, executorService, pedigreeImporter, dogSearchClient));
+        registerInstances(new PedigreeResource(pedigreeService), new GraphResource(graphDb, graphQueryService, executorService, pedigreeImporterFactory, dogSearchClient));
     }
 }

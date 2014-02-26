@@ -30,8 +30,4 @@ public class Dogs {
     public InLitterRelationshipBuilder inLitter() {
         return new InLitterRelationshipBuilder();
     }
-
-    public IsBreedRelationshipBuilder isBreed() {
-        return new IsBreedRelationshipBuilder();
-    }
 }

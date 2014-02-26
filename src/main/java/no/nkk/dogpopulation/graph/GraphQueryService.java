@@ -36,14 +36,6 @@ public class GraphQueryService {
     }
 
 
-    public Node getDog(String uuid) {
-        try (Transaction tx = graphDb.beginTx()) {
-            Node dog = getSingleNode(DogGraphLabel.DOG, DogGraphConstants.DOG_UUID, uuid);
-            tx.success();
-            return dog;
-        }
-    }
-
     public DmuFiles getDmuFiles(String breed) {
         try (Transaction tx = graphDb.beginTx()) {
             DmuFiles dmuFiles = new DmuHdIndexAlgorithm(graphDb).getDmuFiles(breed);
@@ -94,10 +86,35 @@ public class GraphQueryService {
     }
 
 
-    public Node getDogIfItHasAtLeastOneParent(String uuid) {
+    public Node getDog(String id) {
         try (Transaction tx = graphDb.beginTx()) {
-            Node dog = getDogNode(uuid);
+            Node dog = getDogNode(id);
+            tx.success();
+            return dog;
+        }
+    }
+
+
+    public GraphDogLookupResult lookupDog(String id) {
+        try (Transaction tx = graphDb.beginTx()) {
+            Node dog = getDogNode(id);
             if (dog == null) {
+                tx.success();
+                return null;
+            }
+            Iterable<Relationship> parentRelationships = dog.getRelationships(Direction.OUTGOING, DogGraphRelationshipType.HAS_PARENT);
+            boolean atLeastOneConnectedParent = parentRelationships.iterator().hasNext();
+            tx.success();
+            return new GraphDogLookupResult(dog, atLeastOneConnectedParent);
+        }
+    }
+
+
+    public Node getDogIfItHasAtLeastOneParent(String id) {
+        try (Transaction tx = graphDb.beginTx()) {
+            Node dog = getDogNode(id);
+            if (dog == null) {
+                tx.success();
                 return null;
             }
             Iterable<Relationship> parentRelationships = dog.getRelationships(Direction.OUTGOING, DogGraphRelationshipType.HAS_PARENT);
@@ -111,15 +128,15 @@ public class GraphQueryService {
     }
 
 
-    public TopLevelDog getPedigree(String uuid) {
+    public TopLevelDog getPedigree(String id) {
         try (Transaction tx = graphDb.beginTx()) {
-            Node node = getDogNode(uuid);
+            Node node = getDogNode(id);
             if (node == null) {
                 return null; // dog not found
             }
             TopLevelDog dog = new PedigreeAlgorithm(graphDb).getPedigree(node);
-            double coi3 = computeCoefficientOfInbreeding(uuid, 3);
-            double coi6 = computeCoefficientOfInbreeding(uuid, 6);
+            double coi3 = computeCoefficientOfInbreeding(id, 3);
+            double coi6 = computeCoefficientOfInbreeding(id, 6);
             dog.setInbreedingCoefficient3(100 * coi3);
             dog.setInbreedingCoefficient6(100 * coi6);
             tx.success();
@@ -200,7 +217,11 @@ public class GraphQueryService {
         return GraphUtils.getSingleNode(graphDb, label, property, value);
     }
 
-    Node getDogNode(String uuid) {
-        return getSingleNode(DogGraphLabel.DOG, DogGraphConstants.DOG_UUID, uuid);
+    Node getDogNode(String id) {
+        Node dog = getSingleNode(DogGraphLabel.DOG, DogGraphConstants.DOG_UUID, id);
+        if (dog != null) {
+            return dog; // found by UUID
+        }
+        return getSingleNode(DogGraphLabel.DOG, DogGraphConstants.DOG_REGNO, id);
     }
 }

@@ -8,10 +8,22 @@ import java.util.concurrent.CountDownLatch;
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
 public class BulkState {
-    final CountDownLatch countDownLatch = new CountDownLatch(1);
-    private final List<WriteTask<?>> requests = new LinkedList<>();
+    private final CountDownLatch countDownLatch;
+    private final List<WriteTask<?>> tasks = new LinkedList<>();
+
+    public BulkState(CountDownLatch countDownLatch) {
+        this.countDownLatch = countDownLatch;
+    }
 
     public void addBuilder(WriteTask<?> builder) {
-        requests.add(builder);
+        tasks.add(builder);
+    }
+
+    public CountDownLatch getCountDownLatch() {
+        return countDownLatch;
+    }
+
+    public List<WriteTask<?>> getTasks() {
+        return tasks;
     }
 }

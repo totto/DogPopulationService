@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
@@ -43,14 +44,22 @@ public class DogSearchBreedImporter {
         };
     }
 
-    private int importBreedPedigree(String breed, BreedImportStatus progress) {
+    private int importBreedPedigree(final String breed, BreedImportStatus progress) {
         LOGGER.info("Looking up all UUIDs on dogsearch for breed {}", breed);
         Set<String> breedIds = dogSearchClient.listIdsForBreed(breed);
         LOGGER.info("Found {} {} dogs on dogsearch, importing pedigrees...", breedIds.size(), breed);
-        progress.setOriginalPedigreeCount(breedIds.size());
+        progress.setTotalTasks(breedIds.size());
         progress.updateStartTime();
-        final int NTHREADS = 4;
-        ExecutorService breedExecutor = Executors.newFixedThreadPool(NTHREADS);
+        final int NTHREADS = 3;
+        ExecutorService breedExecutor = Executors.newFixedThreadPool(NTHREADS, new ThreadFactory() {
+            private final AtomicInteger nextId = new AtomicInteger(1);
+            @Override
+            public Thread newThread(Runnable runnable) {
+                Thread thread = new Thread(runnable);
+                thread.setName(breed + " - breed-importer-" + nextId.getAndIncrement());
+                return thread;
+            }
+        });
         int n = 0;
         for (String id : breedIds) {
             breedExecutor.submit(createTaskForImportOfPedigree(breed, progress, id));
@@ -63,6 +72,11 @@ public class DogSearchBreedImporter {
             throw new RuntimeException(e);
         }
         progress.updateComplete();
+        try {
+            Thread.sleep(60 * 1000); // wait for bulk-writer to complete
+        } catch (InterruptedException ignore) {
+        }
+        pedigreeImporter.stop();
         LOGGER.info("Submitted {} pedigree tasks to {} threads.", n, NTHREADS);
         return n;
     }
@@ -74,9 +88,9 @@ public class DogSearchBreedImporter {
                 final String origThreadName = Thread.currentThread().getName();
                 Thread.currentThread().setName(breed);
                 try {
-                    TraversalStatistics ts = pedigreeImporter.importDogPedigree(id);
-                    LOGGER.trace("Imported pedigree({} new dogs) for {}", ts.dogCount, id);
-                    progress.updateWith(ts);
+                    TraversalStatistics ts = ((DogSearchPedigreeImporter) pedigreeImporter).importDogPedigree(id, progress.getTraversalStatistics());
+                    LOGGER.trace("Imported pedigree({} new dogs) for {}", ts.dogsAdded.get() + ts.puppiesAdded.get(), id);
+                    progress.recordTaskComplete();
                 } finally {
                     Thread.currentThread().setName(origThreadName);
                 }

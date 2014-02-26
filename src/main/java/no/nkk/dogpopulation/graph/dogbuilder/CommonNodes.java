@@ -47,6 +47,10 @@ public class CommonNodes {
     }
 
     public Node getBreed(String name, String id) {
+        if (name == null) {
+            return null;
+        }
+
         synchronized (breedByName) {
 
             Node breedNode = breedByName.get(name);

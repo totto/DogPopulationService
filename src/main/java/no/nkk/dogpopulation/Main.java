@@ -5,7 +5,7 @@ import no.nkk.dogpopulation.graph.DogGraphLabel;
 import no.nkk.dogpopulation.graph.dogbuilder.CommonNodes;
 import no.nkk.dogpopulation.graph.dogbuilder.Dogs;
 import no.nkk.dogpopulation.importer.dogsearch.DogSearchClient;
-import no.nkk.dogpopulation.importer.dogsearch.DogSearchPedigreeImporter;
+import no.nkk.dogpopulation.importer.dogsearch.DogSearchPedigreeImporterFactory;
 import no.nkk.dogpopulation.importer.dogsearch.DogSearchSolrClient;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
@@ -163,13 +163,14 @@ public class Main {
 
         GraphDatabaseService db = createGraphDb("data/dogdb");
         try {
-            ExecutorService executorService = Executors.newFixedThreadPool(200);
+            ExecutorService executorService = Executors.newFixedThreadPool(300);
             DogSearchClient dogSearchClient = new DogSearchSolrClient("http://dogsearch.nkk.no/dogservice/dogs");
 
             CommonNodes commonNodes = new CommonNodes(db);
             Dogs dogs = new Dogs(commonNodes);
-            DogSearchPedigreeImporter dogImporter = new DogSearchPedigreeImporter(executorService, db, dogSearchClient, dogs);
-            Main main = new Main(db, new DogPopulationResourceConfigFactory(db, dogImporter, executorService, dogSearchClient));
+            DogSearchPedigreeImporterFactory dogImporterFactory = new DogSearchPedigreeImporterFactory(executorService, db, dogSearchClient, dogs, commonNodes);
+
+            Main main = new Main(db, new DogPopulationResourceConfigFactory(db, dogImporterFactory, executorService, dogSearchClient));
             main.start();
             main.join();
         } finally {

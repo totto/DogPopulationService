@@ -12,4 +12,6 @@ public interface PedigreeImporter {
     Future<String> importPedigree(final String id);
 
     TraversalStatistics importDogPedigree(String id);
+
+    void stop();
 }

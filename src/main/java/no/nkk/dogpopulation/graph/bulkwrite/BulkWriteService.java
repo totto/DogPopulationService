@@ -11,6 +11,8 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
@@ -18,6 +20,9 @@ import java.util.concurrent.Future;
 public class BulkWriteService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BulkWriteService.class);
+    private static final AtomicLong bulkWriterServiceSequence = new AtomicLong(1);
+
+    private static final int MAX_PENDING_BUILDERS = 50;
 
     private final GraphDatabaseService graphDb;
 
@@ -31,19 +36,59 @@ public class BulkWriteService {
     private CountDownLatch nextBulk = new CountDownLatch(1);
 
     // access to this map is guarded by locking the map instance itself
-    private final Map<String, Future<Node>> inProgress = new LinkedHashMap<>();
+    private final Map<String, BuilderProgress> inProgress = new LinkedHashMap<>();
 
+    private AtomicBoolean done = new AtomicBoolean(false);
+
+    // only accessed by writer thread
+    private BulkState currentBulk;
+
+    private final Random rnd;
 
     public BulkWriteService(GraphDatabaseService graphDb) {
         this.graphDb = graphDb;
-        new Thread(new Runnable() {
+        Thread thread = new Thread(new Runnable() {
             @Override
             public void run() {
-                for (;;) {
-                    writeNextBulk();
+                while (!done.get()) {
+                    final int MAX_RETRIES = 10;
+                    for (int retry=0; !done.get() && retry<MAX_RETRIES; retry++) {
+                        try {
+                            writeNextBulk();
+                            break; // success, no need for retry
+                        } catch (RuntimeException e) {
+                            if (retry + 1 == MAX_RETRIES) {
+                                // last retry failed
+                                LOGGER.error("", e);
+                                currentBulk = null; // discard poisonous bulk
+                                break;
+                            } else {
+                                int waitMs = 300 + rnd.nextInt(2701);
+                                LOGGER.debug("Exception causing a retry in {} milliseconds: {}", waitMs, e.getMessage());
+                                try {
+                                    // wait between 0.3 and 3 seconds before retrying again
+                                    Thread.sleep(waitMs);
+                                } catch (InterruptedException ignore) {
+                                }
+                            }
+                        }
+                    }
                 }
+                LOGGER.info("{} shutting down.", Thread.currentThread().getName());
             }
-        }).start();
+        });
+        long mySequence = bulkWriterServiceSequence.getAndIncrement();
+        rnd = new Random(System.currentTimeMillis() + mySequence);
+        thread.setName("Bulk-Graph-Writer--" + mySequence);
+        thread.start();
+    }
+
+
+    public void stop() {
+        done.set(true);
+        synchronized (lock) {
+            lock.notifyAll();
+        }
     }
 
 
@@ -55,19 +100,21 @@ public class BulkWriteService {
      * @param builder
      * @return
      */
-    public ConcurrentProgress build(final String key, Builder<Node> builder) {
+    public BuilderProgress build(final String key, Builder<Node> builder) {
         if (!(builder instanceof PostStepBuilder)) {
             throw new IllegalArgumentException("builder must be an instance of " + PostStepBuilder.class.getName());
         }
+        throttle(); // important to throttle before we acquire inProgress monitor, calling it inside will most likely cause deadlock
         synchronized (inProgress) {
-            Future<Node> existingFuture = inProgress.get(key);
-            if (existingFuture != null) {
-                return new ConcurrentProgress(true, existingFuture);
+            BuilderProgress existingProgress = inProgress.get(key);
+            if (existingProgress != null) {
+                return new BuilderProgress(true, existingProgress.getFuture(), existingProgress.getBuilder());
             }
             ((PostStepBuilder) builder).setPostBuildTask(createInProgressCleanupTask(key));
-            Future<Node> future = build(builder);
-            inProgress.put(key, future);
-            return new ConcurrentProgress(false, future);
+            WriteTask<Node> task = addTaskToQueue(builder);
+            BuilderProgress progress = new BuilderProgress(false, task, builder);
+            inProgress.put(key, progress);
+            return progress;
         }
     }
 
@@ -103,39 +150,39 @@ public class BulkWriteService {
      */
     public void writeNextBulk() {
 
-        waitForAtLeastOneTaskInQueue();
+        if (currentBulk == null) {
+            waitForAtLeastOneTaskInQueue();
+            currentBulk = getNextBulk();
+        }
 
-        // queue might still be empty if we have multiple writer threads, that is ok.
-
-        List<WriteTask<?>> tasks = new LinkedList<>();
-        CountDownLatch countDownLatch = populateTaskList(tasks);
+        CountDownLatch countDownLatch = currentBulk.getCountDownLatch();
 
         long startTime = System.currentTimeMillis();
 
-        bulkWriteToGraph(tasks);
+        bulkWriteToGraph(currentBulk);
 
         // signal that all pieces are completed
         countDownLatch.countDown();
 
-        runTaskPoststeps(tasks);
+        runTaskPoststeps(currentBulk);
 
         if (LOGGER.isTraceEnabled()) {
             int size;
             synchronized (inProgress) {
                 size = inProgress.size();
             }
-            LOGGER.trace("Completed bulk write of {} tasks in {} ms. There are now {} tasks in-progress", tasks.size(), System.currentTimeMillis() - startTime, size);
+            LOGGER.trace("Completed bulk write of {} tasks in {} ms. There are now {} tasks in-progress", currentBulk.getTasks().size(), System.currentTimeMillis() - startTime, size);
         }
+
+        currentBulk = null;
     }
 
 
     private void throttle() {
-        final int MAX_PENDING_BUILDERS = 10000;
-        final int SECONDS_TO_WAIT = 2;
         synchronized (lock) {
             while (requestQueue.size() > MAX_PENDING_BUILDERS) {
                 try {
-                    lock.wait(SECONDS_TO_WAIT * 1000);
+                    lock.wait();
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
@@ -155,7 +202,7 @@ public class BulkWriteService {
 
     private void waitForAtLeastOneTaskInQueue() {
         synchronized (lock) {
-            if (requestQueue.isEmpty()) {
+            while (!done.get() && requestQueue.isEmpty()) {
                 try {
                     lock.wait();
                 } catch (InterruptedException e) {
@@ -165,39 +212,52 @@ public class BulkWriteService {
         }
     }
 
-    private CountDownLatch populateTaskList(List<WriteTask<?>> tasks) {
-        CountDownLatch countDownLatch;
+    private BulkState getNextBulk() {
+        BulkState bulkState;
         synchronized (lock) {
-            countDownLatch = nextBulk;
+            bulkState = new BulkState(nextBulk);
             WriteTask<?> task;
-            // drain queue
+            // drain queue - it is very important to drain entire queue here, otherwise we end up with wrong count-down-latch assignments.
+            // all tasks on queue belong to same count-down-latch!
             while ((task = requestQueue.poll()) != null) {
-                tasks.add(task);
+                bulkState.addBuilder(task);
             }
+
             nextBulk = new CountDownLatch(1);
             lock.notifyAll();
         }
-        return countDownLatch;
+        return bulkState;
     }
 
-    private void bulkWriteToGraph(List<WriteTask<?>> tasks) {
+    private void bulkWriteToGraph(BulkState bulkState) {
+        boolean success = false;
+
         try (Transaction tx = graphDb.beginTx()) {
 
             /*
              * Build all the pieces
              */
 
-            for (WriteTask<?> task : tasks) {
+            for (WriteTask<?> task : bulkState.getTasks()) {
                 task.performDirty(graphDb);
             }
 
             // commit in single transaction
             tx.success();
+            success = true;
+
+        } finally {
+            if (!success) {
+                // reset all builders
+                for (WriteTask<?> task : bulkState.getTasks()) {
+                    task.rollback();
+                }
+            }
         }
     }
 
-    private void runTaskPoststeps(List<WriteTask<?>> tasks) {
-        for (WriteTask<?> task : tasks) {
+    private void runTaskPoststeps(BulkState bulkState) {
+        for (WriteTask<?> task : bulkState.getTasks()) {
             task.runPostStep();
         }
     }

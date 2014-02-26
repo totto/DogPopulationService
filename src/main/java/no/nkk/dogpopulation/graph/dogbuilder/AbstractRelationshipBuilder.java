@@ -9,14 +9,28 @@ import org.neo4j.graphdb.Relationship;
  */
 public abstract class AbstractRelationshipBuilder implements Builder<Relationship> {
 
+    protected final Object lock = new Object();
+
     protected Relationship result;
+
+    protected AbstractRelationshipBuilder() {
+    }
 
     @Override
     public Relationship build(GraphDatabaseService graphDb) {
-        if (result != null) {
+        synchronized (lock) {
+            if (result == null) {
+                result = doBuild(graphDb);;
+            }
             return result;
         }
-        return doBuild(graphDb);
+    }
+
+    @Override
+    public void reset() {
+        synchronized (lock) {
+            result = null;
+        }
     }
 
     protected abstract Relationship doBuild(GraphDatabaseService graphDb);

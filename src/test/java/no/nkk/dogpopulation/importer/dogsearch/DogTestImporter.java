@@ -24,6 +24,10 @@ public class DogTestImporter implements PedigreeImporter, Callable<String> {
     }
 
     @Override
+    public void stop() {
+    }
+
+    @Override
     public String call() {
         // used for unit-testing only, do nothing
         return null;

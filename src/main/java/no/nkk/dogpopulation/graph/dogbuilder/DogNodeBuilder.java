@@ -56,9 +56,10 @@ public class DogNodeBuilder extends AbstractNodeBuilder implements PostStepBuild
 
         Node dogNode = GraphUtils.findOrCreateNode(graphDb, DogGraphLabel.DOG, DogGraphConstants.DOG_UUID, uuid);
 
+        boolean dogExists = false;
+
         if (dogNode.hasProperty(DogGraphConstants.DOG_NAME)) {
-            LOGGER.trace("DOG already exists, properties will not be updated");
-            return dogNode;
+            dogExists = true;
         }
 
         // new dog
@@ -79,12 +80,19 @@ public class DogNodeBuilder extends AbstractNodeBuilder implements PostStepBuild
             dogNode.setProperty(DogGraphConstants.DOG_HDYEAR, hdXray.getYear());
         }
 
-        LOGGER.trace("Added DOG to graph {}", uuid);
+        if (dogExists) {
+            LOGGER.trace("Updated DOG properties of {}", uuid);
+        } else {
+            LOGGER.trace("Added DOG to graph {}", uuid);
+        }
 
         return dogNode;
     }
 
     private Relationship connectToBreed(Node dogNode) {
+        if (breedNode == null) {
+            return null;
+        }
 
         if (dogNode.hasRelationship(DogGraphRelationshipType.IS_BREED, Direction.OUTGOING)) {
             // relationship already exists
@@ -95,7 +103,8 @@ public class DogNodeBuilder extends AbstractNodeBuilder implements PostStepBuild
             }
 
             String existingBreed = (String) existingBreedNode.getProperty(DogGraphConstants.BREED_BREED);
-            LOGGER.warn("BREED of dog \"{}\" changed from \"{}\" to \"{}\".", uuid, existingBreed, breedNode);
+            String breed = (String) breedNode.getProperty(DogGraphConstants.BREED_BREED);
+            LOGGER.warn("BREED of dog \"{}\" changed from \"{}\" to \"{}\".", uuid, existingBreed, breed);
             relationship.delete();
         }
 
@@ -127,12 +136,12 @@ public class DogNodeBuilder extends AbstractNodeBuilder implements PostStepBuild
         String breedName;
         String breedId = null;
         if (dogBreed == null) {
-            LOGGER.warn("UNKNOWN breed of dog {}.", uuid);
+            LOGGER.debug("UNKNOWN breed of dog {}.", uuid);
             breedName = "UNKNOWN";
         } else {
             breedId = dogBreed.getId();
             if (dogBreed.getName().trim().isEmpty()) {
-                LOGGER.warn("UNKNOWN breed of dog {}.", uuid);
+                LOGGER.debug("Empty breed name, using UNKNOWN as breed for dog {}.", uuid);
                 breedName = "UNKNOWN";
             } else {
                 breedName = dogBreed.getName();
@@ -182,6 +191,9 @@ public class DogNodeBuilder extends AbstractNodeBuilder implements PostStepBuild
 
 
     public DogNodeBuilder uuid(String uuid) {
+        if (uuid == null) {
+            throw new IllegalArgumentException("uuid cannot be null");
+        }
         this.uuid = uuid;
         return this;
     }
@@ -194,6 +206,10 @@ public class DogNodeBuilder extends AbstractNodeBuilder implements PostStepBuild
         return this;
     }
     public DogNodeBuilder name(String name) {
+        if (name == null) {
+            name = "";
+            LOGGER.warn("UNKNOWN name of dog, using empty name. {}.", uuid);
+        }
         this.name = name;
         return this;
     }

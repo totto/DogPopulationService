@@ -1,5 +1,6 @@
 package no.nkk.dogpopulation.graph.dogbuilder;
 
+import no.nkk.dogpopulation.graph.Builder;
 import no.nkk.dogpopulation.graph.DogGraphConstants;
 import no.nkk.dogpopulation.graph.DogGraphRelationshipType;
 import no.nkk.dogpopulation.graph.ParentRole;
@@ -21,6 +22,7 @@ public class HasLitterRelationshipBuilder extends AbstractRelationshipBuilder {
     private Node parent;
     private Node litter;
     private LitterNodeBuilder litterBuilder;
+    private Builder<Node> parentBuilder;
 
     HasLitterRelationshipBuilder() {
     }
@@ -29,6 +31,9 @@ public class HasLitterRelationshipBuilder extends AbstractRelationshipBuilder {
     protected Relationship doBuild(GraphDatabaseService graphDb) {
         if (litter == null) {
             litter = litterBuilder.build(graphDb);
+        }
+        if (parent == null) {
+            parent = parentBuilder.build(graphDb);
         }
         for (Relationship existingHasLitter : parent.getRelationships(Direction.OUTGOING, DogGraphRelationshipType.HAS_LITTER)) {
             Node existingLitter = existingHasLitter.getEndNode();
@@ -57,9 +62,25 @@ public class HasLitterRelationshipBuilder extends AbstractRelationshipBuilder {
         return hasLitter;
     }
 
+    @Override
+    public void reset() {
+        if (litterBuilder != null) {
+            litterBuilder.reset();
+            litter = null;
+        }
+        if (parentBuilder != null) {
+            parentBuilder.reset();
+            parent = null;
+        }
+        super.reset();
+    }
 
     public HasLitterRelationshipBuilder parent(Node parent) {
         this.parent = parent;
+        return this;
+    }
+    public HasLitterRelationshipBuilder parent(Builder<Node> parentBuilder) {
+        this.parentBuilder = parentBuilder;
         return this;
     }
     public HasLitterRelationshipBuilder role(ParentRole parentRole) {

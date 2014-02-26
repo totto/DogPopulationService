@@ -7,7 +7,20 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class TraversalStatistics {
     final String id;
-    final AtomicInteger dogCount = new AtomicInteger();
+    final AtomicInteger dogsAdded = new AtomicInteger();
+    final AtomicInteger dogsUpdated = new AtomicInteger();
+    final AtomicInteger litterCount = new AtomicInteger();
+    final AtomicInteger puppiesAdded = new AtomicInteger();
+    final AtomicInteger dogsearchHit = new AtomicInteger();
+    final AtomicInteger dogsearchMiss = new AtomicInteger();
+    final AtomicInteger dogsearchPuppyHit = new AtomicInteger();
+    final AtomicInteger dogsearchPuppyMiss = new AtomicInteger();
+    final AtomicInteger graphPuppyHit = new AtomicInteger();
+    final AtomicInteger graphPuppyMiss = new AtomicInteger();
+    final AtomicInteger graphHit = new AtomicInteger();
+    final AtomicInteger graphMiss = new AtomicInteger();
+    final AtomicInteger fathersAdded = new AtomicInteger();
+    final AtomicInteger mothersAdded = new AtomicInteger();
     final AtomicInteger maxDepth = new AtomicInteger();
     final AtomicInteger minDepth = new AtomicInteger(Integer.MAX_VALUE);
 
@@ -18,9 +31,17 @@ public class TraversalStatistics {
     @Override
     public String toString() {
         return "TraversalStatistics{" +
-                "dogCount=" + dogCount.get() +
-                ", maxDepth=" + maxDepth.get() +
-                ", minDepth=" + minDepth.get() +
+                "id='" + id + '\'' +
+                ", dogsAdded=" + dogsAdded +
+                ", dogsUpdated=" + dogsUpdated +
+                ", litterCount=" + litterCount +
+                ", puppiesAdded=" + puppiesAdded +
+                ", dogsearchHit=" + dogsearchHit +
+                ", dogsearchMiss=" + dogsearchMiss +
+                ", graphHit=" + graphHit +
+                ", graphMiss=" + graphMiss +
+                ", maxDepth=" + maxDepth +
+                ", minDepth=" + minDepth +
                 '}';
     }
 }

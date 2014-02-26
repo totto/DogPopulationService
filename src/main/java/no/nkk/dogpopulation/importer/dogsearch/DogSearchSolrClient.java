@@ -67,7 +67,13 @@ public class DogSearchSolrClient implements DogSearchClient {
 
     private QueryResponse runFindDogQuery(String id) {
         String eid = ClientUtils.escapeQueryChars(id);
-        SolrQuery solrQuery = new SolrQuery(String.format("id:\"%s\" OR ids:\"%s\"", eid, eid));
+        SolrQuery solrQuery;
+        try {
+            UUID.fromString(id);
+            solrQuery = new SolrQuery(String.format("id:\"%s\"", eid));
+        } catch (IllegalArgumentException notValidUuid) {
+            solrQuery = new SolrQuery(String.format("ids:\"%s\"", eid));
+        }
         solrQuery.setRows(10);
         return runSolrQueryWithRetries(solrQuery);
     }

@@ -34,12 +34,12 @@ public class PedigreeResource {
     }
 
     @GET
-    @Path("/{uuid}")
+    @Path("/{id}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getPedigree(@PathParam("uuid") String uuid) {
-        LOGGER.trace("getPedigree for dog with uuid " + uuid);
+    public Response getPedigree(@PathParam("id") String id) {
+        LOGGER.trace("getPedigree for dog with id " + id);
 
-        TopLevelDog dog = pedigreeService.getPedigree(uuid);
+        TopLevelDog dog = pedigreeService.getPedigree(id);
 
         if (dog == null) {
             return Response.status(Response.Status.NOT_FOUND).build();

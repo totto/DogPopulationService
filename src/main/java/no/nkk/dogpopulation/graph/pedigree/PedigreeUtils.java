@@ -89,7 +89,7 @@ public class PedigreeUtils {
             }
             List<Puppy> puppyList = new ArrayList<>();
             for (Relationship inLitter : litterNode.getRelationships(Direction.INCOMING, DogGraphRelationshipType.IN_LITTER)) {
-                Node puppyNode = inLitter.getEndNode();
+                Node puppyNode = inLitter.getStartNode();
                 Puppy puppy = new Puppy();
                 puppy.setId((String) puppyNode.getProperty(DogGraphConstants.DOG_UUID));
                 puppy.setName((String) puppyNode.getProperty(DogGraphConstants.DOG_NAME));

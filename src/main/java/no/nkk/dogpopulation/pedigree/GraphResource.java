@@ -3,13 +3,16 @@ package no.nkk.dogpopulation.pedigree;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import no.nkk.dogpopulation.graph.GraphQueryService;
+import no.nkk.dogpopulation.graph.bulkwrite.BulkWriteService;
 import no.nkk.dogpopulation.graph.hdindex.DmuFiles;
 import no.nkk.dogpopulation.graph.inbreeding.InbreedingOfGroup;
 import no.nkk.dogpopulation.graph.pedigreecompleteness.PedigreeCompleteness;
 import no.nkk.dogpopulation.importer.PedigreeImporter;
+import no.nkk.dogpopulation.importer.PedigreeImporterFactory;
 import no.nkk.dogpopulation.importer.dogsearch.BreedImportStatus;
 import no.nkk.dogpopulation.importer.dogsearch.DogSearchBreedImporter;
 import no.nkk.dogpopulation.importer.dogsearch.DogSearchClient;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,16 +35,22 @@ public class GraphResource {
     private final ObjectWriter prettyPrintingObjectWriter;
 
     private final GraphQueryService graphQueryService;
+    private final GraphDatabaseService graphDb;
 
     private final Map<String, BreedImportStatus> breedImportStatus = new LinkedHashMap<>(); // keep references forever
 
-    private final DogSearchBreedImporter dogSearchBreedImporter;
+    private final ExecutorService executorService;
+    private final PedigreeImporterFactory pedigreeImporterFactory;
+    private final DogSearchClient dogSearchClient;
 
-    public GraphResource(GraphQueryService graphQueryService, ExecutorService executorService, PedigreeImporter pedigreeImporter, DogSearchClient dogSearchClient) {
+    public GraphResource(GraphDatabaseService graphDb, GraphQueryService graphQueryService, ExecutorService executorService, PedigreeImporterFactory pedigreeImporterFactory, DogSearchClient dogSearchClient) {
         objectMapper = new ObjectMapper();
         prettyPrintingObjectWriter = objectMapper.writerWithDefaultPrettyPrinter();
+        this.graphDb = graphDb;
         this.graphQueryService = graphQueryService;
-        dogSearchBreedImporter = new DogSearchBreedImporter(executorService, pedigreeImporter, dogSearchClient);
+        this.executorService = executorService;
+        this.pedigreeImporterFactory = pedigreeImporterFactory;
+        this.dogSearchClient = dogSearchClient;
     }
 
     @GET
@@ -84,6 +93,9 @@ public class GraphResource {
         }
 
         if (shouldImport) {
+            BulkWriteService bulkWriteService = new BulkWriteService(graphDb);
+            PedigreeImporter pedigreeImporter = pedigreeImporterFactory.createInstance(bulkWriteService);
+            DogSearchBreedImporter dogSearchBreedImporter = new DogSearchBreedImporter(executorService, pedigreeImporter, dogSearchClient);
             dogSearchBreedImporter.importBreed(breed, progress);
         }
 

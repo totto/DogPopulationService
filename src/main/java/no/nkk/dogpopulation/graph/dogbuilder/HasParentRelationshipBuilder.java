@@ -12,8 +12,8 @@ public class HasParentRelationshipBuilder extends AbstractRelationshipBuilder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HasParentRelationshipBuilder.class);
 
-    private DogNodeBuilder childBuilder;
-    private DogNodeBuilder parentBuilder;
+    private Builder<Node> childBuilder;
+    private Builder<Node> parentBuilder;
     private Node child;
     private Node parent;
     private String childUuid;
@@ -76,6 +76,18 @@ public class HasParentRelationshipBuilder extends AbstractRelationshipBuilder {
         return relationship;
     }
 
+    @Override
+    public void reset() {
+        if (childBuilder != null) {
+            childBuilder.reset();
+            child = null;
+        }
+        if (parentBuilder != null) {
+            parentBuilder.reset();
+            parent = null;
+        }
+        super.reset();
+    }
 
     public HasParentRelationshipBuilder child(Node child) {
         this.child = child;
@@ -107,15 +119,11 @@ public class HasParentRelationshipBuilder extends AbstractRelationshipBuilder {
         this.parentRole = parentRole;
         return this;
     }
-    public HasParentRelationshipBuilder ownAncestor() {
-        relationshipType = DogGraphRelationshipType.OWN_ANCESTOR;
-        return this;
-    }
-    public HasParentRelationshipBuilder child(DogNodeBuilder childBuilder) {
+    public HasParentRelationshipBuilder child(Builder<Node> childBuilder) {
         this.childBuilder = childBuilder;
         return this;
     }
-    public HasParentRelationshipBuilder parent(DogNodeBuilder parentBuilder) {
+    public HasParentRelationshipBuilder parent(Builder<Node> parentBuilder) {
         this.parentBuilder = parentBuilder;
         return this;
     }
