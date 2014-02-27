@@ -5,11 +5,11 @@ import org.joda.time.LocalDate;
 import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.traversal.Evaluators;
 import org.neo4j.graphdb.traversal.Traverser;
-import org.neo4j.graphdb.traversal.Uniqueness;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.PrintWriter;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -38,6 +38,7 @@ public class DmuHdIndexAlgorithm {
 
 
     public void writeFiles() {
+        Set<Long> visitedNodes = new HashSet<>();
         Node categoryBreedNode = GraphUtils.getSingleNode(graphDb, DogGraphLabel.CATEGORY, DogGraphConstants.CATEGORY_CATEGORY, DogGraphConstants.CATEGORY_CATEGORY_BREED);
         for (Path breedPath : commonTraversals.traverseBreedInSet(categoryBreedNode, breed)) {
             Integer breedCode = DmuDataRecord.UNKNOWN;
@@ -51,6 +52,12 @@ public class DmuHdIndexAlgorithm {
             }
             for (Path path : traverseDogsOfBreed(breedNode)) {
                 Node dogNode = path.endNode();
+
+                if (visitedNodes.contains(dogNode.getId())) {
+                    continue;
+                }
+
+                visitedNodes.add(dogNode.getId());
 
                 String uuid = (String) dogNode.getProperty(DogGraphConstants.DOG_UUID);
 
@@ -147,9 +154,8 @@ public class DmuHdIndexAlgorithm {
     private Traverser traverseDogsOfBreed(Node breedNode) {
         return graphDb.traversalDescription()
                 .depthFirst()
-                .uniqueness(Uniqueness.NODE_PATH)
-                .relationships(DogGraphRelationshipType.IS_BREED)
-                .evaluator(Evaluators.excludeStartPosition())
+                .relationships(DogGraphRelationshipType.IS_BREED, Direction.INCOMING)
+                .evaluator(Evaluators.atDepth(1))
                 .traverse(breedNode);
     }
 
