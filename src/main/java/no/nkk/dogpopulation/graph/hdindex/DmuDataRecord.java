@@ -1,5 +1,7 @@
 package no.nkk.dogpopulation.graph.hdindex;
 
+import java.io.PrintWriter;
+
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
@@ -17,6 +19,9 @@ public class DmuDataRecord {
     // Reg_år = Registreringsår
     private final int hdXrayYear;
 
+    // Køn = 1 for female og 2 for male
+    private final int gender;
+
     // RÅK = Race*Reg_år*Køn vekselvirkning ( Race*100000+Reg_år*10+Køn)
     private final int breedHdXrayYearGender;
 
@@ -27,17 +32,40 @@ public class DmuDataRecord {
     private final int motherId;
 
     // HD = HD-score
-    private final double hdScore;
+    private final int hdScore;
 
-    public DmuDataRecord(int id, int breedCode, int hdXrayYear, int breedHdXrayYearGender, int litterId, int motherId, double hdScore) {
+    public DmuDataRecord(int id, int breedCode, int hdXrayYear, int gender, int breedHdXrayYearGender, int litterId, int motherId, int hdScore) {
         this.id = id;
         this.breedCode = breedCode;
         this.hdXrayYear = hdXrayYear;
+        this.gender = gender;
         this.breedHdXrayYearGender = breedHdXrayYearGender;
         this.litterId = litterId;
         this.motherId = motherId;
         this.hdScore = hdScore;
     }
+
+
+    public void writeTo(PrintWriter out) {
+        final String NEWLINE = "\r\n";
+        out.print(getId());
+        out.print(" ");
+        out.print(getBreedCode());
+        out.print(" ");
+        out.print(getHdXrayYear());
+        out.print(" ");
+        out.print(getGender());
+        out.print(" ");
+        out.print(getBreedHdXrayYearGender());
+        out.print(" ");
+        out.print(getLitterId());
+        out.print(" ");
+        out.print(getMotherId());
+        out.print(" ");
+        out.print(getHdScore());
+        out.print(NEWLINE);
+    }
+
 
     public int getId() {
         return id;
@@ -49,6 +77,10 @@ public class DmuDataRecord {
 
     public int getHdXrayYear() {
         return hdXrayYear;
+    }
+
+    public int getGender() {
+        return gender;
     }
 
     public int getBreedHdXrayYearGender() {
@@ -63,7 +95,7 @@ public class DmuDataRecord {
         return motherId;
     }
 
-    public double getHdScore() {
+    public int getHdScore() {
         return hdScore;
     }
 }

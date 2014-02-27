@@ -1,6 +1,5 @@
 package no.nkk.dogpopulation.graph;
 
-import no.nkk.dogpopulation.graph.hdindex.DmuFiles;
 import no.nkk.dogpopulation.graph.hdindex.DmuHdIndexAlgorithm;
 import no.nkk.dogpopulation.graph.inbreeding.InbreedingAlgorithm;
 import no.nkk.dogpopulation.graph.inbreeding.InbreedingOfGroup;
@@ -17,6 +16,7 @@ import org.neo4j.graphdb.traversal.Uniqueness;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.PrintWriter;
 import java.util.*;
 
 /**
@@ -38,13 +38,14 @@ public class GraphQueryService {
     }
 
 
-    public DmuFiles getDmuFiles(String breed) {
+    public void writeDmuFiles(PrintWriter dataFile, PrintWriter pedigreeFile, PrintWriter uuidMappingfile, Set<String> breed) {
         try (Transaction tx = graphDb.beginTx()) {
-            DmuFiles dmuFiles = new DmuHdIndexAlgorithm(graphDb).getDmuFiles(breed);
+            DmuHdIndexAlgorithm algorithm = new DmuHdIndexAlgorithm(graphDb, dataFile, pedigreeFile, uuidMappingfile, breed);
+            algorithm.writeFiles();
             tx.success();
-            return dmuFiles;
         }
     }
+
 
     public List<String> getBreeds() {
         try (Transaction tx = graphDb.beginTx()) {

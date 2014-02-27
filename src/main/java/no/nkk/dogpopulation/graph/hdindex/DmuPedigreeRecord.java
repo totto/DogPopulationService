@@ -1,5 +1,7 @@
 package no.nkk.dogpopulation.graph.hdindex;
 
+import java.io.PrintWriter;
+
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
@@ -32,6 +34,22 @@ public class DmuPedigreeRecord {
         this.birthDate = birthDate;
         this.breedCode = breedCode;
     }
+
+
+    public void writeTo(PrintWriter out) {
+        final String NEWLINE = "\r\n";
+        out.print(getId());
+        out.print(" ");
+        out.print(getFatherId());
+        out.print(" ");
+        out.print(getMotherId());
+        out.print(" ");
+        out.print(getBirthDate());
+        out.print(" ");
+        out.print(getBreedCode());
+        out.print(NEWLINE);
+    }
+
 
     public int getId() {
         return id;

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import no.nkk.dogpopulation.graph.GraphQueryService;
 import no.nkk.dogpopulation.graph.bulkwrite.BulkWriteService;
-import no.nkk.dogpopulation.graph.hdindex.DmuFiles;
 import no.nkk.dogpopulation.graph.inbreeding.InbreedingOfGroup;
 import no.nkk.dogpopulation.graph.litter.LitterStatistics;
 import no.nkk.dogpopulation.graph.pedigreecompleteness.PedigreeCompleteness;
@@ -190,22 +189,6 @@ public class GraphResource {
 
         try {
             String json = prettyPrintingObjectWriter.writeValueAsString(uuids);
-            return Response.ok(json).build();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @GET
-    @Path("/breed/{breed}/hddata")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getDmuHdDataForBreed(@PathParam("breed") String breed) {
-        LOGGER.trace("getDmuHdDataForBreed({})", breed);
-
-        DmuFiles dmuFiles = graphQueryService.getDmuFiles(breed);
-
-        try {
-            String json = prettyPrintingObjectWriter.writeValueAsString(dmuFiles);
             return Response.ok(json).build();
         } catch (IOException e) {
             throw new RuntimeException(e);
