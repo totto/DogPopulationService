@@ -41,13 +41,13 @@ public class DmuHdIndexAlgorithm {
         Set<Long> visitedNodes = new HashSet<>();
         Node categoryBreedNode = GraphUtils.getSingleNode(graphDb, DogGraphLabel.CATEGORY, DogGraphConstants.CATEGORY_CATEGORY, DogGraphConstants.CATEGORY_CATEGORY_BREED);
         for (Path breedPath : commonTraversals.traverseBreedInSet(categoryBreedNode, breed)) {
-            Integer breedCode = DmuDataRecord.UNKNOWN;
+            int breedCode = DmuDataRecord.UNKNOWN;
             Node breedNode = breedPath.endNode();
             if (breedNode.hasProperty(DogGraphConstants.BREED_ID)) {
                 String breedIdStr = (String) breedNode.getProperty(DogGraphConstants.BREED_ID);
                 try {
-                    breedCode = Integer.valueOf(breedIdStr);
-                } catch (Exception ignore) {
+                    breedCode = Integer.parseInt(breedIdStr);
+                } catch (RuntimeException ignore) {
                 }
             }
             for (Path path : traverseDogsOfBreed(breedNode)) {
@@ -107,8 +107,8 @@ public class DmuHdIndexAlgorithm {
                     }
                 }
 
-                int motherId = DmuDataRecord.UNKNOWN;
-                int fatherId = DmuPedigreeRecord.UNKNOWN;
+                int motherId = -breedCode;
+                int fatherId = -breedCode;
                 if (dogNode.hasRelationship(DogGraphRelationshipType.HAS_PARENT)) {
                     for (Relationship hasParent : dogNode.getRelationships(DogGraphRelationshipType.HAS_PARENT, Direction.OUTGOING)) {
                         Node parentNode = hasParent.getEndNode();
