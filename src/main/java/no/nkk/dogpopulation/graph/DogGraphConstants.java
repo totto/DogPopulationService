@@ -22,6 +22,7 @@ public class DogGraphConstants {
 
     public static final String DOG_UUID = "uuid";
     public static final String DOG_NAME = "name";
+    public static final String DOG_GENDER = "gender";
     public static final String DOG_REGNO = "RegNo";
     public static final String DOG_CHIPNO = "Chip";
     public static final String DOG_BORN_YEAR = "b_year";

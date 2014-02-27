@@ -23,6 +23,7 @@ public class DogNodeBuilder extends AbstractNodeBuilder implements PostStepBuild
     private String regNo;
     private Node breedNode;
     private String name;
+    private DogGender gender;
     private LocalDate bornLocalDate;
     private String hdDiag;
     private LocalDate hdXray;
@@ -65,6 +66,9 @@ public class DogNodeBuilder extends AbstractNodeBuilder implements PostStepBuild
         // new dog
 
         dogNode.setProperty(DogGraphConstants.DOG_NAME, name);
+        if (gender != null) {
+            dogNode.setProperty(DogGraphConstants.DOG_GENDER, gender.name().toLowerCase());
+        }
         if (regNo != null) {
             dogNode.setProperty(DogGraphConstants.DOG_REGNO, regNo);
         }
@@ -114,7 +118,7 @@ public class DogNodeBuilder extends AbstractNodeBuilder implements PostStepBuild
     }
 
     public DogNodeBuilder all(DogDetails dogDetails) {
-        return uuid(dogDetails).name(dogDetails).breed(dogDetails).regNo(dogDetails).born(dogDetails).health(dogDetails.getHealth());
+        return uuid(dogDetails).name(dogDetails).gender(dogDetails).breed(dogDetails).regNo(dogDetails).born(dogDetails).health(dogDetails.getHealth());
     }
 
     public DogNodeBuilder uuid(DogDetails dogDetails) {
@@ -128,6 +132,19 @@ public class DogNodeBuilder extends AbstractNodeBuilder implements PostStepBuild
             LOGGER.warn("UNKNOWN name of dog, using empty name. {}.", dogDetails.getId());
         }
         return name(name);
+    }
+
+    public DogNodeBuilder gender(DogDetails dogDetails) {
+        String genderStr = dogDetails.getGender();
+        if (genderStr == null) {
+            return this;
+        }
+        try {
+            gender = DogGender.valueOf(genderStr.toUpperCase());
+        } catch (RuntimeException ignore) {
+            LOGGER.warn("Dog {} is neither male nor female, but {}", dogDetails.getId(), genderStr);
+        }
+        return this;
     }
 
     public DogNodeBuilder breed(DogDetails dogDetails) {
@@ -211,6 +228,10 @@ public class DogNodeBuilder extends AbstractNodeBuilder implements PostStepBuild
             LOGGER.warn("UNKNOWN name of dog, using empty name. {}.", uuid);
         }
         this.name = name;
+        return this;
+    }
+    public DogNodeBuilder gender(DogGender gender) {
+        this.gender = gender;
         return this;
     }
     public DogNodeBuilder born(LocalDate bornLocalDate) {
