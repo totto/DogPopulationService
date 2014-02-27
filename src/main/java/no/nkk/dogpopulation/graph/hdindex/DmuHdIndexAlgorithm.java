@@ -91,7 +91,15 @@ public class DmuHdIndexAlgorithm {
                     }
                 }
 
-                int gender = 1; // TODO assign correct gender! 1 means MALE, and 2 means FEMALE
+                int gender = 1; // Default to MALE if gender is unknown
+                if (dogNode.hasProperty(DogGraphConstants.DOG_GENDER)) {
+                    DogGender dogGender = DogGender.valueOf(((String) dogNode.getProperty(DogGraphConstants.DOG_GENDER)).toUpperCase());
+                    if (dogGender == DogGender.FEMALE) {
+                        gender = 2; // FEMALE
+                    } else if (dogGender == DogGender.MALE) {
+                        gender = 1; // MALE
+                    }
+                }
                 int breedHdXrayYearGender = (100000 * breedCode) + (10 * hdXrayYear) + gender;
 
 
