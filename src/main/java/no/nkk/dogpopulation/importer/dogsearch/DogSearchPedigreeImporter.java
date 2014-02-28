@@ -90,6 +90,10 @@ public class DogSearchPedigreeImporter implements PedigreeImporter {
         long startTime = System.currentTimeMillis();
         LOGGER.trace("Importing Pedigree from DogSearch for dog {}", id);
         DogFuture dogFuture = depthFirstDogImport(id, ts, 1);
+        if (dogFuture == null) {
+            LOGGER.trace("Could not resolve id {}", id);
+            return ts;
+        }
         dogFuture.waitForPedigreeImportToComplete();
         long durationMs = System.currentTimeMillis() - startTime;
         double duration = durationMs / 1000;
