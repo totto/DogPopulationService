@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public class DogOffspring {
     private String id;
     private String born;
-    private int count;
+    private Integer count;
     private DogPuppy[] puppies;
 
     public String getId() {
@@ -28,11 +28,11 @@ public class DogOffspring {
         this.born = born;
     }
 
-    public int getCount() {
+    public Integer getCount() {
         return count;
     }
 
-    public void setCount(int count) {
+    public void setCount(Integer count) {
         this.count = count;
     }
 
