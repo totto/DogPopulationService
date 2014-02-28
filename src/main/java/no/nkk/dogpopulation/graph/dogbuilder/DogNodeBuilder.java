@@ -141,7 +141,7 @@ public class DogNodeBuilder extends AbstractNodeBuilder implements PostStepBuild
             return this;
         }
         try {
-            gender = DogGender.valueOf(genderStr.toUpperCase());
+            return gender(DogGender.valueOf(genderStr.toUpperCase()));
         } catch (RuntimeException ignore) {
             LOGGER.warn("Dog {} is neither male nor female, but {}", dogDetails.getId(), genderStr);
         }
@@ -182,6 +182,9 @@ public class DogNodeBuilder extends AbstractNodeBuilder implements PostStepBuild
         if (born == null) {
             return this;
         }
+        if (born.trim().isEmpty()) {
+            return this;
+        }
         try {
             DateTime dateTime = DateTime.parse(born);
             return born(dateTime);
@@ -201,11 +204,18 @@ public class DogNodeBuilder extends AbstractNodeBuilder implements PostStepBuild
         }
         DogHealthHD hd = hdArr[0]; // TODO choose HD diagnosis more wisely than just picking the first one.
         hdDiag(hd.getDiagnosis());
+        String xray = hd.getXray();
+        if (xray == null) {
+            return this;
+        }
+        if (xray.trim().isEmpty()) {
+            return this;
+        }
         try {
-            DateTime dateTime = DateTime.parse(hd.getXray());
+            DateTime dateTime = DateTime.parse(xray);
             hdXray(dateTime);
         } catch (RuntimeException e) {
-            LOGGER.warn("Unable to parse xRay as DateTime: uuid={}, xRay={}", uuid, hd.getXray());
+            LOGGER.warn("Unable to parse xRay as DateTime: uuid={}, xRay={}", uuid, xray);
         }
         return this;
     }
@@ -240,6 +250,10 @@ public class DogNodeBuilder extends AbstractNodeBuilder implements PostStepBuild
     }
     public DogNodeBuilder born(DateTime born) {
         this.bornLocalDate = born.toLocalDate();
+        return this;
+    }
+    public DogNodeBuilder born(LocalDate bornLocalDate) {
+        this.bornLocalDate = bornLocalDate;
         return this;
     }
     public DogNodeBuilder hdDiag(String hdDiag) {

@@ -94,6 +94,12 @@ public class LitterNodeBuilder extends AbstractNodeBuilder {
         if (born == null) {
             return this;
         }
+        if (born.trim().isEmpty()) {
+            return this;
+        }
+        if (born.equals("????-??-??")) {
+            return this;
+        }
         try {
             DateTime dateTime = DateTime.parse(born);
             return born(dateTime);
