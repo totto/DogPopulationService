@@ -90,8 +90,10 @@ public class DogSearchBreedImporter {
                 try {
                     TraversalStatistics ts = ((DogSearchPedigreeImporter) pedigreeImporter).importDogPedigree(id, progress.getTraversalStatistics());
                     LOGGER.trace("Imported pedigree({} new dogs) for {}", ts.dogsAdded.get() + ts.puppiesAdded.get(), id);
-                    progress.recordTaskComplete();
+                } catch(RuntimeException e) {
+                    LOGGER.error(String.format("breed = %s, id = %s", breed, id), e);
                 } finally {
+                    progress.recordTaskComplete();
                     Thread.currentThread().setName(origThreadName);
                 }
             }
