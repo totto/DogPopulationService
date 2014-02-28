@@ -3,6 +3,7 @@ package no.nkk.dogpopulation.graph.dogbuilder;
 import no.nkk.dogpopulation.graph.DogGraphConstants;
 import no.nkk.dogpopulation.graph.DogGraphLabel;
 import no.nkk.dogpopulation.graph.GraphUtils;
+import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
@@ -16,6 +17,7 @@ public class LitterNodeBuilder extends AbstractNodeBuilder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LitterNodeBuilder.class);
 
+    private String parentId; // for debug purposes only
     private String id;
     private LocalDate born;
     private Integer count;
@@ -88,12 +90,29 @@ public class LitterNodeBuilder extends AbstractNodeBuilder {
     }
 
 
+    public LitterNodeBuilder born(String born) {
+        if (born == null) {
+            return this;
+        }
+        try {
+            DateTime dateTime = DateTime.parse(born);
+            return born(dateTime);
+        } catch (Exception e) {
+            LOGGER.warn("Unable to parse born as DateTime: parentId={}, litterId={}, born={}", parentId, id, born);
+        }
+        return this;
+    }
+
+    public LitterNodeBuilder parentId(String parentId) {
+        this.parentId = parentId;
+        return this;
+    }
     public LitterNodeBuilder id(String id) {
         this.id = id;
         return this;
     }
-    public LitterNodeBuilder born(LocalDate born) {
-        this.born = born;
+    public LitterNodeBuilder born(DateTime born) {
+        this.born = born.toLocalDate();
         return this;
     }
     public LitterNodeBuilder count(Integer count) {

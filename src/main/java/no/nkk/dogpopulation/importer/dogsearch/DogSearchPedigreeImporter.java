@@ -8,7 +8,6 @@ import no.nkk.dogpopulation.graph.bulkwrite.BuilderProgress;
 import no.nkk.dogpopulation.graph.bulkwrite.BulkWriteService;
 import no.nkk.dogpopulation.graph.dogbuilder.*;
 import no.nkk.dogpopulation.importer.PedigreeImporter;
-import org.joda.time.LocalDate;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
@@ -281,9 +280,10 @@ public class DogSearchPedigreeImporter implements PedigreeImporter {
 
         for (DogOffspring offspring : offspringArr) {
             String litterId = offspring.getId();
-            LocalDate litterBorn = LocalDate.parse(offspring.getBorn());
-            int count = offspring.getCount();
-            LitterNodeBuilder litterBuilder = dogs.litter().id(litterId).born(litterBorn).count(count);
+            String parentUuid = ((DogNodeBuilder) parentBuilder).uuid();
+            Integer count = offspring.getCount();
+            String born = offspring.getBorn();
+            LitterNodeBuilder litterBuilder = dogs.litter().id(litterId).parentId(parentUuid).count(count).born(born);
             Future<Relationship> hasLitterFuture = bulkWriteService.build(dogs.hasLitter().litter(litterBuilder).parent(parentBuilder).role(parentRole));
             ts.litterCount.incrementAndGet();
             puppyFutureList.add(new ImmediateFuture<>(hasLitterFuture));

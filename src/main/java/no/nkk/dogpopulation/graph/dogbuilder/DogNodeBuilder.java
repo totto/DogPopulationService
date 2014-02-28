@@ -2,6 +2,7 @@ package no.nkk.dogpopulation.graph.dogbuilder;
 
 import no.nkk.dogpopulation.graph.*;
 import no.nkk.dogpopulation.importer.dogsearch.*;
+import org.joda.time.DateTime;
 import org.joda.time.LocalDate;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -182,9 +183,10 @@ public class DogNodeBuilder extends AbstractNodeBuilder implements PostStepBuild
             return this;
         }
         try {
-            LocalDate localDate = LocalDate.parse(born.substring(0, 10));
-            return born(localDate);
-        } catch (RuntimeException ignore) {
+            DateTime dateTime = DateTime.parse(born);
+            return born(dateTime);
+        } catch (RuntimeException e) {
+            LOGGER.warn("Unable to parse born as DateTime: uuid={}, born={}", uuid, born);
         }
         return this;
     }
@@ -194,14 +196,16 @@ public class DogNodeBuilder extends AbstractNodeBuilder implements PostStepBuild
             return this;
         }
         DogHealthHD[] hdArr = health.getHd();
-        if (hdArr != null && hdArr.length > 0) {
-            DogHealthHD hd = hdArr[0]; // TODO choose HD diagnosis more wisely than just picking the first one.
-            hdDiag(hd.getDiagnosis());
-            try {
-                LocalDate localDate = LocalDate.parse(hd.getXray().substring(0, 10));
-                hdXray(localDate);
-            } catch (RuntimeException ignore) {
-            }
+        if (hdArr == null || hdArr.length == 0) {
+            return this;
+        }
+        DogHealthHD hd = hdArr[0]; // TODO choose HD diagnosis more wisely than just picking the first one.
+        hdDiag(hd.getDiagnosis());
+        try {
+            DateTime dateTime = DateTime.parse(hd.getXray());
+            hdXray(dateTime);
+        } catch (RuntimeException e) {
+            LOGGER.warn("Unable to parse xRay as DateTime: uuid={}, xRay={}", uuid, hd.getXray());
         }
         return this;
     }
@@ -234,16 +238,20 @@ public class DogNodeBuilder extends AbstractNodeBuilder implements PostStepBuild
         this.gender = gender;
         return this;
     }
-    public DogNodeBuilder born(LocalDate bornLocalDate) {
-        this.bornLocalDate = bornLocalDate;
+    public DogNodeBuilder born(DateTime born) {
+        this.bornLocalDate = born.toLocalDate();
         return this;
     }
     public DogNodeBuilder hdDiag(String hdDiag) {
         this.hdDiag = hdDiag;
         return this;
     }
-    public DogNodeBuilder hdXray(LocalDate hdXray) {
-        this.hdXray = hdXray;
+    public DogNodeBuilder hdXray(DateTime hdXray) {
+        this.hdXray = hdXray.toLocalDate();
         return this;
+    }
+
+    public String uuid() {
+        return uuid;
     }
 }
