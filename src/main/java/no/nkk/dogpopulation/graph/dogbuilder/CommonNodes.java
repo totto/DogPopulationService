@@ -70,6 +70,9 @@ public class CommonNodes {
                 if (id == null) {
                     return nodeAndId.node;
                 }
+                if (id.trim().isEmpty()) {
+                    return nodeAndId.node;
+                }
                 if (id.trim().equals(nodeAndId.id)) {
                     return nodeAndId.node;
                 }
