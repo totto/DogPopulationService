@@ -161,8 +161,14 @@ public class Main {
         SLF4JBridgeHandler.removeHandlersForRootLogger();
         SLF4JBridgeHandler.install();
 
-        GraphDatabaseService db = createGraphDb("data/dogdb");
+        final GraphDatabaseService db = createGraphDb("data/dogdb");
         try {
+            Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    db.shutdown();
+                }
+            }));
             ExecutorService executorService = Executors.newFixedThreadPool(300);
             DogSearchClient dogSearchClient = new DogSearchSolrClient("http://dogsearch.nkk.no/dogservice/dogs");
 
