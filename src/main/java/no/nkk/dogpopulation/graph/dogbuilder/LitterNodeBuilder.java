@@ -96,7 +96,7 @@ public class LitterNodeBuilder extends AbstractNodeBuilder {
         this.born = born;
         return this;
     }
-    public LitterNodeBuilder count(int count) {
+    public LitterNodeBuilder count(Integer count) {
         this.count = count;
         return this;
     }
