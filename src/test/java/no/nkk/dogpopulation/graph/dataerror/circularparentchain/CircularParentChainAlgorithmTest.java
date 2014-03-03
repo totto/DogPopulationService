@@ -1,4 +1,4 @@
-package no.nkk.dogpopulation.graph.circularparentchain;
+package no.nkk.dogpopulation.graph.dataerror.circularparentchain;
 
 import no.nkk.dogpopulation.AbstractGraphTest;
 import org.neo4j.graphdb.Node;

@@ -1,4 +1,4 @@
-package no.nkk.dogpopulation.graph.circularparentchain;
+package no.nkk.dogpopulation.graph.dataerror.circularparentchain;
 
 import org.neo4j.cypher.javacompat.ExecutionEngine;
 import org.neo4j.cypher.javacompat.ExecutionResult;
