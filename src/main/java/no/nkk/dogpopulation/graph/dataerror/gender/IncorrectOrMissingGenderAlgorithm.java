@@ -28,14 +28,11 @@ public class IncorrectOrMissingGenderAlgorithm {
 
     public List<String> findDataError(int skip, int limit) {
         List<String> list = new ArrayList<>();
-        try (Transaction tx = graphDb.beginTx()) {
-            ExecutionResult result1 = engine.execute("MATCH (p:DOG)<-[r:HAS_PARENT]-(c) WHERE (p.gender='female' AND r.role='father') OR (p.gender='male' AND r.role='mother') RETURN DISTINCT p.uuid SKIP " + skip + " LIMIT " + limit);
-            try (ResourceIterator<Map<String,Object>> iterator = result1.iterator()) {
-                for (Map<String,Object> record : IteratorUtil.asIterable(iterator)) {
-                    list.add((String) record.get("p.uuid"));
-                }
+        ExecutionResult result1 = engine.execute("MATCH (p:DOG)<-[r:HAS_PARENT]-(c) WHERE (p.gender='female' AND r.role='father') OR (p.gender='male' AND r.role='mother') RETURN DISTINCT p.uuid SKIP " + skip + " LIMIT " + limit);
+        try (ResourceIterator<Map<String,Object>> iterator = result1.iterator()) {
+            for (Map<String,Object> record : IteratorUtil.asIterable(iterator)) {
+                list.add((String) record.get("p.uuid"));
             }
-            tx.success();
         }
         return list;
     }
