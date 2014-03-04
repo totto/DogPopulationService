@@ -1,5 +1,7 @@
 package no.nkk.dogpopulation.graph;
 
+import no.nkk.dogpopulation.graph.dataerror.breed.IncorrectBreedAlgorithm;
+import no.nkk.dogpopulation.graph.dataerror.breed.IncorrectBreedRecord;
 import no.nkk.dogpopulation.graph.dataerror.gender.IncorrectGenderRecord;
 import no.nkk.dogpopulation.graph.dataerror.gender.IncorrectOrMissingGenderAlgorithm;
 import no.nkk.dogpopulation.graph.hdindex.DmuHdIndexAlgorithm;
@@ -228,6 +230,26 @@ public class GraphQueryService {
             IncorrectGenderRecord igr = algorithm.findDataError(uuid);
             tx.success();
             return igr;
+        }
+    }
+
+
+    public List<String> getAllDogsWithInconsistentBreed(int skip, int limit) {
+        try (Transaction tx = graphDb.beginTx()) {
+            IncorrectBreedAlgorithm algorithm = new IncorrectBreedAlgorithm(graphDb, engine);
+            List<String> result = algorithm.findDataError(skip, limit);
+            tx.success();
+            return result;
+        }
+    }
+
+
+    public IncorrectBreedRecord getDogWithInconsistentBreed(String uuid) {
+        try (Transaction tx = graphDb.beginTx()) {
+            IncorrectBreedAlgorithm algorithm = new IncorrectBreedAlgorithm(graphDb, engine);
+            IncorrectBreedRecord ibr = algorithm.findDataError(uuid);
+            tx.success();
+            return ibr;
         }
     }
 

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import no.nkk.dogpopulation.graph.GraphQueryService;
 import no.nkk.dogpopulation.graph.bulkwrite.BulkWriteService;
+import no.nkk.dogpopulation.graph.dataerror.breed.IncorrectBreedRecord;
 import no.nkk.dogpopulation.graph.dataerror.gender.IncorrectGenderRecord;
 import no.nkk.dogpopulation.graph.inbreeding.InbreedingOfGroup;
 import no.nkk.dogpopulation.graph.litter.LitterStatistics;
@@ -249,6 +250,44 @@ public class GraphResource {
     public Response getIncorrectOrMissingGender(@PathParam("uuid") String uuid) {
         LOGGER.trace("getIncorrectOrMissingGender({})", uuid);
         IncorrectGenderRecord result = graphQueryService.getDogWithInconsistentGender(uuid);
+
+        try {
+            String json = prettyPrintingObjectWriter.writeValueAsString(result);
+            return Response.ok(json).build();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    @GET
+    @Path("/inconsistencies/breed/all")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getIncorrectBreed(@QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
+        LOGGER.trace("getIncorrectOrMissingGender()");
+        if (skip == null || skip < 0) {
+            skip = 0;
+        }
+        if (limit == null || limit < 0) {
+            limit = 10;
+        }
+
+        List<String> result = graphQueryService.getAllDogsWithInconsistentBreed(skip, limit);
+
+        try {
+            String json = prettyPrintingObjectWriter.writeValueAsString(result);
+            return Response.ok(json).build();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @GET
+    @Path("/inconsistencies/breed/{uuid}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getIncorrectBreed(@PathParam("uuid") String uuid) {
+        LOGGER.trace("getIncorrectOrMissingGender({})", uuid);
+        IncorrectBreedRecord result = graphQueryService.getDogWithInconsistentBreed(uuid);
 
         try {
             String json = prettyPrintingObjectWriter.writeValueAsString(result);
