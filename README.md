@@ -17,3 +17,8 @@ Some quick pointers to the REST services
   must be set to one or more breed names. Consequtive access to any of the above URLs will ignore any query parameters,
   and simply return a cached dataset.
 * Litter-statistics  http://dogid.nkk.no/dogpopulation/graph/litter?breed=Rottweiler&minYear=1999&maxYear=2001
+* Data-Inconsistencies
+** http://dogid.nkk.no/dogpopulation/graph/inconsistencies/gender/all
+   Lists all uuids of dogs that have some sort of gender inconsistency
+** http://dogid.nkk.no/dogpopulation/graph/inconsistencies/gender/654cecf2-2eb1-4bc0-9d93-5046ed2f82ec
+   Get details related to gender inconsistencies of dog with uuid 654cecf2-2eb1-4bc0-9d93-5046ed2f82ec

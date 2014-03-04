@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import no.nkk.dogpopulation.graph.GraphQueryService;
 import no.nkk.dogpopulation.graph.bulkwrite.BulkWriteService;
+import no.nkk.dogpopulation.graph.dataerror.gender.IncorrectGenderRecord;
 import no.nkk.dogpopulation.graph.inbreeding.InbreedingOfGroup;
 import no.nkk.dogpopulation.graph.litter.LitterStatistics;
 import no.nkk.dogpopulation.graph.pedigreecompleteness.PedigreeCompleteness;
@@ -220,4 +221,33 @@ public class GraphResource {
         }
     }
 
+    @GET
+    @Path("/inconsistencies/gender/all")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getIncorrectOrMissingGender() {
+        LOGGER.trace("getIncorrectOrMissingGender()");
+        List<String> result = graphQueryService.getAllDogsWithInconsistentGender();
+
+        try {
+            String json = prettyPrintingObjectWriter.writeValueAsString(result);
+            return Response.ok(json).build();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @GET
+    @Path("/inconsistencies/gender/{uuid}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getIncorrectOrMissingGender(@PathParam("uuid") String uuid) {
+        LOGGER.trace("getIncorrectOrMissingGender({})", uuid);
+        IncorrectGenderRecord result = graphQueryService.getDogWithInconsistentGender(uuid);
+
+        try {
+            String json = prettyPrintingObjectWriter.writeValueAsString(result);
+            return Response.ok(json).build();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

@@ -1,5 +1,7 @@
 package no.nkk.dogpopulation.graph;
 
+import no.nkk.dogpopulation.graph.dataerror.gender.IncorrectGenderRecord;
+import no.nkk.dogpopulation.graph.dataerror.gender.IncorrectOrMissingGenderAlgorithm;
 import no.nkk.dogpopulation.graph.hdindex.DmuHdIndexAlgorithm;
 import no.nkk.dogpopulation.graph.inbreeding.InbreedingAlgorithm;
 import no.nkk.dogpopulation.graph.inbreeding.InbreedingOfGroup;
@@ -10,6 +12,7 @@ import no.nkk.dogpopulation.graph.pedigree.PedigreeAlgorithm;
 import no.nkk.dogpopulation.graph.pedigree.TopLevelDog;
 import no.nkk.dogpopulation.graph.pedigreecompleteness.PedigreeCompleteness;
 import no.nkk.dogpopulation.graph.pedigreecompleteness.PedigreeCompletenessAlgorithm;
+import org.neo4j.cypher.javacompat.ExecutionEngine;
 import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.traversal.Evaluators;
 import org.neo4j.graphdb.traversal.Uniqueness;
@@ -31,10 +34,12 @@ public class GraphQueryService {
 
 
     private final GraphDatabaseService graphDb;
+    private final ExecutionEngine engine;
 
 
     public GraphQueryService(GraphDatabaseService graphDb) {
         this.graphDb = graphDb;
+        engine = new ExecutionEngine(graphDb);
     }
 
 
@@ -203,6 +208,26 @@ public class GraphQueryService {
             LitterStatistics litterStatistics = algorithm.execute();
             tx.success();
             return litterStatistics;
+        }
+    }
+
+
+    public List<String> getAllDogsWithInconsistentGender() {
+        try (Transaction tx = graphDb.beginTx()) {
+            IncorrectOrMissingGenderAlgorithm algorithm = new IncorrectOrMissingGenderAlgorithm(graphDb, engine);
+            List<String> result = algorithm.findDataError();
+            tx.success();
+            return result;
+        }
+    }
+
+
+    public IncorrectGenderRecord getDogWithInconsistentGender(String uuid) {
+        try (Transaction tx = graphDb.beginTx()) {
+            IncorrectOrMissingGenderAlgorithm algorithm = new IncorrectOrMissingGenderAlgorithm(graphDb, engine);
+            IncorrectGenderRecord igr = algorithm.findDataError(uuid);
+            tx.success();
+            return igr;
         }
     }
 

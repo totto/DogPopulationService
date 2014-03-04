@@ -80,4 +80,11 @@ public abstract class AbstractGraphTest {
             return hasMother;
         }
     }
+
+    protected void setProperty(Node node, String key, Object value) {
+        try (Transaction tx = graphDb.beginTx()) {
+            node.setProperty(key, value);
+            tx.success();
+        }
+    }
 }
