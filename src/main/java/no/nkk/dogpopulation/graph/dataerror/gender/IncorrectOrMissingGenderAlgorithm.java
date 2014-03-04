@@ -26,17 +26,11 @@ public class IncorrectOrMissingGenderAlgorithm {
         this.engine = engine;
     }
 
-    public List<String> findDataError() {
+    public List<String> findDataError(int skip, int limit) {
         List<String> list = new ArrayList<>();
         try (Transaction tx = graphDb.beginTx()) {
-            ExecutionResult result1 = engine.execute("MATCH (p:DOG {gender:'female'})<-[:HAS_PARENT {role:'father'}]-(c) RETURN DISTINCT p.uuid");
+            ExecutionResult result1 = engine.execute("MATCH (p:DOG)<-[r:HAS_PARENT]-(c) WHERE (p.gender='female' AND r.role='father') OR (p.gender='male' AND r.role='mother') RETURN DISTINCT p.uuid SKIP " + skip + " LIMIT " + limit);
             try (ResourceIterator<Map<String,Object>> iterator = result1.iterator()) {
-                for (Map<String,Object> record : IteratorUtil.asIterable(iterator)) {
-                    list.add((String) record.get("p.uuid"));
-                }
-            }
-            ExecutionResult result2 = engine.execute("MATCH (p:DOG {gender:'male'  })<-[:HAS_PARENT {role:'mother'}]-(c) RETURN DISTINCT p.uuid");
-            try (ResourceIterator<Map<String,Object>> iterator = result2.iterator()) {
                 for (Map<String,Object> record : IteratorUtil.asIterable(iterator)) {
                     list.add((String) record.get("p.uuid"));
                 }
@@ -49,16 +43,8 @@ public class IncorrectOrMissingGenderAlgorithm {
     public IncorrectGenderRecord findDataError(String uuid) {
         Map<String, Object> params = new LinkedHashMap<>();
         params.put("uuid", uuid);
-        ExecutionResult result1 = engine.execute("MATCH (p:DOG {uuid:{uuid}, gender:'female'})<-[:HAS_PARENT {role:'father'}]-(c) RETURN DISTINCT p", params);
+        ExecutionResult result1 = engine.execute("MATCH (p:DOG {uuid:{uuid}})<-[r:HAS_PARENT]-(c) WHERE (p.gender='female' AND r.role='father') OR (p.gender='male' AND r.role='mother') RETURN DISTINCT p", params);
         try (ResourceIterator<Map<String,Object>> iterator = result1.iterator()) {
-            for (Map<String,Object> record : IteratorUtil.asIterable(iterator)) {
-                Node parent = (Node) record.get("p");
-                IncorrectGenderRecord igr = populateRecord(parent);
-                return igr;
-            }
-        }
-        ExecutionResult result2 = engine.execute("MATCH (p:DOG {uuid:{uuid}, gender:'male'  })<-[:HAS_PARENT {role:'mother'}]-(c) RETURN DISTINCT p", params);
-        try (ResourceIterator<Map<String,Object>> iterator = result2.iterator()) {
             for (Map<String,Object> record : IteratorUtil.asIterable(iterator)) {
                 Node parent = (Node) record.get("p");
                 IncorrectGenderRecord igr = populateRecord(parent);
@@ -116,6 +102,7 @@ public class IncorrectOrMissingGenderAlgorithm {
             litters.add(litterRecord);
         }
         record.setLitters(litters);
+
         /*
          * Children
          */

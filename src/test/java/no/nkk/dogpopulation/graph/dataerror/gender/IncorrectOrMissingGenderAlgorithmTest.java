@@ -29,12 +29,13 @@ public class IncorrectOrMissingGenderAlgorithmTest extends AbstractGraphTest {
 
         GraphQueryService graphQueryService = new GraphQueryService(graphDb);
 
-        List<String> result = graphQueryService.getAllDogsWithInconsistentGender();
+        List<String> result = graphQueryService.getAllDogsWithInconsistentGender(0, 10);
         Assert.assertNotNull(result);
         Assert.assertEquals(result.size(), 1);
 
         IncorrectGenderRecord igr = graphQueryService.getDogWithInconsistentGender("C");
         Assert.assertNotNull(igr);
+        Assert.assertEquals(igr.getUuid(), "C");
     }
 
 }

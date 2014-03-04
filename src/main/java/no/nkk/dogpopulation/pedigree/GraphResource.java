@@ -224,9 +224,16 @@ public class GraphResource {
     @GET
     @Path("/inconsistencies/gender/all")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getIncorrectOrMissingGender() {
+    public Response getIncorrectOrMissingGender(@QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
         LOGGER.trace("getIncorrectOrMissingGender()");
-        List<String> result = graphQueryService.getAllDogsWithInconsistentGender();
+        if (skip == null || skip < 0) {
+            skip = 0;
+        }
+        if (limit == null || limit < 0) {
+            limit = 10;
+        }
+
+        List<String> result = graphQueryService.getAllDogsWithInconsistentGender(skip, limit);
 
         try {
             String json = prettyPrintingObjectWriter.writeValueAsString(result);
