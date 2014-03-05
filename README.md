@@ -26,3 +26,5 @@ Some quick pointers to the REST services
    Lists uuid of all dogs that have a different breed from both its parents
 ** http://dogid.nkk.no/dogpopulation/graph/inconsistencies/breed/0426517e-3833-4a29-a620-075ebb1b8b68
    Get details related to breed inconsistencies of dog with uuid 0426517e-3833-4a29-a620-075ebb1b8b68
+** http://dogid.nkk.no/dogpopulation/graph/inconsistencies/circularancestry/37c2f6ac-ef93-49e8-a4df-1017df1161ea
+   Get parent-chain that form a circle in the ancestry of dog with uuid 37c2f6ac-ef93-49e8-a4df-1017df1161ea

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import no.nkk.dogpopulation.graph.GraphQueryService;
 import no.nkk.dogpopulation.graph.bulkwrite.BulkWriteService;
 import no.nkk.dogpopulation.graph.dataerror.breed.IncorrectBreedRecord;
+import no.nkk.dogpopulation.graph.dataerror.circularparentchain.CircularRecord;
 import no.nkk.dogpopulation.graph.dataerror.gender.IncorrectGenderRecord;
 import no.nkk.dogpopulation.graph.inbreeding.InbreedingOfGroup;
 import no.nkk.dogpopulation.graph.litter.LitterStatistics;
@@ -282,12 +283,32 @@ public class GraphResource {
         }
     }
 
+
     @GET
     @Path("/inconsistencies/breed/{uuid}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getIncorrectBreed(@PathParam("uuid") String uuid) {
         LOGGER.trace("getIncorrectOrMissingGender({})", uuid);
         IncorrectBreedRecord result = graphQueryService.getDogWithInconsistentBreed(uuid);
+
+        try {
+            String json = prettyPrintingObjectWriter.writeValueAsString(result);
+            return Response.ok(json).build();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    @GET
+    @Path("/inconsistencies/circularancestry/{uuid}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getCircularAncestry(@PathParam("uuid") String uuid) {
+        LOGGER.trace("getCircularAncestry({})", uuid);
+        List<CircularRecord> result = graphQueryService.getCircluarParentChainInAncestryOf(uuid);
+        if (result == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
 
         try {
             String json = prettyPrintingObjectWriter.writeValueAsString(result);
