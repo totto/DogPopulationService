@@ -56,6 +56,19 @@ public class InbreedingAlgorithm {
     }
 
 
+    /**
+     * Compute the "Coefficient Of Inbreeding" of a not-yet-bred offspring of two parents using the method by geneticist Sewall Wright.
+     *
+     * @param inbredDogId a non-existent ID of the dog we want as a result of breeding the two parents
+     * @param firstParent the first parent to use in the wanted breeding
+     * @param secondParent the second parent to use in the wanted breeding
+     * @return the Coefficient Of Inbreeding of the inbredDogId.
+     */
+    public double computeSewallWrightCoefficientOfInbreeding(String inbredDogId, Node firstParent, Node secondParent) {
+        return computeCoefficientOfInbreeding(inbredDogId, PEDIGREE_GENERATIONS, 0, firstParent, secondParent);
+    }
+
+
     private double computeCoefficientOfInbreeding(Node dog, int toDepth, int recursionLevel) {
         Iterable<Relationship> relationships = dog.getRelationships(Direction.OUTGOING, DogGraphRelationshipType.HAS_PARENT);
 
@@ -65,24 +78,34 @@ public class InbreedingAlgorithm {
             return 0; // no known parents
         }
 
-        Relationship firstParent = parents.next();
+        Relationship firstHasParent = parents.next();
 
         if (!parents.hasNext()) {
             return 0; // missing one parent
         }
 
-        Relationship secondParent = parents.next();
+        Relationship secondHasParent = parents.next();
+        Node secondParent = secondHasParent.getEndNode();
 
         // traverse pedigree of first parent, and collect all paths while traversing
-        Map<String, List<Path>> firstParentPathsByUuid = mapAncestryPathsByAncestorUuid(firstParent.getEndNode(), toDepth - 1, recursionLevel);
+        Node firstParent = firstHasParent.getEndNode();
 
-        double coi = computeInbreedingCoefficient(secondParent, firstParentPathsByUuid, toDepth - 1, recursionLevel);
+        String inbredDogId = (String) dog.getProperty(DogGraphConstants.DOG_UUID);
+
+        return computeCoefficientOfInbreeding(inbredDogId, toDepth, recursionLevel, firstParent, secondParent);
+    }
+
+
+    private double computeCoefficientOfInbreeding(String inbredDogId, int toDepth, int recursionLevel, Node firstParent, Node secondParent) {
+        Map<String, List<Path>> firstParentPathsByUuid = mapAncestryPathsByAncestorUuid(firstParent, toDepth - 1, recursionLevel);
+
+        double coi = computeInbreedingCoefficient(inbredDogId, secondParent, firstParentPathsByUuid, toDepth - 1, recursionLevel);
 
         return coi;
     }
 
 
-    private double computeInbreedingCoefficient(Relationship secondParent, Map<String, List<Path>> firstParentPathsByUuid, int generations, int recursionLevel) {
+    private double computeInbreedingCoefficient(String inbredDogId, Node secondParent, Map<String, List<Path>> firstParentPathsByUuid, int generations, int recursionLevel) {
         CommonAncestorEvaluator commonAncestorEvaluator = new CommonAncestorEvaluator(firstParentPathsByUuid, recursionLevel);
 
         double coi = 0;
@@ -93,7 +116,7 @@ public class InbreedingAlgorithm {
                 .relationships(DogGraphRelationshipType.HAS_PARENT, Direction.OUTGOING)
                 .evaluator(Evaluators.toDepth(generations - 1))
                 .evaluator(commonAncestorEvaluator)
-                .traverse(secondParent.getEndNode())){
+                .traverse(secondParent)){
 
             Node commonAncestor = secondParentPath.endNode();
 
@@ -118,7 +141,7 @@ public class InbreedingAlgorithm {
 
                 coi += contribution * (1 + ancestorCoi);
 
-                tracePathBetweenParentsThroughCommonAncestor(secondParent.getStartNode(), secondParentPath, firstParentPath, ancestorCoi, recursionLevel);
+                tracePathBetweenParentsThroughCommonAncestor(inbredDogId, secondParentPath, firstParentPath, ancestorCoi, recursionLevel);
             }
         }
         return coi;
@@ -153,12 +176,12 @@ public class InbreedingAlgorithm {
      * This method assumes that the two supplied paths have the same end-node. The start-node of each path correlates to
      * each parent of the inbred dog. The end-node of both paths represents the common ancestor.
      *
-     * @param inbredDog
+     * @param inbredDogId
      * @param path
      * @param otherPath
      * @param ancestorCoi
      */
-    private static void tracePathBetweenParentsThroughCommonAncestor(Node inbredDog, Path path, Path otherPath, double ancestorCoi, int recursionLevel) {
+    private static void tracePathBetweenParentsThroughCommonAncestor(String inbredDogId, Path path, Path otherPath, double ancestorCoi, int recursionLevel) {
         if (!LOGGER.isTraceEnabled()) {
             return;
         }
@@ -180,7 +203,6 @@ public class InbreedingAlgorithm {
         }
         int contributingRelations = path.length() + otherPath.length() + 1;
         Node ancestorDog = path.endNode();
-        String inbredDogId = (String) inbredDog.getProperty(DogGraphConstants.DOG_UUID);
         String ancestorDogId = (String) ancestorDog.getProperty(DogGraphConstants.DOG_UUID);
         String indentation = "";
         for (int i=0; i<recursionLevel; i++) {

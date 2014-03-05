@@ -28,6 +28,16 @@ public class PedigreeService {
     }
 
     public TopLevelDog getPedigree(String id) {
+        if (loadPedigree(id)) {
+            return null;
+        }
+
+        TopLevelDog dog = graphQueryService.getPedigree(id);
+
+        return dog;
+    }
+
+    private boolean loadPedigree(String id) {
         Node dogWithMoreThanOneParent = graphQueryService.getDogIfItHasAtLeastOneParent(id);
 
         if (dogWithMoreThanOneParent == null) {
@@ -41,11 +51,21 @@ public class PedigreeService {
             } catch (ExecutionException e) {
                 throw new RuntimeException(e);
             } catch (TimeoutException e) {
-                return null;
+                return true;
             }
         }
+        return false;
+    }
 
-        TopLevelDog dog = graphQueryService.getPedigree(id);
+    public TopLevelDog getFicticiousPedigree(String uuid, String name, String fatherUuid, String motherUuid) {
+        if (loadPedigree(fatherUuid)) {
+            return null;
+        }
+        if (loadPedigree(motherUuid)) {
+            return null;
+        }
+
+        TopLevelDog dog = graphQueryService.getPedigree(uuid, name, fatherUuid, motherUuid);
 
         return dog;
     }

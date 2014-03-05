@@ -13,6 +13,7 @@ import no.nkk.dogpopulation.graph.inbreeding.InbreedingOfGroup;
 import no.nkk.dogpopulation.graph.inbreeding.InbreedingOfGroupAlgorithm;
 import no.nkk.dogpopulation.graph.litter.LitterStatistics;
 import no.nkk.dogpopulation.graph.litter.LitterStatisticsAlgorithm;
+import no.nkk.dogpopulation.graph.pedigree.Ancestry;
 import no.nkk.dogpopulation.graph.pedigree.PedigreeAlgorithm;
 import no.nkk.dogpopulation.graph.pedigree.TopLevelDog;
 import no.nkk.dogpopulation.graph.pedigreecompleteness.PedigreeCompleteness;
@@ -154,6 +155,33 @@ public class GraphQueryService {
             dog.setInbreedingCoefficient6(100 * coi6);
             tx.success();
             return dog;
+        }
+    }
+
+
+    public TopLevelDog getPedigree(String uuid, String name, String fatherUuid, String motherUuid) {
+        try (Transaction tx = graphDb.beginTx()) {
+            Node fatherNode = getDogNode(fatherUuid);
+            if (fatherNode == null) {
+                return null; // preant-1 not found
+            }
+            Node motherNode = getDogNode(motherUuid);
+            if (motherNode == null) {
+                return null; // parent-2 not found
+            }
+            TopLevelDog father = new PedigreeAlgorithm(graphDb).getPedigree(fatherNode);
+            TopLevelDog mother = new PedigreeAlgorithm(graphDb).getPedigree(motherNode);
+            double coi3 = new InbreedingAlgorithm(graphDb, 3).computeSewallWrightCoefficientOfInbreeding(uuid, fatherNode, motherNode);
+            double coi6 = new InbreedingAlgorithm(graphDb, 6).computeSewallWrightCoefficientOfInbreeding(uuid, fatherNode, motherNode);
+
+            TopLevelDog ficticiousDog = new TopLevelDog();
+            ficticiousDog.setUuid(uuid);
+            ficticiousDog.setName(name);
+            ficticiousDog.setInbreedingCoefficient3(100 * coi3);
+            ficticiousDog.setInbreedingCoefficient6(100 * coi6);
+            ficticiousDog.setAncestry(new Ancestry(father, mother));
+            tx.success();
+            return ficticiousDog;
         }
     }
 
