@@ -13,11 +13,7 @@ All results are returned in JSON format with the header: "Content-Type: applicat
 
 | Resource        | Action | Result           | Attributes  |
 |:------------- |:------------- |:----- |:------ |
-| *Pedigree completeness*  
-http://dogid.nkk.no/dogpopulation/graph/pedigreecompleteness?generations=6&breed=Rottweiler&minYear=1999&maxYear=2001 | get  | Pedigree Completeness for a selection of dogs in given breed and registration year | generations: number of generations incl. the dog itself  
-breed: Case sensitive breed title  
-minYear: Min year of registration  
-maxYear: Max year of registration |
+| **Pedigree completeness**<br/>http://dogid.nkk.no/dogpopulation/graph/pedigreecompleteness?generations=6&breed=Rottweiler&minYear=1999&maxYear=2001 | get  | Pedigree Completeness for a selection of dogs in given breed and registration year | **generations**: number of generations incl. the dog itself<br/>**breed**: Case sensitive breed title<br/>**minYear:** Min year of registration<br/>**maxYear**: Max year of registration |
  
 * Inbreeding  http://dogid.nkk.no/dogpopulation/graph/inbreeding?generations=6&breed=Rottweiler&minYear=1999&maxYear=2001
   Inbreeding coefficients are measured in percentage-of-inbreeding. The "frequency" property counts the number of dogs within ranges of inbreeding.
