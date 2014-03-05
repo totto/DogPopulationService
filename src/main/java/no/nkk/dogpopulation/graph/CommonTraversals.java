@@ -64,4 +64,13 @@ public class CommonTraversals {
                 .traverse(categoryBreedNode);
     }
 
+
+    public Traverser traverseDogsOfBreed(Node breedNode) {
+        return graphDb.traversalDescription()
+                .depthFirst()
+                .relationships(DogGraphRelationshipType.IS_BREED, Direction.INCOMING)
+                .evaluator(Evaluators.atDepth(1))
+                .traverse(breedNode);
+    }
+
 }

@@ -3,8 +3,6 @@ package no.nkk.dogpopulation.graph.hdindex;
 import no.nkk.dogpopulation.graph.*;
 import org.joda.time.LocalDate;
 import org.neo4j.graphdb.*;
-import org.neo4j.graphdb.traversal.Evaluators;
-import org.neo4j.graphdb.traversal.Traverser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +48,7 @@ public class DmuHdIndexAlgorithm {
                 } catch (RuntimeException ignore) {
                 }
             }
-            for (Path path : traverseDogsOfBreed(breedNode)) {
+            for (Path path : commonTraversals.traverseDogsOfBreed(breedNode)) {
                 Node dogNode = path.endNode();
 
                 if (visitedNodes.contains(dogNode.getId())) {
@@ -156,15 +154,6 @@ public class DmuHdIndexAlgorithm {
         uuidMappingfile.print(" ");
         uuidMappingfile.print(uuid);
         uuidMappingfile.print(NEWLINE);
-    }
-
-
-    private Traverser traverseDogsOfBreed(Node breedNode) {
-        return graphDb.traversalDescription()
-                .depthFirst()
-                .relationships(DogGraphRelationshipType.IS_BREED, Direction.INCOMING)
-                .evaluator(Evaluators.atDepth(1))
-                .traverse(breedNode);
     }
 
 }
