@@ -307,6 +307,29 @@ public class GraphResource {
 
 
     @GET
+    @Path("/inconsistencies/circularancestry/breed")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getCircularAncestry(@QueryParam("breed") List<String> breed) {
+        LOGGER.trace("getCircularAncestry()");
+        if (breed == null || breed.isEmpty()) {
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+
+        List<String> result = graphQueryService.getCircluarParentChainInAncestryOf(new LinkedHashSet<>(breed));
+        if (result == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        try {
+            String json = prettyPrintingObjectWriter.writeValueAsString(result);
+            return Response.ok(json).build();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    @GET
     @Path("/inconsistencies/circularancestry/{uuid}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getCircularAncestry(@PathParam("uuid") String uuid) {

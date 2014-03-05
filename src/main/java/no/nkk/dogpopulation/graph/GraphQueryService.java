@@ -2,6 +2,7 @@ package no.nkk.dogpopulation.graph;
 
 import no.nkk.dogpopulation.graph.dataerror.breed.IncorrectBreedAlgorithm;
 import no.nkk.dogpopulation.graph.dataerror.breed.IncorrectBreedRecord;
+import no.nkk.dogpopulation.graph.dataerror.circularparentchain.CircularAncestryBreedGroupAlgorithm;
 import no.nkk.dogpopulation.graph.dataerror.circularparentchain.CircularParentChainAlgorithm;
 import no.nkk.dogpopulation.graph.dataerror.circularparentchain.CircularRecord;
 import no.nkk.dogpopulation.graph.dataerror.gender.IncorrectGenderRecord;
@@ -262,6 +263,16 @@ public class GraphQueryService {
             List<CircularRecord> circle = algorithm.run(uuid);
             tx.success();
             return circle;
+        }
+    }
+
+
+    public List<String> getCircluarParentChainInAncestryOf(Set<String> breedSet) {
+        try (Transaction tx = graphDb.beginTx()) {
+            CircularAncestryBreedGroupAlgorithm algorithm = new CircularAncestryBreedGroupAlgorithm(graphDb, engine);
+            List<String> uuids = algorithm.run(breedSet);
+            tx.success();
+            return uuids;
         }
     }
 
