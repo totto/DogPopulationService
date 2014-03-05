@@ -1,10 +1,20 @@
 DogPopulationService
 ====================
 
+* A Service using Neo4J to build a graph with relationships between dogs.
+* Provides REST endpoints for 
+** dog pedigree
+** breed dashboards
+** data inconsistencies
 
-Some quick pointers to the REST services
+REST API
+--------
+All results are returned in JSON format with the header: "Content-Type: application/json"  
 
-* Pedigree Completeness  http://dogid.nkk.no/dogpopulation/graph/pedigreecompleteness?generations=6&breed=Rottweiler&minYear=1999&maxYear=2001
+| Resource        | Action | Result           | Attributes  |
+|:------------- |:------------- |:----- |:------ |
+| http://dogid.nkk.no/dogpopulation/graph/pedigreecompleteness?generations=6&breed=Rottweiler&minYear=1999&maxYear=2001 | get  | Pedigree Completeness for a selection of dogs in given breed and registration year | generations: number of generations incl. the dog itself\\breed: Case sensitive breed title\\minYear: Min year of registration\\maxYear: Max year of registration |
+ 
 * Inbreeding  http://dogid.nkk.no/dogpopulation/graph/inbreeding?generations=6&breed=Rottweiler&minYear=1999&maxYear=2001
   Inbreeding coefficients are measured in percentage-of-inbreeding. The "frequency" property counts the number of dogs within ranges of inbreeding.
   i.e. frequncy[0] are all dogs with 0% inbreeding, frequency[1] are dogs in range (0,1)%, frequency[2] in range [1,2)%, frequency[3] in range [2,3)%, etc.
