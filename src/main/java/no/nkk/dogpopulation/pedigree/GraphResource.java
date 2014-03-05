@@ -251,6 +251,9 @@ public class GraphResource {
     public Response getIncorrectOrMissingGender(@PathParam("uuid") String uuid) {
         LOGGER.trace("getIncorrectOrMissingGender({})", uuid);
         IncorrectGenderRecord result = graphQueryService.getDogWithInconsistentGender(uuid);
+        if (result == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
 
         try {
             String json = prettyPrintingObjectWriter.writeValueAsString(result);
@@ -290,6 +293,9 @@ public class GraphResource {
     public Response getIncorrectBreed(@PathParam("uuid") String uuid) {
         LOGGER.trace("getIncorrectOrMissingGender({})", uuid);
         IncorrectBreedRecord result = graphQueryService.getDogWithInconsistentBreed(uuid);
+        if (result == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
 
         try {
             String json = prettyPrintingObjectWriter.writeValueAsString(result);
