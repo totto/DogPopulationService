@@ -1,5 +1,6 @@
 package no.nkk.dogpopulation.graph.pedigree;
 
+import no.nkk.dogpopulation.graph.DogGraphConstants;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Path;
@@ -25,6 +26,9 @@ public class PedigreeAlgorithm {
         for (Path path : traversePedigree(node, dog)) {
         }
         dog.setOffspring(PedigreeUtils.getOffspring(node));
+        if (node.hasProperty(DogGraphConstants.DOG_GENDER)) {
+            dog.setGender((String) node.getProperty(DogGraphConstants.DOG_GENDER));
+        }
         return dog;
     }
 
