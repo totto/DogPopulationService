@@ -27,8 +27,8 @@ All results are returned in JSON format with the header: "Content-Type: applicat
 ### Dog pedigree
 | Resource        | Action | Result           | Attributes  |
 |:------------- |:------------- |:----- |:------ |
-| **Pedigree**<br/>http://dogid.nkk.no/dogpopulation/pedigree/ff433553-b14a-4f9d-9408-c10addbefac4| get | Get pedigree of given dog. This end point auto imports this dog to graph if the breed is not imported before. | uuid: The global unique id of this dog |
-| **Ficticious Pedigree**<br/>http://localhost:8051/dogpopulation/pedigree/fictitious?father=ff433553-b14a-4f9d-9408-c10addbefac4&mother=ed3a4fd6-1814-4668-ad3d-faa39418a273| get | Get pedigree of the ficticious offspring of the given dog. This end point auto imports the mother and father to graph if necessary. The expected inbreeding coefficients are computed. | father: The global unique id of the father, mother: The global unique id of the mother |
+| **Pedigree**<br/>http://dogid.nkk.no/dogpopulation/pedigree/ff433553-b14a-4f9d-9408-c10addbefac4| get | Get pedigree of given dog. This end point auto imports this dog to graph if the breed is not imported before. | **uuid**: The global unique id of this dog |
+| **Ficticious Pedigree**<br/>http://dogid.nkk.no/dogpopulation/pedigree/fictitious?father=ff433553-b14a-4f9d-9408-c10addbefac4&mother=ed3a4fd6-1814-4668-ad3d-faa39418a273| get | Get pedigree of the ficticious offspring of the given dog. This end point auto imports the mother and father to graph if necessary. The expected inbreeding coefficients are computed. | **father**: The global unique id of the father <br/>**mother**: The global unique id of the mother |
 
 ### Breed dashboard data
 | Resource        | Action | Result           | Attributes  |
