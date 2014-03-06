@@ -30,6 +30,8 @@ public class InbreedingAlgorithm {
 
     private final int PEDIGREE_GENERATIONS;
 
+    private final InbreedingResult ZERO = new InbreedingResult(0, Collections.unmodifiableMap(new LinkedHashMap<String, Double>()));
+
 
     /**
      * Create an algorithm that will work on a specific graph using a fixed number of generations when computing
@@ -51,7 +53,7 @@ public class InbreedingAlgorithm {
      * @param dog the dog for which we want the inbreeding coefficient of.
      * @return the Coefficient Of Inbreeding.
      */
-    public double computeSewallWrightCoefficientOfInbreeding(Node dog) {
+    public InbreedingResult computeSewallWrightCoefficientOfInbreeding(Node dog) {
         return computeCoefficientOfInbreeding(dog, PEDIGREE_GENERATIONS, 0);
     }
 
@@ -64,24 +66,24 @@ public class InbreedingAlgorithm {
      * @param secondParent the second parent to use in the wanted breeding
      * @return the Coefficient Of Inbreeding of the inbredDogId.
      */
-    public double computeSewallWrightCoefficientOfInbreeding(String inbredDogId, Node firstParent, Node secondParent) {
+    public InbreedingResult computeSewallWrightCoefficientOfInbreeding(String inbredDogId, Node firstParent, Node secondParent) {
         return computeCoefficientOfInbreeding(inbredDogId, PEDIGREE_GENERATIONS, 0, firstParent, secondParent);
     }
 
 
-    private double computeCoefficientOfInbreeding(Node dog, int toDepth, int recursionLevel) {
+    private InbreedingResult computeCoefficientOfInbreeding(Node dog, int toDepth, int recursionLevel) {
         Iterable<Relationship> relationships = dog.getRelationships(Direction.OUTGOING, DogGraphRelationshipType.HAS_PARENT);
 
         Iterator<Relationship> parents = relationships.iterator();
 
         if (!parents.hasNext()) {
-            return 0; // no known parents
+            return ZERO; // no known parents
         }
 
         Relationship firstHasParent = parents.next();
 
         if (!parents.hasNext()) {
-            return 0; // missing one parent
+            return ZERO; // missing one parent
         }
 
         Relationship secondHasParent = parents.next();
@@ -96,19 +98,20 @@ public class InbreedingAlgorithm {
     }
 
 
-    private double computeCoefficientOfInbreeding(String inbredDogId, int toDepth, int recursionLevel, Node firstParent, Node secondParent) {
+    private InbreedingResult computeCoefficientOfInbreeding(String inbredDogId, int toDepth, int recursionLevel, Node firstParent, Node secondParent) {
         Map<String, List<Path>> firstParentPathsByUuid = mapAncestryPathsByAncestorUuid(firstParent, toDepth - 1, recursionLevel);
 
-        double coi = computeInbreedingCoefficient(inbredDogId, secondParent, firstParentPathsByUuid, toDepth - 1, recursionLevel);
+        InbreedingResult coi = computeInbreedingCoefficient(inbredDogId, secondParent, firstParentPathsByUuid, toDepth - 1, recursionLevel);
 
         return coi;
     }
 
 
-    private double computeInbreedingCoefficient(String inbredDogId, Node secondParent, Map<String, List<Path>> firstParentPathsByUuid, int generations, int recursionLevel) {
+    private InbreedingResult computeInbreedingCoefficient(String inbredDogId, Node secondParent, Map<String, List<Path>> firstParentPathsByUuid, int generations, int recursionLevel) {
         CommonAncestorEvaluator commonAncestorEvaluator = new CommonAncestorEvaluator(firstParentPathsByUuid, recursionLevel);
 
         double coi = 0;
+        Map<String, Double> contributingAncestors = new LinkedHashMap<>();
 
         for (Path secondParentPath : graphDb.traversalDescription()
                 .depthFirst()
@@ -137,14 +140,20 @@ public class InbreedingAlgorithm {
 
                 double contribution = Math.pow(0.5, n + 1);
 
-                double ancestorCoi = computeCoefficientOfInbreeding(commonAncestor, PEDIGREE_GENERATIONS, recursionLevel + 1);
+                InbreedingResult ancestorCoi = computeCoefficientOfInbreeding(commonAncestor, PEDIGREE_GENERATIONS, recursionLevel + 1);
+                contributingAncestors.putAll(ancestorCoi.getCoiByContributingAncestor());
 
-                coi += contribution * (1 + ancestorCoi);
+                coi += contribution * (1 + ancestorCoi.getCoi());
 
-                tracePathBetweenParentsThroughCommonAncestor(inbredDogId, secondParentPath, firstParentPath, ancestorCoi, recursionLevel);
+                tracePathBetweenParentsThroughCommonAncestor(inbredDogId, secondParentPath, firstParentPath, ancestorCoi.getCoi(), recursionLevel);
             }
         }
-        return coi;
+
+        if (coi > 0) {
+            contributingAncestors.put(inbredDogId, coi);
+        }
+
+        return new InbreedingResult(coi, contributingAncestors);
     }
 
 

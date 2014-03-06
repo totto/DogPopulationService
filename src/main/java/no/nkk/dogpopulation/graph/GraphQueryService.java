@@ -13,9 +13,11 @@ import no.nkk.dogpopulation.graph.hdxray.HDXrayStatisticsAlgorithm;
 import no.nkk.dogpopulation.graph.inbreeding.InbreedingAlgorithm;
 import no.nkk.dogpopulation.graph.inbreeding.InbreedingOfGroup;
 import no.nkk.dogpopulation.graph.inbreeding.InbreedingOfGroupAlgorithm;
+import no.nkk.dogpopulation.graph.inbreeding.InbreedingResult;
 import no.nkk.dogpopulation.graph.litter.LitterStatistics;
 import no.nkk.dogpopulation.graph.litter.LitterStatisticsAlgorithm;
 import no.nkk.dogpopulation.graph.pedigree.Ancestry;
+import no.nkk.dogpopulation.graph.pedigree.Dog;
 import no.nkk.dogpopulation.graph.pedigree.PedigreeAlgorithm;
 import no.nkk.dogpopulation.graph.pedigree.TopLevelDog;
 import no.nkk.dogpopulation.graph.pedigreecompleteness.PedigreeCompleteness;
@@ -151,15 +153,57 @@ public class GraphQueryService {
                 return null; // dog not found
             }
             TopLevelDog dog = new PedigreeAlgorithm(graphDb).getPedigree(node);
-            double coi3 = computeCoefficientOfInbreeding(id, 3);
-            double coi6 = computeCoefficientOfInbreeding(id, 6);
-            dog.setInbreedingCoefficient3(100 * coi3);
-            dog.setInbreedingCoefficient6(100 * coi6);
+            InbreedingResult inbreedingResult3 = computeCoefficientOfInbreeding(id, 3);
+            InbreedingResult inbreedingResult6 = computeCoefficientOfInbreeding(id, 6);
+            updateInbreedingContributions(dog, inbreedingResult3, inbreedingResult6);
             tx.success();
             return dog;
         }
     }
 
+    private void updateInbreedingContributions(Dog dog, InbreedingResult inbreedingResult3, InbreedingResult inbreedingResult6) {
+        dog.setInbreedingCoefficient3(0.0);
+        dog.setInbreedingCoefficient6(0.0);
+        Map<String, List<Dog>> dogByUuid = new LinkedHashMap<>();
+        populateMap(dog, dogByUuid);
+        for (Map.Entry<String, Double> e : inbreedingResult3.getCoiByContributingAncestor().entrySet()) {
+            String uuid = e.getKey();
+            Double coi = e.getValue();
+            List<Dog> dogs = dogByUuid.get(uuid);
+            for (Dog d : dogs) {
+                d.setInbreedingCoefficient3(100 * coi);
+            }
+        }
+        for (Map.Entry<String, Double> e : inbreedingResult6.getCoiByContributingAncestor().entrySet()) {
+            String uuid = e.getKey();
+            Double coi = e.getValue();
+            List<Dog> dogs = dogByUuid.get(uuid);
+            for (Dog d : dogs) {
+                d.setInbreedingCoefficient6(100 * coi);
+            }
+        }
+    }
+
+    private void populateMap(Dog dog, Map<String, List<Dog>> dogByUuid) {
+        List<Dog> dogs = dogByUuid.get(dog.getUuid());
+        if (dogs == null) {
+            dogs = new LinkedList<>();
+            dogByUuid.put(dog.getUuid(), dogs);
+        }
+        dogs.add(dog);
+        Ancestry ancestry = dog.getAncestry();
+        if (ancestry == null) {
+            return;
+        }
+        Dog father = ancestry.getFather();
+        if (father != null) {
+            populateMap(father, dogByUuid);
+        }
+        Dog mother = ancestry.getMother();
+        if (mother != null) {
+            populateMap(mother, dogByUuid);
+        }
+    }
 
     public TopLevelDog getPedigree(String uuid, String name, String fatherUuid, String motherUuid) {
         try (Transaction tx = graphDb.beginTx()) {
@@ -173,14 +217,13 @@ public class GraphQueryService {
             }
             TopLevelDog father = new PedigreeAlgorithm(graphDb).getPedigree(fatherNode);
             TopLevelDog mother = new PedigreeAlgorithm(graphDb).getPedigree(motherNode);
-            double coi3 = new InbreedingAlgorithm(graphDb, 3).computeSewallWrightCoefficientOfInbreeding(uuid, fatherNode, motherNode);
-            double coi6 = new InbreedingAlgorithm(graphDb, 6).computeSewallWrightCoefficientOfInbreeding(uuid, fatherNode, motherNode);
+            InbreedingResult inbreedingResult3 = new InbreedingAlgorithm(graphDb, 3).computeSewallWrightCoefficientOfInbreeding(uuid, fatherNode, motherNode);
+            InbreedingResult inbreedingResult6 = new InbreedingAlgorithm(graphDb, 6).computeSewallWrightCoefficientOfInbreeding(uuid, fatherNode, motherNode);
 
             TopLevelDog ficticiousDog = new TopLevelDog();
             ficticiousDog.setUuid(uuid);
             ficticiousDog.setName(name);
-            ficticiousDog.setInbreedingCoefficient3(100 * coi3);
-            ficticiousDog.setInbreedingCoefficient6(100 * coi6);
+            updateInbreedingContributions(ficticiousDog, inbreedingResult3, inbreedingResult6);
             ficticiousDog.setAncestry(new Ancestry(father, mother));
             tx.success();
             return ficticiousDog;
@@ -204,12 +247,12 @@ public class GraphQueryService {
      * @param generations how many generations to use from the pedigree.
      * @return the Coefficient Of Inbreeding.
      */
-    public double computeCoefficientOfInbreeding(String uuid, int generations) {
+    public InbreedingResult computeCoefficientOfInbreeding(String uuid, int generations) {
         try (Transaction tx = graphDb.beginTx()) {
             Node dog = getDogNode(uuid);
-            double coi = new InbreedingAlgorithm(graphDb, generations).computeSewallWrightCoefficientOfInbreeding(dog);
+            InbreedingResult inbreedingResult = new InbreedingAlgorithm(graphDb, generations).computeSewallWrightCoefficientOfInbreeding(dog);
             tx.success();
-            return coi;
+            return inbreedingResult;
         }
     }
 

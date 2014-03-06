@@ -74,7 +74,7 @@ public class InbreedingAlgorithmTest extends AbstractGraphTest {
         GraphQueryService graphQueryService = new GraphQueryService(graphDb);
 
         // when
-        double coi = graphQueryService.computeCoefficientOfInbreeding("A", 3);
+        double coi = graphQueryService.computeCoefficientOfInbreeding("A", 3).getCoi();
 
         // then
         Assert.assertEquals(coi, 0.25, 0.000001);
@@ -178,7 +178,7 @@ public class InbreedingAlgorithmTest extends AbstractGraphTest {
         GraphQueryService graphQueryService = new GraphQueryService(graphDb);
 
         // when
-        double coi = graphQueryService.computeCoefficientOfInbreeding("A", 5);
+        double coi = graphQueryService.computeCoefficientOfInbreeding("A", 5).getCoi();
 
         // then
         Assert.assertEquals(coi, 0.3125, 0.000001);

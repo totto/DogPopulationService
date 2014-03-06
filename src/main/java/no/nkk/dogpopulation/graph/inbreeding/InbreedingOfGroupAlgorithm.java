@@ -37,7 +37,7 @@ public class InbreedingOfGroupAlgorithm {
         for (Path breedMemberPath : commonTraversals.traverseBreedInSet(categoryBreedNode, breedSet)) {
             for (Path dogPath : commonTraversals.traverseDogOfBreedBornBetween(breedMemberPath.endNode(), minYear, maxYear)) {
                 Node dogNode = dogPath.endNode();
-                double coi = algorithm.computeSewallWrightCoefficientOfInbreeding(dogNode);
+                double coi = algorithm.computeSewallWrightCoefficientOfInbreeding(dogNode).getCoi();
                 double percentage = 100 * coi;
                 int index = 1 + (int) percentage;
                 if (percentage == 0) {
