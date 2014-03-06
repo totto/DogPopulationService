@@ -7,6 +7,7 @@ import no.nkk.dogpopulation.graph.bulkwrite.BulkWriteService;
 import no.nkk.dogpopulation.graph.dataerror.breed.IncorrectBreedRecord;
 import no.nkk.dogpopulation.graph.dataerror.circularparentchain.CircularRecord;
 import no.nkk.dogpopulation.graph.dataerror.gender.IncorrectGenderRecord;
+import no.nkk.dogpopulation.graph.hdxray.HDXrayStatistics;
 import no.nkk.dogpopulation.graph.inbreeding.InbreedingOfGroup;
 import no.nkk.dogpopulation.graph.litter.LitterStatistics;
 import no.nkk.dogpopulation.graph.pedigreecompleteness.PedigreeCompleteness;
@@ -148,6 +149,56 @@ public class GraphResource {
 
         try {
             String json = prettyPrintingObjectWriter.writeValueAsString(breedOverview);
+            return Response.ok(json).build();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @GET
+    @Path("/hdstatistics/bornyear")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getHdXrayStatisticsOfDogGroupBornBetween(@QueryParam("minYear") Integer minYear, @QueryParam("maxYear") Integer maxYear, @QueryParam("breed") List<String> breed) {
+        LOGGER.trace("getHdXrayStatisticsOfDogGroupBornBetween({}, {}, {})", minYear, maxYear, breed);
+
+        if (breed == null) {
+            breed = new ArrayList<>();
+        }
+        if (minYear == null) {
+            minYear = 0;
+        }
+        if (maxYear == null) {
+            maxYear = Integer.MAX_VALUE;
+        }
+        HDXrayStatistics statistics = graphQueryService.getHDXrayStatisticsOfGroupBornBetween(new LinkedHashSet<>(breed), minYear, maxYear);
+
+        try {
+            String json = prettyPrintingObjectWriter.writeValueAsString(statistics);
+            return Response.ok(json).build();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @GET
+    @Path("/hdstatistics/xrayyear")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getHdXrayStatisticsOfDogGroupHdXrayedBetween(@QueryParam("minYear") Integer minYear, @QueryParam("maxYear") Integer maxYear, @QueryParam("breed") List<String> breed) {
+        LOGGER.trace("getHdXrayStatisticsOfDogGroupHdXrayedBetween({}, {}, {})", minYear, maxYear, breed);
+
+        if (breed == null) {
+            breed = new ArrayList<>();
+        }
+        if (minYear == null) {
+            minYear = 0;
+        }
+        if (maxYear == null) {
+            maxYear = Integer.MAX_VALUE;
+        }
+        HDXrayStatistics statistics = graphQueryService.getHDXrayStatisticsOfGroupHdXRayedBetween(new LinkedHashSet<>(breed), minYear, maxYear);
+
+        try {
+            String json = prettyPrintingObjectWriter.writeValueAsString(statistics);
             return Response.ok(json).build();
         } catch (IOException e) {
             throw new RuntimeException(e);

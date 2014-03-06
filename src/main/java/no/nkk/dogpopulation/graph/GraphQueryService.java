@@ -8,6 +8,8 @@ import no.nkk.dogpopulation.graph.dataerror.circularparentchain.CircularRecord;
 import no.nkk.dogpopulation.graph.dataerror.gender.IncorrectGenderRecord;
 import no.nkk.dogpopulation.graph.dataerror.gender.IncorrectOrMissingGenderAlgorithm;
 import no.nkk.dogpopulation.graph.hdindex.DmuHdIndexAlgorithm;
+import no.nkk.dogpopulation.graph.hdxray.HDXrayStatistics;
+import no.nkk.dogpopulation.graph.hdxray.HDXrayStatisticsAlgorithm;
 import no.nkk.dogpopulation.graph.inbreeding.InbreedingAlgorithm;
 import no.nkk.dogpopulation.graph.inbreeding.InbreedingOfGroup;
 import no.nkk.dogpopulation.graph.inbreeding.InbreedingOfGroupAlgorithm;
@@ -219,6 +221,26 @@ public class GraphQueryService {
             PedigreeCompleteness pedigreeCompletenessOfGroup = algorithm.getPedigreeCompletenessOfGroup(categoryBreedNode, breedSet, minYear, maxYear);
             tx.success();
             return pedigreeCompletenessOfGroup;
+        }
+    }
+
+
+    public HDXrayStatistics getHDXrayStatisticsOfGroupBornBetween(Set<String> breedSet, int minYear, int maxYear) {
+        try (Transaction tx = graphDb.beginTx()) {
+            HDXrayStatisticsAlgorithm algorithm = new HDXrayStatisticsAlgorithm(graphDb);
+            HDXrayStatistics hdXrayStatistics = algorithm.hdXrayStatisticsForDogsOfBreedBornBetween(breedSet, minYear, maxYear);
+            tx.success();
+            return hdXrayStatistics;
+        }
+    }
+
+
+    public HDXrayStatistics getHDXrayStatisticsOfGroupHdXRayedBetween(Set<String> breedSet, int minYear, int maxYear) {
+        try (Transaction tx = graphDb.beginTx()) {
+            HDXrayStatisticsAlgorithm algorithm = new HDXrayStatisticsAlgorithm(graphDb);
+            HDXrayStatistics hdXrayStatistics = algorithm.hdXrayStatisticsForDogsOfBreedXrayedBetween(breedSet, minYear, maxYear);
+            tx.success();
+            return hdXrayStatistics;
         }
     }
 
