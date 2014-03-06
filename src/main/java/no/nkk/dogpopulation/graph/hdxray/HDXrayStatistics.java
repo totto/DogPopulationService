@@ -8,7 +8,7 @@ import java.util.Set;
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
-@JsonPropertyOrder({"breed", "minYear", "maxYear", "dogCount", "countByDiagnose"})
+@JsonPropertyOrder({"breed", "minYear", "maxYear", "dogCount", "percentageWithDiagnose", "countByDiagnose"})
 public class HDXrayStatistics {
     private final Set<String> breed;
     private final int minYear;
@@ -38,6 +38,14 @@ public class HDXrayStatistics {
 
     public int getDogCount() {
         return dogCount;
+    }
+
+    public double getPercentageWithDiagnose() {
+        int sum = 0;
+        for (Integer value : countByDiagnose.values()) {
+            sum += value;
+        }
+        return 100.0 * sum / dogCount;
     }
 
     public Map<String, Integer> getCountByDiagnose() {
