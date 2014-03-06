@@ -170,6 +170,9 @@ public class GraphQueryService {
             String uuid = e.getKey();
             Double coi = e.getValue();
             List<Dog> dogs = dogByUuid.get(uuid);
+            if (dogs == null) {
+                continue;
+            }
             for (Dog d : dogs) {
                 d.setInbreedingCoefficient3(100 * coi);
             }
@@ -178,6 +181,9 @@ public class GraphQueryService {
             String uuid = e.getKey();
             Double coi = e.getValue();
             List<Dog> dogs = dogByUuid.get(uuid);
+            if (dogs == null) {
+                continue;
+            }
             for (Dog d : dogs) {
                 d.setInbreedingCoefficient6(100 * coi);
             }
