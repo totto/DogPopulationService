@@ -134,6 +134,7 @@ public class DogSearchSolrClient implements DogSearchClient {
         for (SolrDocument solrDocument : results) {
             String json_detailed = (String) solrDocument.get("json_detailed");
             try {
+                preProcess(id, json_detailed);
                 DogDetails dogDetails = objectMapper.readValue(json_detailed, DogDetails.class);
                 candidates.add(dogDetails); // found candidate
             } catch (IOException e) {
@@ -170,4 +171,6 @@ public class DogSearchSolrClient implements DogSearchClient {
         return chosenCandidate; // return first candidate
     }
 
+    protected void preProcess(String id, String json_detailed) {
+    }
 }
