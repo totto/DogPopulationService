@@ -1,6 +1,7 @@
 package no.nkk.dogpopulation.hdindex;
 
 import no.nkk.dogpopulation.graph.GraphQueryService;
+import no.nkk.dogpopulation.graph.hdindex.UnknownBreedCodeException;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,7 +58,11 @@ public class HdIndexResource {
             if (breedSet == null || breedSet.isEmpty()) {
                 return Response.status(Response.Status.BAD_REQUEST).build();
             }
-            getHdIndexFiles(breedSet, map);
+            try {
+                getHdIndexFiles(breedSet, map);
+            } catch (UnknownBreedCodeException e) {
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Unknown breed code of race \"" + e.getMessage() + "\"").build();
+            }
         }
 
         File file = map.get(HdIndexFileType.DATA);
@@ -79,7 +84,11 @@ public class HdIndexResource {
             if (breedSet == null || breedSet.isEmpty()) {
                 return Response.status(Response.Status.BAD_REQUEST).build();
             }
-            getHdIndexFiles(breedSet, map);
+            try {
+                getHdIndexFiles(breedSet, map);
+            } catch (UnknownBreedCodeException e) {
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Unknown breed code of race \"" + e.getMessage() + "\"").build();
+            }
         }
 
         File file = map.get(HdIndexFileType.PEDIGREE);
@@ -101,7 +110,11 @@ public class HdIndexResource {
             if (breedSet == null || breedSet.isEmpty()) {
                 return Response.status(Response.Status.BAD_REQUEST).build();
             }
-            getHdIndexFiles(breedSet, map);
+            try {
+                getHdIndexFiles(breedSet, map);
+            } catch (UnknownBreedCodeException e) {
+                return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Unknown breed code of race \"" + e.getMessage() + "\"").build();
+            }
         }
 
         File file = map.get(HdIndexFileType.UUID_MAPPING);

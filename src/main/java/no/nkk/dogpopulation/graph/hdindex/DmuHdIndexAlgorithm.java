@@ -39,7 +39,7 @@ public class DmuHdIndexAlgorithm {
         Set<Long> visitedNodes = new HashSet<>();
         Node categoryBreedNode = GraphUtils.getSingleNode(graphDb, DogGraphLabel.CATEGORY, DogGraphConstants.CATEGORY_CATEGORY, DogGraphConstants.CATEGORY_CATEGORY_BREED);
         for (Path breedPath : commonTraversals.traverseBreedInSet(categoryBreedNode, breed)) {
-            int breedCode = DmuDataRecord.UNKNOWN;
+            int breedCode = -1;
             Node breedNode = breedPath.endNode();
             if (breedNode.hasProperty(DogGraphConstants.BREED_ID)) {
                 String breedIdStr = (String) breedNode.getProperty(DogGraphConstants.BREED_ID);
@@ -47,6 +47,13 @@ public class DmuHdIndexAlgorithm {
                     breedCode = Integer.parseInt(breedIdStr);
                 } catch (RuntimeException ignore) {
                 }
+            }
+            if (breedCode <= 0) {
+                String breedName = "Breed Node does not have breed name set!";
+                if (breedNode.hasProperty(DogGraphConstants.BREED_BREED)) {
+                    breedName = (String) breedNode.getProperty(DogGraphConstants.BREED_BREED);
+                }
+                throw new UnknownBreedCodeException(breedName);
             }
             for (Path path : commonTraversals.traverseDogsOfBreed(breedNode)) {
                 Node dogNode = path.endNode();
