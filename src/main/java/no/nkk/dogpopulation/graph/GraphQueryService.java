@@ -53,9 +53,9 @@ public class GraphQueryService {
     }
 
 
-    public void writeDmuFiles(File dataFile, File pedigreeFile, File uuidMappingFile, Set<String> breed) {
+    public void writeDmuFiles(File dataFile, File pedigreeFile, File uuidMappingFile, File breedCodeMappingFile, Set<String> breed) {
         try (Transaction tx = graphDb.beginTx()) {
-            DmuHdIndexAlgorithm algorithm = new DmuHdIndexAlgorithm(graphDb, dataFile, pedigreeFile, uuidMappingFile, breed);
+            DmuHdIndexAlgorithm algorithm = new DmuHdIndexAlgorithm(graphDb, dataFile, pedigreeFile, uuidMappingFile, breedCodeMappingFile, breed);
             algorithm.writeFiles();
             tx.success();
         }

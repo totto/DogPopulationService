@@ -33,7 +33,7 @@ public class HdIndexResource {
     private final File hdIndexFolder;
 
     private enum HdIndexFileType {
-        DATA, PEDIGREE, UUID_MAPPING
+        DATA, PEDIGREE, UUID_MAPPING, BREED_CODE_MAPPING
     }
 
     public HdIndexResource(GraphQueryService graphQueryService, String hdIndexFolderPath) {
@@ -145,7 +145,7 @@ public class HdIndexResource {
             }
         } else {
             // generate file
-            graphQueryService.writeDmuFiles(map.get(HdIndexFileType.DATA), map.get(HdIndexFileType.PEDIGREE), map.get(HdIndexFileType.UUID_MAPPING), breed);
+            graphQueryService.writeDmuFiles(map.get(HdIndexFileType.DATA), map.get(HdIndexFileType.PEDIGREE), map.get(HdIndexFileType.UUID_MAPPING), map.get(HdIndexFileType.BREED_CODE_MAPPING), breed);
             lock.countDown(); // signal file generation completion
             synchronized (lockedFiles) {
                 lockedFiles.remove(map.get(HdIndexFileType.DATA).getName());
@@ -161,6 +161,7 @@ public class HdIndexResource {
         String dataFilename = String.format("hdindex-data-%s.txt", breed);
         String pedigreeFilename = String.format("hdindex-pedigree-%s.txt", breed);
         String uuidMappingFilename = String.format("hdindex-uuid-map-%s.txt", breed);
+        String breedCodeMappingFilename = String.format("hdindex-breed-map-%s.txt", breed);
         File folder = new File(hdIndexFolder, breed);
         try {
             FileUtils.forceMkdir(folder);
@@ -170,10 +171,12 @@ public class HdIndexResource {
         File dataFile = new File(folder, dataFilename);
         File pedigreeFile = new File(folder, pedigreeFilename);
         File uuidMappingFile = new File(folder, uuidMappingFilename);
+        File breedCodeMappingFile = new File(folder, breedCodeMappingFilename);
 
         map.put(HdIndexFileType.DATA, dataFile);
         map.put(HdIndexFileType.PEDIGREE, pedigreeFile);
         map.put(HdIndexFileType.UUID_MAPPING, uuidMappingFile);
+        map.put(HdIndexFileType.BREED_CODE_MAPPING, breedCodeMappingFile);
         return map;
     }
 }

@@ -8,6 +8,8 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -21,16 +23,18 @@ public class DmuHdIndexAlgorithm {
     private final File dataFile;
     private final File pedigreeFile;
     private final File uuidMappingFile;
+    private final File breedCodeMappingFile;
 
     private final Set<String> breed;
 
     private final CommonTraversals commonTraversals;
 
-    public DmuHdIndexAlgorithm(GraphDatabaseService graphDb, File dataFile, File pedigreeFile, File uuidMappingFile, Set<String> breed) {
+    public DmuHdIndexAlgorithm(GraphDatabaseService graphDb, File dataFile, File pedigreeFile, File uuidMappingFile, File breedCodeMappingFile, Set<String> breed) {
         this.graphDb = graphDb;
         this.dataFile = dataFile;
         this.pedigreeFile = pedigreeFile;
         this.uuidMappingFile = uuidMappingFile;
+        this.breedCodeMappingFile = breedCodeMappingFile;
         this.breed = breed;
         this.commonTraversals = new CommonTraversals(graphDb);
     }
@@ -40,9 +44,11 @@ public class DmuHdIndexAlgorithm {
         boolean success = false;
         try(PrintWriter dataOut = new PrintWriter(new OutputStreamWriter(new FileOutputStream(dataFile), Charset.forName("ISO-8859-1")))) {
             try(PrintWriter pedigreeOut = new PrintWriter(new OutputStreamWriter(new FileOutputStream(pedigreeFile), Charset.forName("ISO-8859-1")))) {
-                try(PrintWriter mappingOut = new PrintWriter(new OutputStreamWriter(new FileOutputStream(uuidMappingFile), Charset.forName("ISO-8859-1")))) {
-                    writeFiles(dataOut, pedigreeOut, mappingOut);
-                    mappingOut.flush();
+                try(PrintWriter uuidMappingOut = new PrintWriter(new OutputStreamWriter(new FileOutputStream(uuidMappingFile), Charset.forName("ISO-8859-1")))) {
+                    try(PrintWriter breedMappingOut = new PrintWriter(new OutputStreamWriter(new FileOutputStream(breedCodeMappingFile), Charset.forName("ISO-8859-1")))) {
+                        writeFiles(dataOut, pedigreeOut, uuidMappingOut, breedMappingOut);
+                    }
+                    uuidMappingOut.flush();
                 }
                 pedigreeOut.flush();
             }
@@ -56,22 +62,28 @@ public class DmuHdIndexAlgorithm {
                 dataFile.delete();
                 pedigreeFile.delete();
                 uuidMappingFile.delete();
+                breedCodeMappingFile.delete();
                 folder.delete();
             }
         }
     }
 
-    public void writeFiles(PrintWriter dataWriter, PrintWriter pedigreeWriter, PrintWriter uuidMappingWriter) {
+    public void writeFiles(PrintWriter dataWriter, PrintWriter pedigreeWriter, PrintWriter uuidMappingWriter, PrintWriter breedMappingWriter) {
         Set<Long> visitedNodes = new HashSet<>();
         Node categoryBreedNode = GraphUtils.getSingleNode(graphDb, DogGraphLabel.CATEGORY, DogGraphConstants.CATEGORY_CATEGORY, DogGraphConstants.CATEGORY_CATEGORY_BREED);
         for (Path breedPath : commonTraversals.traverseBreedInSet(categoryBreedNode, breed)) {
-            writeBreedToFiles(dataWriter, pedigreeWriter, uuidMappingWriter, visitedNodes, breedPath);
+            writeBreedToFiles(dataWriter, pedigreeWriter, uuidMappingWriter, breedMappingWriter, visitedNodes, breedPath);
         }
     }
 
-    private void writeBreedToFiles(PrintWriter dataWriter, PrintWriter pedigreeWriter, PrintWriter uuidMappingWriter, Set<Long> visitedNodes, Path breedPath) {
+    private void writeBreedToFiles(PrintWriter dataWriter, PrintWriter pedigreeWriter, PrintWriter uuidMappingWriter, PrintWriter breedMappingWriter, Set<Long> visitedNodes, Path breedPath) {
+        Map<String, Integer> breedCodeMap = new LinkedHashMap<>();
         int breedCode = -1;
         Node breedNode = breedPath.endNode();
+        String breedName = "Breed Node does not have breed name set!";
+        if (breedNode.hasProperty(DogGraphConstants.BREED_BREED)) {
+            breedName = (String) breedNode.getProperty(DogGraphConstants.BREED_BREED);
+        }
         if (breedNode.hasProperty(DogGraphConstants.BREED_ID)) {
             String breedIdStr = (String) breedNode.getProperty(DogGraphConstants.BREED_ID);
             try {
@@ -80,10 +92,6 @@ public class DmuHdIndexAlgorithm {
             }
         }
         if (breedCode <= 0) {
-            String breedName = "Breed Node does not have breed name set!";
-            if (breedNode.hasProperty(DogGraphConstants.BREED_BREED)) {
-                breedName = (String) breedNode.getProperty(DogGraphConstants.BREED_BREED);
-            }
             LOGGER.warn("Unable to produce HDIndex files. No valid breed-code registered for breed: \"{}\"", breedName);
             throw new UnknownBreedCodeException(breedName);
         }
@@ -181,6 +189,9 @@ public class DmuHdIndexAlgorithm {
             dmuPedigreeRecord.writeTo(pedigreeWriter);
 
             writeUuidMappingRecord(id, uuid, uuidMappingWriter);
+
+            writeBreedCodeMappingRecord(id, uuid, breedMappingWriter, breedName, breedCode);
+
         }
     }
 
@@ -191,6 +202,14 @@ public class DmuHdIndexAlgorithm {
         uuidMappingWriter.print(" ");
         uuidMappingWriter.print(uuid);
         uuidMappingWriter.print(NEWLINE);
+    }
+
+    private void writeBreedCodeMappingRecord(int id, String uuid, PrintWriter breedMappingWriter, String breedName, int breedCode) {
+        final String NEWLINE = "\r\n";
+        breedMappingWriter.print(breedCode);
+        breedMappingWriter.print(" ");
+        breedMappingWriter.print(breedName);
+        breedMappingWriter.print(NEWLINE);
     }
 
 }
