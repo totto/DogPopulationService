@@ -4,6 +4,7 @@ import com.jayway.restassured.RestAssured;
 import no.nkk.dogpopulation.graph.GraphQueryService;
 import no.nkk.dogpopulation.graph.dogbuilder.CommonNodes;
 import no.nkk.dogpopulation.graph.dogbuilder.Dogs;
+import no.nkk.dogpopulation.hdindex.HdIndexResource;
 import no.nkk.dogpopulation.importer.dogsearch.DogTestImporterFactory;
 import no.nkk.dogpopulation.pedigree.PedigreeResource;
 import no.nkk.dogpopulation.pedigree.PedigreeService;
@@ -39,7 +40,9 @@ public class AbstractResourceTest {
             @Override
             public ResourceConfig createResourceConfig() {
                 ResourceConfig resourceConfig = new ResourceConfig();
-                resourceConfig.registerInstances(new PedigreeResource(new PedigreeService(graphDb, new GraphQueryService(graphDb), new DogTestImporterFactory())));
+                GraphQueryService graphQueryService = new GraphQueryService(graphDb);
+                resourceConfig.registerInstances(new PedigreeResource(new PedigreeService(graphDb, graphQueryService, new DogTestImporterFactory())));
+                resourceConfig.registerInstances(new HdIndexResource(graphQueryService, "target/hdindex-test"));
                 return resourceConfig;
             }
         };

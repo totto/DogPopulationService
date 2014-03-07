@@ -25,6 +25,6 @@ public class DogPopulationJerseyApplication extends ResourceConfig {
         registerInstances(
                 new PedigreeResource(pedigreeService),
                 new GraphResource(graphDb, graphQueryService, executorService, pedigreeImporterFactory, dogSearchClient),
-                new HdIndexResource(graphQueryService));
+                new HdIndexResource(graphQueryService, "hdindex"));
     }
 }

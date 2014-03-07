@@ -29,7 +29,7 @@ import org.neo4j.graphdb.traversal.Uniqueness;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.PrintWriter;
+import java.io.File;
 import java.util.*;
 
 /**
@@ -53,9 +53,9 @@ public class GraphQueryService {
     }
 
 
-    public void writeDmuFiles(PrintWriter dataFile, PrintWriter pedigreeFile, PrintWriter uuidMappingfile, Set<String> breed) {
+    public void writeDmuFiles(File dataFile, File pedigreeFile, File uuidMappingFile, Set<String> breed) {
         try (Transaction tx = graphDb.beginTx()) {
-            DmuHdIndexAlgorithm algorithm = new DmuHdIndexAlgorithm(graphDb, dataFile, pedigreeFile, uuidMappingfile, breed);
+            DmuHdIndexAlgorithm algorithm = new DmuHdIndexAlgorithm(graphDb, dataFile, pedigreeFile, uuidMappingFile, breed);
             algorithm.writeFiles();
             tx.success();
         }

@@ -9,8 +9,8 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.io.*;
-import java.nio.charset.Charset;
+import java.io.File;
+import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
@@ -30,14 +30,15 @@ public class HdIndexResource {
 
     private final GraphQueryService graphQueryService;
 
-    private final File hdIndexFolder = new File("hdindex");
+    private final File hdIndexFolder;
 
     private enum HdIndexFileType {
         DATA, PEDIGREE, UUID_MAPPING
     }
 
-    public HdIndexResource(GraphQueryService graphQueryService) {
+    public HdIndexResource(GraphQueryService graphQueryService, String hdIndexFolderPath) {
         this.graphQueryService = graphQueryService;
+        hdIndexFolder = new File(hdIndexFolderPath);
         try {
             FileUtils.forceMkdir(hdIndexFolder);
         } catch (IOException e) {
@@ -144,18 +145,7 @@ public class HdIndexResource {
             }
         } else {
             // generate file
-            try(PrintWriter dataOut = new PrintWriter(new OutputStreamWriter(new FileOutputStream(map.get(HdIndexFileType.DATA)), Charset.forName("ISO-8859-1")))) {
-                try(PrintWriter pedigreeOut = new PrintWriter(new OutputStreamWriter(new FileOutputStream(map.get(HdIndexFileType.PEDIGREE)), Charset.forName("ISO-8859-1")))) {
-                    try(PrintWriter mappingOut = new PrintWriter(new OutputStreamWriter(new FileOutputStream(map.get(HdIndexFileType.UUID_MAPPING)), Charset.forName("ISO-8859-1")))) {
-                        graphQueryService.writeDmuFiles(dataOut, pedigreeOut, mappingOut, breed);
-                        mappingOut.flush();
-                    }
-                    pedigreeOut.flush();
-                }
-                dataOut.flush();
-            } catch (FileNotFoundException e) {
-                throw new RuntimeException(e);
-            }
+            graphQueryService.writeDmuFiles(map.get(HdIndexFileType.DATA), map.get(HdIndexFileType.PEDIGREE), map.get(HdIndexFileType.UUID_MAPPING), breed);
             lock.countDown(); // signal file generation completion
             synchronized (lockedFiles) {
                 lockedFiles.remove(map.get(HdIndexFileType.DATA).getName());
