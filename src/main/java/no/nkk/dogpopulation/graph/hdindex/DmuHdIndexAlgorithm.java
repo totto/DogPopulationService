@@ -1,7 +1,6 @@
 package no.nkk.dogpopulation.graph.hdindex;
 
 import no.nkk.dogpopulation.graph.*;
-import org.joda.time.LocalDate;
 import org.neo4j.graphdb.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,18 +99,20 @@ public class DmuHdIndexAlgorithm {
             String uuid = (String) dogNode.getProperty(DogGraphConstants.DOG_UUID);
 
             int born = DmuPedigreeRecord.UNKNOWN;
+            int bornYear = 0; // part of breedBornYearGender, where we probably don't want more than 4 digits.
             if (dogNode.hasProperty(DogGraphConstants.DOG_BORN_YEAR)) {
-                int year = (Integer) dogNode.getProperty(DogGraphConstants.DOG_BORN_YEAR);
+                bornYear = (Integer) dogNode.getProperty(DogGraphConstants.DOG_BORN_YEAR);
                 int month = (Integer) dogNode.getProperty(DogGraphConstants.DOG_BORN_MONTH);
                 int day = (Integer) dogNode.getProperty(DogGraphConstants.DOG_BORN_DAY);
-                LocalDate bornDate = new LocalDate(year, month, day);
-                born = 10000 * year + 100 * month + day;
+                born = 10000 * bornYear + 100 * month + day;
             }
 
+            /*
             int hdXrayYear = DmuDataRecord.UNKNOWN;
             if (dogNode.hasProperty(DogGraphConstants.DOG_HDYEAR)) {
                 hdXrayYear = (Integer) dogNode.getProperty(DogGraphConstants.DOG_HDYEAR);
             }
+            */
 
             int hdScore = DmuDataRecord.UNKNOWN;
             if (dogNode.hasProperty(DogGraphConstants.DOG_HDDIAG)) {
@@ -138,7 +139,7 @@ public class DmuHdIndexAlgorithm {
                     gender = 1; // MALE
                 }
             }
-            int breedHdXrayYearGender = (100000 * breedCode) + (10 * hdXrayYear) + gender;
+            int breedBornYearGender = (100000 * breedCode) + (10 * bornYear) + gender;
 
 
             int litterId = DmuDataRecord.UNKNOWN;
@@ -172,7 +173,7 @@ public class DmuHdIndexAlgorithm {
 
             if (hdScore != DmuDataRecord.UNKNOWN) {
                 // only use records with known HD score in data file.
-                DmuDataRecord dmuDataRecord = new DmuDataRecord(id, breedCode, hdXrayYear, gender, breedHdXrayYearGender, litterId, motherId, hdScore);
+                DmuDataRecord dmuDataRecord = new DmuDataRecord(id, breedCode, bornYear, gender, breedBornYearGender, litterId, motherId, hdScore);
                 dmuDataRecord.writeTo(dataWriter);
             }
 
