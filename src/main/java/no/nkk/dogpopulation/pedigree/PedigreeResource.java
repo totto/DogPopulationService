@@ -56,6 +56,13 @@ public class PedigreeResource {
     public Response getFictitiousPedigree(@QueryParam("father") String fatherUuid, @QueryParam("mother") String motherUuid) {
         LOGGER.trace("getFictitiousPedigree({}, {})", fatherUuid, motherUuid);
 
+        if (fatherUuid == null) {
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+        if (motherUuid == null) {
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+
         TopLevelDog dog = pedigreeService.getFicticiousPedigree("xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx", "Fictitious", fatherUuid, motherUuid);
 
         if (dog == null) {
