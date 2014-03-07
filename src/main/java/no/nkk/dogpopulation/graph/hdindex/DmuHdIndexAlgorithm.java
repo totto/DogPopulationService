@@ -145,11 +145,8 @@ public class DmuHdIndexAlgorithm {
             if (dogNode.hasRelationship(DogGraphRelationshipType.IN_LITTER)) {
                 for (Relationship inLitter : dogNode.getRelationships(Direction.OUTGOING, DogGraphRelationshipType.IN_LITTER)) {
                     Node litterNode = inLitter.getEndNode();
-                    try {
-                        litterId = Integer.parseInt((String) litterNode.getProperty(DogGraphConstants.LITTER_ID));
-                        break; // use first valid litter-id that can be found
-                    } catch (RuntimeException ignore) {
-                    }
+                    litterId = (int) litterNode.getId();
+                    break; // use first valid litter-id that can be found
                 }
             }
 
