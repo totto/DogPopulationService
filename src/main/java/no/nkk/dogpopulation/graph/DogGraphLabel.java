@@ -9,6 +9,8 @@ public enum DogGraphLabel implements Label {
     CATEGORY,
     COUNTRY,
     BREED,
+    BREED_GROUP,
+    BREED_SYNONYM,
     DOG,
     LITTER
 }
