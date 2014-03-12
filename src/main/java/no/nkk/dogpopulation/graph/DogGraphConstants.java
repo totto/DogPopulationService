@@ -7,14 +7,20 @@ package no.nkk.dogpopulation.graph;
  */
 public class DogGraphConstants {
 
-    public static final String BREED_ID = "id";
-    public static final String BREED_BREED = "breed";
+    public static final String BREEDGROUP_FCIBREEDGROUP = "FCIBreedGroup";
+
+    public static final String BREED_BREED_NAME = "BreedName";
+    public static final String BREED_FCI_BREED_ID = "FCIBreedId";
+    public static final String BREED_NKK_BREED_ID = "NKKBreedId";
+    public static final String BREED_CLUB_ID = "ClubId";
+
+    public static final String BREEDSYNONYM_SYNONYM = "synonym";
 
     public static final String CATEGORY_CATEGORY = "category";
 
     public static final String CATEGORY_CATEGORY_ROOT = "Root";
-    public static final String CATEGORY_CATEGORY_BREED = "Breed";
-    public static final String CATEGORY_CATEGORY_LITTER = "Litter";
+    public static final String CATEGORY_CATEGORY_BREEDGROUPS = "BreedGroups";
+    // public static final String CATEGORY_CATEGORY_LITTER = "Litter";
 
     // public static final String CATEGORY_CATEGORY_COUNTRY = "Country";
 

@@ -67,7 +67,7 @@ public class PedigreeCompletenessAlgorithmTest extends AbstractGraphTest {
          *
          */
 
-        Node breedNode = breed("Unit-test Breed", "1");
+        Node breedNode = breed("Unit-test Breed");
         Node A = addDog("A", breedNode);
         addDog("B", breedNode);
         addDog("C", breedNode);
@@ -130,7 +130,7 @@ public class PedigreeCompletenessAlgorithmTest extends AbstractGraphTest {
     @Test
     public void thatPedigreeCompletenessOfRottweilerAndPointerComputesCorrectlyWithoutAlsoIncludingBoxer() {
         // given
-        Node rottweiler = breed("Rottweiler", "1");
+        Node rottweiler = breed("Rottweiler");
         // Rottweiler
         addDog("A", rottweiler, LocalDate.parse("2000-11-14"));
         addDog("B", rottweiler, LocalDate.parse("1998-01-03"));
@@ -140,7 +140,7 @@ public class PedigreeCompletenessAlgorithmTest extends AbstractGraphTest {
         connectChildToMother("A", "C");
         connectChildToMother("C", "D");
         // Pointer
-        Node pointer = breed("Pointer", "2");
+        Node pointer = breed("Pointer");
         addDog("E", pointer, LocalDate.parse("2001-02-05"));
         addDog("F", pointer, LocalDate.parse("1999-08-18"));
         addDog("G", pointer);
@@ -154,7 +154,7 @@ public class PedigreeCompletenessAlgorithmTest extends AbstractGraphTest {
         connectChildToMother("H", "J");
         connectChildToFather("I", "L");
         // Boxer
-        Node boxer = breed("Boxer", "3");
+        Node boxer = breed("Boxer");
         addDog("M", boxer, LocalDate.parse("1999-02-14"));
         addDog("X", boxer, LocalDate.parse("2000-03-12"));
         connectChildToFather("M", "X");

@@ -25,7 +25,7 @@ public class PedigreeResourceTest extends AbstractResourceTest {
         String fathersMotherName = "Daisy";
         String motherUuid = "uuid-1234567894";
         String motherName = "Tigerclaws";
-        Node breedNode = commonNodes.getBreed(breed, null);
+        Node breedNode = breedSynonymNodeCache.getBreed(breed);
         addDog(childUuid, childName, breedNode);
         addDog(fatherUuid, fatherName, breedNode);
         connectChildToFather(childUuid, fatherUuid);

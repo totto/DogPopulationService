@@ -15,7 +15,7 @@ public class HdIndexResourceTest extends AbstractResourceTest {
         String breed = "Rottweiler";
         String uuid = "uuid-1234567890";
         String name = "Wicked teeth Jr. III";
-        Node breedNode = commonNodes.getBreed(breed, null);
+        Node breedNode = breedSynonymNodeCache.getBreed(breed);
         addDog(uuid, name, breedNode);
 
         RestAssured.expect().statusCode(500).given().when().param("breed", "Rottweiler").get("/dogpopulation/hdindex/Rottweiler_NoRaceCode/pedigree");

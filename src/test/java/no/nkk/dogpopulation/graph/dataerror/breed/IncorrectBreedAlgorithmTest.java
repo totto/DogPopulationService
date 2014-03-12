@@ -15,8 +15,8 @@ public class IncorrectBreedAlgorithmTest  extends AbstractGraphTest {
 
     @Test
     public void thatDobermannChildOfTwoDalmatinersIsConsideredIncorrectBreed() {
-        Node dalmatiner = breed("Dalmatiner", "1");
-        Node dobermann = breed("Dobermann", "2");
+        Node dalmatiner = breed("Dalmatiner");
+        Node dobermann = breed("Dobermann");
         addDog("A", dobermann);
         addDog("B", dalmatiner);
         addDog("C", dalmatiner);

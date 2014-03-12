@@ -16,7 +16,7 @@ public class GraphQueryServiceTest extends AbstractGraphTest {
     @Test
     public void thatPopulateDescendantsIncludesAllButItself() {
         // given
-        Node breedNode = breed("Unit-test Breed", "1");
+        Node breedNode = breed("Unit-test Breed");
         Node A = addDog("A", breedNode);
         addDog("B", breedNode);
         addDog("C", breedNode);
@@ -74,7 +74,7 @@ public class GraphQueryServiceTest extends AbstractGraphTest {
     @Test
     public void thatGetBreedDogsWorks() {
         // given
-        Node breedNode = breed("Unit-test Breed", "1");
+        Node breedNode = breed("Unit-test Breed");
         addDog("A", breed("Unwanted Breed"));
         addDog("B", breedNode);
         addDog("C", breedNode);

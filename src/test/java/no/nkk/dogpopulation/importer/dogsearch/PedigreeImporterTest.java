@@ -3,7 +3,7 @@ package no.nkk.dogpopulation.importer.dogsearch;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import no.nkk.dogpopulation.Main;
 import no.nkk.dogpopulation.graph.bulkwrite.BulkWriteService;
-import no.nkk.dogpopulation.graph.dogbuilder.CommonNodes;
+import no.nkk.dogpopulation.graph.dogbuilder.BreedSynonymNodeCache;
 import no.nkk.dogpopulation.graph.dogbuilder.Dogs;
 import org.apache.commons.io.FileUtils;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -45,11 +45,11 @@ public class PedigreeImporterTest {
 
         DogSearchClient dogSearchClient = createFileReadingDogSearchClient(dogUuid);
 
-        CommonNodes commonNodes = new CommonNodes(graphDb);
-        Dogs dogs = new Dogs(commonNodes);
+        BreedSynonymNodeCache breedSynonymNodeCache = new BreedSynonymNodeCache(graphDb);
+        Dogs dogs = new Dogs(breedSynonymNodeCache);
         BulkWriteService bulkWriteService = new BulkWriteService(graphDb);
 
-        DogSearchPedigreeImporter importer = new DogSearchPedigreeImporter(executorService, graphDb, dogSearchClient, dogs, commonNodes, bulkWriteService);
+        DogSearchPedigreeImporter importer = new DogSearchPedigreeImporter(executorService, graphDb, dogSearchClient, dogs, breedSynonymNodeCache, bulkWriteService);
         Future<String> future = importer.importPedigree(dogUuid);
         String uuid = future.get(300, TimeUnit.SECONDS);
         importer.stop();

@@ -1,11 +1,12 @@
 package no.nkk.dogpopulation.graph;
 
-import org.neo4j.graphdb.Direction;
-import org.neo4j.graphdb.GraphDatabaseService;
-import org.neo4j.graphdb.Node;
-import org.neo4j.graphdb.Path;
-import org.neo4j.graphdb.traversal.*;
+import org.neo4j.graphdb.*;
+import org.neo4j.graphdb.traversal.Evaluation;
+import org.neo4j.graphdb.traversal.Evaluator;
+import org.neo4j.graphdb.traversal.Evaluators;
+import org.neo4j.graphdb.traversal.Traverser;
 
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
@@ -43,25 +44,36 @@ public class CommonTraversals {
     }
 
 
-    public  Traverser traverseBreedInSet(Node categoryBreedNode, final Set<String> breedList) {
-        return graphDb.traversalDescription()
-                .depthFirst()
-                .uniqueness(Uniqueness.NODE_GLOBAL)
+    public  Traverser traverseAllBreedSynonymNodesThatAreMembersOfTheSameBreedGroupAsSynonymsInSet(Node breedGroupsCategoryNode, final Set<String> breedSet) {
+        return traverseAllBreedSynonymNodesThatAreMembersOfTheSameBreedGroupAsSynonymsInSet(breedSet);
+    }
+
+    public  Traverser traverseAllBreedSynonymNodesThatAreMembersOfTheSameBreedGroupAsSynonymsInSet(Set<String> breedSet) {
+        Set<Node> synonymNodes = new LinkedHashSet<>();
+        Set<Node> breedNodes = new LinkedHashSet<>();
+        for (String synonym : breedSet) {
+            Node synonymNode = GraphUtils.getSingleNode(graphDb, DogGraphLabel.BREED_SYNONYM, DogGraphConstants.BREEDSYNONYM_SYNONYM, synonym);
+            if (synonymNode == null) {
+                    continue;
+            }
+            synonymNodes.add(synonymNode);
+            Relationship memberOf = synonymNode.getSingleRelationship(DogGraphRelationshipType.MEMBER_OF, Direction.OUTGOING);
+            if (memberOf == null) {
+                continue;
+            }
+            Node breedNode = memberOf.getEndNode();
+            breedNodes.add(breedNode);
+        }
+        for (Path path : graphDb.traversalDescription()
                 .relationships(DogGraphRelationshipType.MEMBER_OF, Direction.INCOMING)
-                .evaluator(new PathEvaluator.Adapter() {
-                    public Evaluation evaluate(Path path, BranchState state) {
-                        if (path.length() != 1) {
-                            return Evaluation.EXCLUDE_AND_CONTINUE; // not at depth 1
-                        }
-                        Node breedNode = path.endNode();
-                        String breed = (String) breedNode.getProperty(DogGraphConstants.BREED_BREED);
-                        if (breedList.contains(breed)) {
-                            return Evaluation.INCLUDE_AND_PRUNE;
-                        }
-                        return Evaluation.EXCLUDE_AND_PRUNE;
-                    }
-                })
-                .traverse(categoryBreedNode);
+                .evaluator(Evaluators.atDepth(1))
+                .traverse(breedNodes.toArray(new Node[breedNodes.size()]))) {
+            Node synonymNode = path.endNode();
+            synonymNodes.add(synonymNode);
+        }
+        return graphDb.traversalDescription()
+                .evaluator(Evaluators.atDepth(0))
+                .traverse(synonymNodes.toArray(new Node[synonymNodes.size()]));
     }
 
 

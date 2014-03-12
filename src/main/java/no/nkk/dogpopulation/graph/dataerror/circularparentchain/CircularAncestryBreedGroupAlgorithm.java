@@ -1,6 +1,8 @@
 package no.nkk.dogpopulation.graph.dataerror.circularparentchain;
 
-import no.nkk.dogpopulation.graph.*;
+import no.nkk.dogpopulation.graph.CommonTraversals;
+import no.nkk.dogpopulation.graph.DogGraphConstants;
+import no.nkk.dogpopulation.graph.DogGraphRelationshipType;
 import org.neo4j.cypher.javacompat.ExecutionEngine;
 import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.traversal.Traverser;
@@ -29,10 +31,9 @@ public class CircularAncestryBreedGroupAlgorithm {
 
     public List<String> run(Set<String> breedSet) {
         Set<String> result = new LinkedHashSet<>();
-        Node categoryBreedNode = GraphUtils.getSingleNode(graphDb, DogGraphLabel.CATEGORY, DogGraphConstants.CATEGORY_CATEGORY, DogGraphConstants.CATEGORY_CATEGORY_BREED);
         CommonTraversals commonTraversals = new CommonTraversals(graphDb);
         Set<Relationship> alreadyVisited = new HashSet<>(30000);
-        for (Path breedPath : commonTraversals.traverseBreedInSet(categoryBreedNode, breedSet)) {
+        for (Path breedPath : commonTraversals.traverseAllBreedSynonymNodesThatAreMembersOfTheSameBreedGroupAsSynonymsInSet(breedSet)) {
             Node breedNode = breedPath.endNode();
             for (Path path : commonTraversals.traverseDogsOfBreed(breedNode)) {
                 Node dogNode = path.endNode();

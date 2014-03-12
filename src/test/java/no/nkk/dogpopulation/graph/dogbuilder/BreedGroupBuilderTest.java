@@ -49,4 +49,12 @@ public class BreedGroupBuilderTest extends AbstractGraphTest {
         }
     }
 
+    @Test
+    public void thatBreedGroupsCanBeCreatedInEmptyGraph() {
+    }
+
+    @Test
+    public void thatBreedGroupsCanBeAddedToExistingSynonyms() {
+    }
+
 }

@@ -34,19 +34,19 @@ public class DogSearchPedigreeImporter implements PedigreeImporter {
     private final DogSearchClient dogSearchClient;
 
     private final Dogs dogs;
-    private final CommonNodes commonNodes;
+    private final BreedSynonymNodeCache breedSynonymNodeCache;
 
     private final ExecutorService executorService;
 
     private final BulkWriteService bulkWriteService;
 
-    public DogSearchPedigreeImporter(ExecutorService executorService, GraphDatabaseService graphDb, DogSearchClient dogSearchClient, Dogs dogs, CommonNodes commonNodes, BulkWriteService bulkWriteService) {
+    public DogSearchPedigreeImporter(ExecutorService executorService, GraphDatabaseService graphDb, DogSearchClient dogSearchClient, Dogs dogs, BreedSynonymNodeCache breedSynonymNodeCache, BulkWriteService bulkWriteService) {
         this.executorService = executorService;
         this.graphDb = graphDb;
         this.graphQueryService = new GraphQueryService(graphDb);
         this.dogSearchClient = dogSearchClient;
         this.dogs = dogs;
-        this.commonNodes = commonNodes;
+        this.breedSynonymNodeCache = breedSynonymNodeCache;
         this.bulkWriteService = bulkWriteService;
     }
 
@@ -328,7 +328,7 @@ public class DogSearchPedigreeImporter implements PedigreeImporter {
                 if (validUuid) {
                     DogNodeBuilder puppyBuilder = dogs.dog().uuid(dogPuppy.getId()).name(dogPuppy.getName());
                     if (dogPuppy.getBreed() != null) {
-                        puppyBuilder.breed(commonNodes.getBreed(dogPuppy.getBreed().getName(), dogPuppy.getBreed().getId()));
+                        puppyBuilder.breed(breedSynonymNodeCache.getBreed(dogPuppy.getBreed().getName()));
                     }
                     inLitterBuilder.puppy(puppyBuilder);
                 } else {

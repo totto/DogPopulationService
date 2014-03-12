@@ -5,7 +5,7 @@ import no.nkk.dogpopulation.Main;
 import no.nkk.dogpopulation.graph.DogGraphConstants;
 import no.nkk.dogpopulation.graph.GraphQueryService;
 import no.nkk.dogpopulation.graph.bulkwrite.BulkWriteService;
-import no.nkk.dogpopulation.graph.dogbuilder.CommonNodes;
+import no.nkk.dogpopulation.graph.dogbuilder.BreedSynonymNodeCache;
 import no.nkk.dogpopulation.graph.dogbuilder.Dogs;
 import no.nkk.dogpopulation.graph.pedigree.TopLevelDog;
 import org.apache.commons.io.FileUtils;
@@ -63,11 +63,11 @@ public class DogSearchPedigreeImporterTest {
             }
         };
 
-        CommonNodes commonNodes = new CommonNodes(graphDb);
-        Dogs dogs = new Dogs(commonNodes);
+        BreedSynonymNodeCache breedSynonymNodeCache = new BreedSynonymNodeCache(graphDb);
+        Dogs dogs = new Dogs(breedSynonymNodeCache);
         BulkWriteService bulkWriteService = new BulkWriteService(graphDb);
 
-        DogSearchPedigreeImporter importer = new DogSearchPedigreeImporter(executorService, graphDb, dogSearchClient, dogs, commonNodes, bulkWriteService);
+        DogSearchPedigreeImporter importer = new DogSearchPedigreeImporter(executorService, graphDb, dogSearchClient, dogs, breedSynonymNodeCache, bulkWriteService);
         Future<String> future = importer.importPedigree("AB/12345/67");
         String uuid = future.get(30, TimeUnit.SECONDS);
         importer.stop();
@@ -77,7 +77,6 @@ public class DogSearchPedigreeImporterTest {
         Assert.assertEquals(topLevelDog.getName(), "Awesomebitch");
         Assert.assertEquals(topLevelDog.getIds().get(DogGraphConstants.DOG_REGNO), "AB/12345/67");
         Assert.assertEquals(topLevelDog.getBreed().getName(), "Border Collie");
-        Assert.assertEquals(topLevelDog.getBreed().getId(), "401");
         Assert.assertEquals(topLevelDog.getBorn(), "1994-04-28");
         Assert.assertEquals(topLevelDog.getHealth().getHdDiag(), "A1");
         Assert.assertEquals(topLevelDog.getHealth().getHdYear(), 1996);

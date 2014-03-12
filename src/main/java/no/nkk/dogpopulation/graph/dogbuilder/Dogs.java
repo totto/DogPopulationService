@@ -5,14 +5,14 @@ package no.nkk.dogpopulation.graph.dogbuilder;
  */
 public class Dogs {
 
-    private final CommonNodes commonNodes;
+    private final BreedSynonymNodeCache breedSynonymNodeCache;
 
-    public Dogs(CommonNodes commonNodes) {
-        this.commonNodes = commonNodes;
+    public Dogs(BreedSynonymNodeCache breedSynonymNodeCache) {
+        this.breedSynonymNodeCache = breedSynonymNodeCache;
     }
 
     public DogNodeBuilder dog() {
-        return new DogNodeBuilder(commonNodes);
+        return new DogNodeBuilder(breedSynonymNodeCache);
     }
 
     public LitterNodeBuilder litter() {

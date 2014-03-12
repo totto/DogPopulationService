@@ -64,7 +64,7 @@ public class GraphQueryService {
 
     public List<String> getBreeds() {
         try (Transaction tx = graphDb.beginTx()) {
-            Node breedRoot = getSingleNode(DogGraphLabel.CATEGORY, DogGraphConstants.CATEGORY_CATEGORY, DogGraphConstants.CATEGORY_CATEGORY_BREED);
+            Node breedRoot = getSingleNode(DogGraphLabel.CATEGORY, DogGraphConstants.CATEGORY_CATEGORY, DogGraphConstants.CATEGORY_CATEGORY_BREEDGROUPS);
             if (breedRoot == null) {
                 return Collections.emptyList();
             }
@@ -75,7 +75,7 @@ public class GraphQueryService {
                     .evaluator(Evaluators.includingDepths(1, 1))
                     .traverse(breedRoot)) {
                 Node dogOfBreed = path.endNode();
-                breeds.add((String) dogOfBreed.getProperty(DogGraphConstants.BREED_BREED));
+                breeds.add((String) dogOfBreed.getProperty(DogGraphConstants.BREEDSYNONYM_SYNONYM));
             }
             tx.success();
             return breeds;
@@ -83,20 +83,20 @@ public class GraphQueryService {
     }
 
 
-    public List<String> getBreedList(String breed) {
+    public List<String> getBreedList(String synonym) {
         try (Transaction tx = graphDb.beginTx()) {
-            Node breedRoot = getBreedNode(breed);
-            if (breedRoot == null) {
-                return Collections.emptyList();
-            }
+            LinkedHashSet<String> breedSet = new LinkedHashSet<>();
+            breedSet.add(synonym);
             List<String> dogIds = new ArrayList<>(10000);
-            for (Path path : graphDb.traversalDescription()
-                    .depthFirst()
-                    .relationships(DogGraphRelationshipType.IS_BREED, Direction.INCOMING)
-                    .evaluator(Evaluators.includingDepths(1, 1))
-                    .traverse(breedRoot)) {
-                Node dogOfBreed = path.endNode();
-                dogIds.add((String) dogOfBreed.getProperty(DogGraphConstants.DOG_UUID));
+            for (Path breedSynonymPath : new CommonTraversals(graphDb).traverseAllBreedSynonymNodesThatAreMembersOfTheSameBreedGroupAsSynonymsInSet(breedSet)) {
+                Node breedSynonymNode = breedSynonymPath.endNode();
+                for (Path path : graphDb.traversalDescription()
+                        .relationships(DogGraphRelationshipType.IS_BREED, Direction.INCOMING)
+                        .evaluator(Evaluators.atDepth(1))
+                        .traverse(breedSynonymNode)) {
+                    Node dogOfBreed = path.endNode();
+                    dogIds.add((String) dogOfBreed.getProperty(DogGraphConstants.DOG_UUID));
+                }
             }
             tx.success();
             return dogIds;
@@ -265,9 +265,8 @@ public class GraphQueryService {
 
     public PedigreeCompleteness getPedigreeCompletenessOfGroup(int generations, Set<String> breedSet, int minYear, int maxYear) {
         try (Transaction tx = graphDb.beginTx()) {
-            Node categoryBreedNode = getSingleNode(DogGraphLabel.CATEGORY, DogGraphConstants.CATEGORY_CATEGORY, DogGraphConstants.CATEGORY_CATEGORY_BREED);
             PedigreeCompletenessAlgorithm algorithm = new PedigreeCompletenessAlgorithm(graphDb, generations);
-            PedigreeCompleteness pedigreeCompletenessOfGroup = algorithm.getPedigreeCompletenessOfGroup(categoryBreedNode, breedSet, minYear, maxYear);
+            PedigreeCompleteness pedigreeCompletenessOfGroup = algorithm.getPedigreeCompletenessOfGroup(breedSet, minYear, maxYear);
             tx.success();
             return pedigreeCompletenessOfGroup;
         }
@@ -296,9 +295,8 @@ public class GraphQueryService {
 
     public InbreedingOfGroup getInbreedingOfGroup(int generations, Set<String> breedSet, int minYear, int maxYear) {
         try (Transaction tx = graphDb.beginTx()) {
-            Node categoryBreedNode = getSingleNode(DogGraphLabel.CATEGORY, DogGraphConstants.CATEGORY_CATEGORY, DogGraphConstants.CATEGORY_CATEGORY_BREED);
             InbreedingOfGroupAlgorithm algorithm = new InbreedingOfGroupAlgorithm(graphDb, generations);
-            InbreedingOfGroup inbreedingOfGroup = algorithm.getInbreedingOfGroup(categoryBreedNode, breedSet, minYear, maxYear);
+            InbreedingOfGroup inbreedingOfGroup = algorithm.getInbreedingOfGroup(breedSet, minYear, maxYear);
             tx.success();
             return inbreedingOfGroup;
         }
@@ -307,8 +305,7 @@ public class GraphQueryService {
 
     public LitterStatistics getLitterStatisticsOfGroup(Set<String> breed, int minYear, int maxYear) {
         try (Transaction tx = graphDb.beginTx()) {
-            Node categoryBreedNode = getSingleNode(DogGraphLabel.CATEGORY, DogGraphConstants.CATEGORY_CATEGORY, DogGraphConstants.CATEGORY_CATEGORY_BREED);
-            LitterStatisticsAlgorithm algorithm = new LitterStatisticsAlgorithm(graphDb, breed, minYear, maxYear, categoryBreedNode);
+            LitterStatisticsAlgorithm algorithm = new LitterStatisticsAlgorithm(graphDb, breed, minYear, maxYear);
             LitterStatistics litterStatistics = algorithm.execute();
             tx.success();
             return litterStatistics;
@@ -390,10 +387,6 @@ public class GraphQueryService {
             }
             descendants.add(uuid);
         }
-    }
-
-    private Node getBreedNode(String breed) {
-        return getSingleNode(DogGraphLabel.BREED, DogGraphConstants.BREED_BREED, breed);
     }
 
     Node getSingleNode(DogGraphLabel label, String property, String value) {

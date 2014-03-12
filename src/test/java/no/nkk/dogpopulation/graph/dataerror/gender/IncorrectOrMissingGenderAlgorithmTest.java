@@ -17,7 +17,7 @@ public class IncorrectOrMissingGenderAlgorithmTest extends AbstractGraphTest {
 
     @Test
     public void thatFemaleFatherIsIllegal() {
-        Node breedNode = breed("Unit-test Breed", "1");
+        Node breedNode = breed("Unit-test Breed");
         Node A = addDog("A", breedNode);
         setProperty(A, DogGraphConstants.DOG_GENDER, DogGender.FEMALE.name().toLowerCase());
         Node B = addDog("B", breedNode);

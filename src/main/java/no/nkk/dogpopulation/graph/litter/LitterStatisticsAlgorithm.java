@@ -25,14 +25,12 @@ public class LitterStatisticsAlgorithm {
     private final Set<String> breedSet;
     private final int minYear;
     private final int maxYear;
-    private final Node categoryBreedNode;
 
-    public LitterStatisticsAlgorithm(GraphDatabaseService graphDb, Set<String> breedSet, int minYear, int maxYear, Node categoryBreedNode) {
+    public LitterStatisticsAlgorithm(GraphDatabaseService graphDb, Set<String> breedSet, int minYear, int maxYear) {
         this.graphDb = graphDb;
         this.breedSet = breedSet;
         this.minYear = minYear;
         this.maxYear = maxYear;
-        this.categoryBreedNode = categoryBreedNode;
     }
 
     public LitterStatistics execute() {
@@ -42,7 +40,7 @@ public class LitterStatisticsAlgorithm {
         CommonTraversals commonTraversals = new CommonTraversals(graphDb);
         Set<Node> dogNodes = new HashSet<>();
         Set<Node> litterNodes = new HashSet<>();
-        for (Path breedMemberPath : commonTraversals.traverseBreedInSet(categoryBreedNode, breedSet)) {
+        for (Path breedMemberPath : commonTraversals.traverseAllBreedSynonymNodesThatAreMembersOfTheSameBreedGroupAsSynonymsInSet(breedSet)) {
             for (Path dogPath : commonTraversals.traverseDogOfBreedBornBetween(breedMemberPath.endNode(), minYear, maxYear)) {
                 Node dogNode = dogPath.endNode();
                 if (dogNodes.contains(dogNode)) {

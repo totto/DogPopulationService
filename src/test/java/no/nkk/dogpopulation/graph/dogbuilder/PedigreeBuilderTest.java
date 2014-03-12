@@ -119,13 +119,7 @@ public class PedigreeBuilderTest extends AbstractGraphTest {
             Assert.assertEquals((String) dogNode.getProperty(DogGraphConstants.DOG_NAME), name);
             Relationship dogToBreedRelation = dogNode.getSingleRelationship(DogGraphRelationshipType.IS_BREED, Direction.OUTGOING);
             Node breedNode = dogToBreedRelation.getEndNode();
-            Assert.assertEquals((String) breedNode.getProperty(DogGraphConstants.BREED_BREED), breed);
-            Relationship breedToCategoryRelation = breedNode.getSingleRelationship(DogGraphRelationshipType.MEMBER_OF, Direction.OUTGOING);
-            Node breedCategoryNode = breedToCategoryRelation.getEndNode();
-            Relationship breedToRootRelation = breedCategoryNode.getSingleRelationship(DogGraphRelationshipType.MEMBER_OF, Direction.OUTGOING);
-            Node rootNode = breedToRootRelation.getEndNode();
-            String category = (String) rootNode.getProperty(DogGraphConstants.CATEGORY_CATEGORY);
-            Assert.assertEquals(category, DogGraphConstants.CATEGORY_CATEGORY_ROOT);
+            Assert.assertEquals((String) breedNode.getProperty(DogGraphConstants.BREEDSYNONYM_SYNONYM), breed);
             tx.success();
         }
     }

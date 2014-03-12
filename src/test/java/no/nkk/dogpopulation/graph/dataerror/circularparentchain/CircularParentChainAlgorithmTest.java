@@ -16,7 +16,7 @@ public class CircularParentChainAlgorithmTest extends AbstractGraphTest {
 
     @Test
     public void thatSimpleCircleCanBeDetected() {
-        Node breedNode = breed("Unit-test Breed", "1");
+        Node breedNode = breed("Unit-test Breed");
         addDog("A", breedNode, new LocalDate(2007, 6, 17));
         addDog("B", breedNode);
         addDog("C", breedNode, new LocalDate(2002, 10, 21));
@@ -39,7 +39,7 @@ public class CircularParentChainAlgorithmTest extends AbstractGraphTest {
 
     @Test
     public void thatCircleInAncestryNotIncludingDogItselfCanBeDetected() {
-        Node breedNode = breed("Unit-test Breed", "1");
+        Node breedNode = breed("Unit-test Breed");
         addDog("A", breedNode, new LocalDate(2007, 6, 17));
         addDog("B", breedNode, new LocalDate(2004, 2, 2));
         addDog("C", breedNode, new LocalDate(2002, 10, 21));
@@ -58,7 +58,7 @@ public class CircularParentChainAlgorithmTest extends AbstractGraphTest {
 
     @Test
     public void thatCorrectPedigreeWontBedetectedAsHavingCircle() {
-        Node breedNode = breed("Unit-test Breed", "1");
+        Node breedNode = breed("Unit-test Breed");
         addDog("A", breedNode, new LocalDate(2007, 6, 17));
         addDog("B", breedNode, new LocalDate(2004, 2, 2));
         addDog("C", breedNode, new LocalDate(2002, 10, 21));

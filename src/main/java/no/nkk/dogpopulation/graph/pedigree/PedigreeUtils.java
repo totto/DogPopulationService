@@ -20,11 +20,15 @@ public class PedigreeUtils {
         String uuid = (String) source.getProperty(DogGraphConstants.DOG_UUID);
         String name = (String) source.getProperty(DogGraphConstants.DOG_NAME);
         Relationship breedRelation = source.getSingleRelationship(DogGraphRelationshipType.IS_BREED, Direction.OUTGOING);
-        Node breedNode = breedRelation.getEndNode();
-        String breedName = (String) breedNode.getProperty(DogGraphConstants.BREED_BREED);
+        Node breedSynonymNode = breedRelation.getEndNode();
+        String breedName = (String) breedSynonymNode.getProperty(DogGraphConstants.BREEDSYNONYM_SYNONYM);
         Breed breed = new Breed(breedName);
-        if (breedNode.hasProperty(DogGraphConstants.BREED_ID)) {
-            breed.setId((String) breedNode.getProperty(DogGraphConstants.BREED_ID));
+        if (breedSynonymNode.hasRelationship(Direction.OUTGOING, DogGraphRelationshipType.MEMBER_OF)) {
+            Relationship breedMemberRelationship = breedSynonymNode.getSingleRelationship(DogGraphRelationshipType.MEMBER_OF, Direction.OUTGOING);
+            if (breedMemberRelationship != null) {
+                Node breedNode = breedMemberRelationship.getEndNode();
+                breed.setId((String) breedNode.getProperty(DogGraphConstants.BREED_FCI_BREED_ID));
+            }
         }
         target.setUuid(uuid);
         target.setName(name);
@@ -97,10 +101,14 @@ public class PedigreeUtils {
                     puppy.setRegNo((String) puppyNode.getProperty(DogGraphConstants.DOG_REGNO));
                 }
                 Relationship isBreed = puppyNode.getSingleRelationship(DogGraphRelationshipType.IS_BREED, Direction.OUTGOING);
-                Node puppyBreedNode = isBreed.getEndNode();
-                Breed puppyBreed = new Breed((String) puppyBreedNode.getProperty(DogGraphConstants.BREED_BREED));
-                if (puppyBreedNode.hasProperty(DogGraphConstants.BREED_ID)) {
-                    puppyBreed.setId((String) puppyBreedNode.getProperty(DogGraphConstants.BREED_ID));
+                Node puppyBreedSynonymNode = isBreed.getEndNode();
+                Breed puppyBreed = new Breed((String) puppyBreedSynonymNode.getProperty(DogGraphConstants.BREEDSYNONYM_SYNONYM));
+                if (puppyBreedSynonymNode.hasRelationship(Direction.OUTGOING, DogGraphRelationshipType.MEMBER_OF)) {
+                    Relationship breedMemberRelationship = puppyBreedSynonymNode.getSingleRelationship(DogGraphRelationshipType.MEMBER_OF, Direction.OUTGOING);
+                    if (breedMemberRelationship != null) {
+                        Node breedNode = breedMemberRelationship.getEndNode();
+                        puppyBreed.setId((String) breedNode.getProperty(DogGraphConstants.BREED_FCI_BREED_ID));
+                    }
                 }
                 puppy.setBreed(puppyBreed);
                 puppyList.add(puppy);

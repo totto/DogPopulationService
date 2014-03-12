@@ -2,7 +2,7 @@ package no.nkk.dogpopulation;
 
 import com.jayway.restassured.RestAssured;
 import no.nkk.dogpopulation.graph.GraphQueryService;
-import no.nkk.dogpopulation.graph.dogbuilder.CommonNodes;
+import no.nkk.dogpopulation.graph.dogbuilder.BreedSynonymNodeCache;
 import no.nkk.dogpopulation.graph.dogbuilder.Dogs;
 import no.nkk.dogpopulation.hdindex.HdIndexResource;
 import no.nkk.dogpopulation.importer.dogsearch.DogTestImporterFactory;
@@ -26,7 +26,7 @@ import java.io.File;
 public class AbstractResourceTest {
     protected Main main;
     protected GraphDatabaseService graphDb;
-    protected CommonNodes commonNodes;
+    protected BreedSynonymNodeCache breedSynonymNodeCache;
     protected Dogs dogs;
 
     @BeforeClass
@@ -46,8 +46,8 @@ public class AbstractResourceTest {
                 return resourceConfig;
             }
         };
-        commonNodes = new CommonNodes(graphDb);
-        dogs = new Dogs(commonNodes);
+        breedSynonymNodeCache = new BreedSynonymNodeCache(graphDb);
+        dogs = new Dogs(breedSynonymNodeCache);
         main = new Main(graphDb, resourceConfigFactory, httpPort);
         main.start();
         RestAssured.port = httpPort;
@@ -62,28 +62,24 @@ public class AbstractResourceTest {
 
 
     protected Node breed(String breedName) {
-        return commonNodes.getBreed(breedName, null);
+        return breedSynonymNodeCache.getBreed(breedName);
     }
 
-    protected Node breed(String breedName, String breedId) {
-        return commonNodes.getBreed(breedName, breedId);
+    protected Node addDog(String uuid, Node breedSynonymNode) {
+        return addDog(uuid, uuid, breedSynonymNode);
     }
 
-    protected Node addDog(String uuid, Node breedNode) {
-        return addDog(uuid, uuid, breedNode);
-    }
-
-    protected Node addDog(String uuid, String name, Node breedNode) {
+    protected Node addDog(String uuid, String name, Node breedSynonymNode) {
         try (Transaction tx = graphDb.beginTx()) {
-            Node dog = dogs.dog().uuid(uuid).name(name).breed(breedNode).build(graphDb);
+            Node dog = dogs.dog().uuid(uuid).name(name).breed(breedSynonymNode).build(graphDb);
             tx.success();
             return dog;
         }
     }
 
-    protected Node addDog(String uuid, Node breedNode, LocalDate born) {
+    protected Node addDog(String uuid, Node breedSynonymNode, LocalDate born) {
         try (Transaction tx = graphDb.beginTx()) {
-            Node dog = dogs.dog().uuid(uuid).name(uuid).breed(breedNode).born(born).build(graphDb);
+            Node dog = dogs.dog().uuid(uuid).name(uuid).breed(breedSynonymNode).born(born).build(graphDb);
             tx.success();
             return dog;
         }

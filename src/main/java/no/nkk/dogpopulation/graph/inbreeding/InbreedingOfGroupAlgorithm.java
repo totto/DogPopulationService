@@ -26,7 +26,7 @@ public class InbreedingOfGroupAlgorithm {
     }
 
 
-    public InbreedingOfGroup getInbreedingOfGroup(Node categoryBreedNode, final Set<String> breedSet, final int minYear, final int maxYear) {
+    public InbreedingOfGroup getInbreedingOfGroup(final Set<String> breedSet, final int minYear, final int maxYear) {
         DescriptiveStatistics coefficientStatistics = new DescriptiveStatistics();
         int[] frequency = new int[60];
         List<UuidAndRegNo> dogsWithCoefficientAbove1250 = new ArrayList<>();
@@ -34,7 +34,7 @@ public class InbreedingOfGroupAlgorithm {
         List<UuidAndRegNo> dogsWithCoefficientAbove3000 = new ArrayList<>();
         InbreedingAlgorithm algorithm = new InbreedingAlgorithm(graphDb, PEDIGREE_GENERATIONS);
         CommonTraversals commonTraversals = new CommonTraversals(graphDb);
-        for (Path breedMemberPath : commonTraversals.traverseBreedInSet(categoryBreedNode, breedSet)) {
+        for (Path breedMemberPath : commonTraversals.traverseAllBreedSynonymNodesThatAreMembersOfTheSameBreedGroupAsSynonymsInSet(breedSet)) {
             for (Path dogPath : commonTraversals.traverseDogOfBreedBornBetween(breedMemberPath.endNode(), minYear, maxYear)) {
                 Node dogNode = dogPath.endNode();
                 double coi = algorithm.computeSewallWrightCoefficientOfInbreeding(dogNode).getCoi();

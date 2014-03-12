@@ -1,8 +1,10 @@
 package no.nkk.dogpopulation;
 
+import no.nkk.dogpopulation.breedgroupimport.BreedGroupJsonImporter;
 import no.nkk.dogpopulation.graph.DogGraphConstants;
 import no.nkk.dogpopulation.graph.DogGraphLabel;
-import no.nkk.dogpopulation.graph.dogbuilder.CommonNodes;
+import no.nkk.dogpopulation.graph.GraphSchemaMigration;
+import no.nkk.dogpopulation.graph.dogbuilder.BreedSynonymNodeCache;
 import no.nkk.dogpopulation.graph.dogbuilder.Dogs;
 import no.nkk.dogpopulation.importer.dogsearch.DogSearchClient;
 import no.nkk.dogpopulation.importer.dogsearch.DogSearchPedigreeImporterFactory;
@@ -23,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import javax.ws.rs.core.UriBuilder;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.LinkedHashSet;
@@ -116,7 +119,7 @@ public class Main {
             Schema schema = graphDatabaseService.schema();
             startTime = System.currentTimeMillis();
             createIndexIfNeeded(schema, DogGraphLabel.CATEGORY, DogGraphConstants.CATEGORY_CATEGORY);
-            createIndexIfNeeded(schema, DogGraphLabel.BREED, DogGraphConstants.BREED_BREED);
+            createIndexIfNeeded(schema, DogGraphLabel.BREED, DogGraphConstants.BREEDSYNONYM_SYNONYM);
             createIndexIfNeeded(schema, DogGraphLabel.DOG, DogGraphConstants.DOG_NAME);
             createIndexIfNeeded(schema, DogGraphLabel.DOG, DogGraphConstants.DOG_REGNO);
             createUniqueConstraintIfNeeded(schema, DogGraphLabel.DOG, DogGraphConstants.DOG_UUID);
@@ -163,6 +166,9 @@ public class Main {
 
         final GraphDatabaseService db = createGraphDb("data/dogdb");
         try {
+            GraphSchemaMigration.migrateSchema(db);
+            updateBreedGroups(db);
+
             Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -172,9 +178,9 @@ public class Main {
             ExecutorService executorService = Executors.newFixedThreadPool(300);
             DogSearchClient dogSearchClient = new DogSearchSolrClient("http://dogsearch.nkk.no/dogservice/dogs");
 
-            CommonNodes commonNodes = new CommonNodes(db);
-            Dogs dogs = new Dogs(commonNodes);
-            DogSearchPedigreeImporterFactory dogImporterFactory = new DogSearchPedigreeImporterFactory(executorService, db, dogSearchClient, dogs, commonNodes);
+            BreedSynonymNodeCache breedSynonymNodeCache = new BreedSynonymNodeCache(db);
+            Dogs dogs = new Dogs(breedSynonymNodeCache);
+            DogSearchPedigreeImporterFactory dogImporterFactory = new DogSearchPedigreeImporterFactory(executorService, db, dogSearchClient, dogs, breedSynonymNodeCache);
 
             Main main = new Main(db, new DogPopulationResourceConfigFactory(db, dogImporterFactory, executorService, dogSearchClient));
             main.start();
@@ -182,6 +188,17 @@ public class Main {
         } finally {
             db.shutdown();
         }
+    }
+
+    private static void updateBreedGroups(GraphDatabaseService db) {
+        URL url = null;
+        try {
+            url = new URL("http://dogid.nkk.no/ras/Raser.json");
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        }
+        BreedGroupJsonImporter importer = new BreedGroupJsonImporter(url, db);
+        importer.importBreedGroup();
     }
 
 }

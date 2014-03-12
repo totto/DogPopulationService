@@ -1,6 +1,8 @@
 package no.nkk.dogpopulation.graph.hdxray;
 
-import no.nkk.dogpopulation.graph.*;
+import no.nkk.dogpopulation.graph.CommonTraversals;
+import no.nkk.dogpopulation.graph.DogGraphConstants;
+import no.nkk.dogpopulation.graph.DogGraphRelationshipType;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
@@ -52,10 +54,9 @@ public class HDXrayStatisticsAlgorithm {
     }
 
     private HDXrayStatistics hdXrayStatisticsForDogsOfBreed(Set<String> breedSet, int minYear, int maxYear, BreedTraverserFactory factory) {
-        Node categoryBreedNode = GraphUtils.getSingleNode(graphDb, DogGraphLabel.CATEGORY, DogGraphConstants.CATEGORY_CATEGORY, DogGraphConstants.CATEGORY_CATEGORY_BREED);
         int dogCount = 0;
         Map<String, Integer> countByDiagnose = new LinkedHashMap<>();
-        for (Path breedMemberPath : commonTraversals.traverseBreedInSet(categoryBreedNode, breedSet)) {
+        for (Path breedMemberPath : commonTraversals.traverseAllBreedSynonymNodesThatAreMembersOfTheSameBreedGroupAsSynonymsInSet(breedSet)) {
             for (Path dogPath : factory.traverse(minYear, maxYear, breedMemberPath.endNode())) {
                 Node dogNode = dogPath.endNode();
                 dogCount++;

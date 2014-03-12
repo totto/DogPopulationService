@@ -2,28 +2,21 @@ package no.nkk.dogpopulation.graph.dogbuilder;
 
 import no.nkk.dogpopulation.graph.DogGraphConstants;
 import no.nkk.dogpopulation.graph.DogGraphLabel;
-import no.nkk.dogpopulation.graph.DogGraphRelationshipType;
 import no.nkk.dogpopulation.graph.GraphUtils;
-import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
 public class BreedNodeBuilder extends AbstractNodeBuilder {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(BreedNodeBuilder.class);
-
-    private final CommonNodes commonNodes;
-
-    private String id;
+    private String fci;
+    private String nkk;
+    private String club;
     private String name;
 
-    BreedNodeBuilder(CommonNodes commonNodes) {
-        this.commonNodes = commonNodes;
+    BreedNodeBuilder() {
     }
 
     @Override
@@ -31,29 +24,41 @@ public class BreedNodeBuilder extends AbstractNodeBuilder {
         if (name == null) {
             throw new MissingFieldException("name");
         }
-
-        Node breedNode = GraphUtils.findOrCreateNode(graphDb, DogGraphLabel.BREED, DogGraphConstants.BREED_BREED, name);
-        if (id != null && id.trim().length() > 0) {
-            if (breedNode.hasProperty(DogGraphConstants.BREED_ID)) {
-                String existingBreedId = (String) breedNode.getProperty(DogGraphConstants.BREED_ID);
-                if (!existingBreedId.equals(id)) {
-                    LOGGER.warn("Breed-ID conflict: ID \"{}\" (in graph) and \"{}\" are both assigned to breed \"{}\"", existingBreedId, id, name);
-                }
-            } else {
-                LOGGER.trace("Added breed.id={} to \"{}\"", id, name);
-                breedNode.setProperty(DogGraphConstants.BREED_ID, id);
-            }
+        if (fci == null) {
+            throw new MissingFieldException("fci");
         }
-        if (!breedNode.hasRelationship(DogGraphRelationshipType.MEMBER_OF, Direction.OUTGOING)) {
-            breedNode.createRelationshipTo(commonNodes.getBreedCategory(), DogGraphRelationshipType.MEMBER_OF);
+
+        Node breedNode = GraphUtils.findOrCreateNode(graphDb, DogGraphLabel.BREED, DogGraphConstants.BREED_FCI_BREED_ID, fci);
+        breedNode.setProperty(DogGraphConstants.BREED_BREED_NAME, name);
+        if (nkk != null) {
+            breedNode.setProperty(DogGraphConstants.BREED_NKK_BREED_ID, nkk);
+        } else if (breedNode.hasProperty(DogGraphConstants.BREED_NKK_BREED_ID)) {
+            breedNode.removeProperty(DogGraphConstants.BREED_NKK_BREED_ID);
+        }
+        if (club != null) {
+            breedNode.setProperty(DogGraphConstants.BREED_CLUB_ID, club);
+        } else if (breedNode.hasProperty(DogGraphConstants.BREED_CLUB_ID)) {
+            breedNode.removeProperty(DogGraphConstants.BREED_CLUB_ID);
         }
         return breedNode;
     }
 
 
-    public BreedNodeBuilder id(String id) {
-        if (id != null) {
-            this.id = id.trim();
+    public BreedNodeBuilder club(String club) {
+        if (club != null) {
+            this.club = club.trim();
+        }
+        return this;
+    }
+    public BreedNodeBuilder nkk(String nkk) {
+        if (nkk != null) {
+            this.nkk = nkk.trim();
+        }
+        return this;
+    }
+    public BreedNodeBuilder fci(String fci) {
+        if (fci != null) {
+            this.fci = fci.trim();
         }
         return this;
     }

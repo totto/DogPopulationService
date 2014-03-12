@@ -72,7 +72,7 @@ public class IncorrectOrMissingGenderAlgorithm {
         }
         Relationship isBreed = dogNode.getSingleRelationship(DogGraphRelationshipType.IS_BREED, Direction.OUTGOING);
         Node breedNode = isBreed.getEndNode();
-        record.setBreed((String) breedNode.getProperty(DogGraphConstants.BREED_BREED));
+        record.setBreed((String) breedNode.getProperty(DogGraphConstants.BREEDSYNONYM_SYNONYM));
 
         /*
          * Litters

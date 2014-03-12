@@ -18,7 +18,7 @@ public class DogNodeBuilder extends AbstractNodeBuilder implements PostStepBuild
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DogNodeBuilder.class);
 
-    private final CommonNodes commonNodes;
+    private final BreedSynonymNodeCache breedSynonymNodeCache;
 
     private String uuid;
     private String regNo;
@@ -30,8 +30,8 @@ public class DogNodeBuilder extends AbstractNodeBuilder implements PostStepBuild
     private LocalDate hdXray;
     private Runnable task;
 
-    DogNodeBuilder(CommonNodes commonNodes) {
-        this.commonNodes = commonNodes;
+    DogNodeBuilder(BreedSynonymNodeCache breedSynonymNodeCache) {
+        this.breedSynonymNodeCache = breedSynonymNodeCache;
     }
 
     @Override
@@ -107,8 +107,8 @@ public class DogNodeBuilder extends AbstractNodeBuilder implements PostStepBuild
                 return relationship; // breed is correct - do nothing
             }
 
-            String existingBreed = (String) existingBreedNode.getProperty(DogGraphConstants.BREED_BREED);
-            String breed = (String) breedNode.getProperty(DogGraphConstants.BREED_BREED);
+            String existingBreed = (String) existingBreedNode.getProperty(DogGraphConstants.BREEDSYNONYM_SYNONYM);
+            String breed = (String) breedNode.getProperty(DogGraphConstants.BREEDSYNONYM_SYNONYM);
             LOGGER.warn("BREED of dog \"{}\" changed from \"{}\" to \"{}\".", uuid, existingBreed, breed);
             relationship.delete();
         }
@@ -152,12 +152,10 @@ public class DogNodeBuilder extends AbstractNodeBuilder implements PostStepBuild
         String uuid = dogDetails.getId();
         DogBreed dogBreed = dogDetails.getBreed();
         String breedName;
-        String breedId = null;
         if (dogBreed == null) {
             LOGGER.debug("UNKNOWN breed of dog {}.", uuid);
             breedName = "UNKNOWN";
         } else {
-            breedId = dogBreed.getId();
             if (dogBreed.getName().trim().isEmpty()) {
                 LOGGER.debug("Empty breed name, using UNKNOWN as breed for dog {}.", uuid);
                 breedName = "UNKNOWN";
@@ -165,7 +163,7 @@ public class DogNodeBuilder extends AbstractNodeBuilder implements PostStepBuild
                 breedName = dogBreed.getName();
             }
         }
-        return breed(commonNodes.getBreed(breedName, breedId));
+        return breed(breedSynonymNodeCache.getBreed(breedName));
     }
 
     public DogNodeBuilder regNo(DogDetails dogDetails) {

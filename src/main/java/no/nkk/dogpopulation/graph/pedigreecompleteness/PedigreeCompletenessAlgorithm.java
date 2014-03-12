@@ -28,7 +28,7 @@ public class PedigreeCompletenessAlgorithm {
     }
 
 
-    public PedigreeCompleteness getPedigreeCompletenessOfGroup(Node categoryBreedNode, final Set<String> breedSet, final int minYear, final int maxYear) {
+    public PedigreeCompleteness getPedigreeCompletenessOfGroup(final Set<String> breedSet, final int minYear, final int maxYear) {
         DescriptiveStatistics pedigreeSizeStat = new DescriptiveStatistics();
         DescriptiveStatistics completenessStat = new DescriptiveStatistics();
         int N = PedigreeCompleteness.getSizeOfCompletePedigree(PEDIGREE_GENERATIONS);
@@ -36,7 +36,7 @@ public class PedigreeCompletenessAlgorithm {
         List<UuidAndRegNo> dogsWithEmptyPedigree = new ArrayList<>();
         List<UuidAndRegNo> dogsWithJustOneParent = new ArrayList<>();
         CommonTraversals commonTraversals = new CommonTraversals(graphDb);
-        for (Path breedMemberPath : commonTraversals.traverseBreedInSet(categoryBreedNode, breedSet)) {
+        for (Path breedMemberPath : commonTraversals.traverseAllBreedSynonymNodesThatAreMembersOfTheSameBreedGroupAsSynonymsInSet(breedSet)) {
             for (Path dogPath : commonTraversals.traverseDogOfBreedBornBetween(breedMemberPath.endNode(), minYear, maxYear)) {
                 Node dogNode = dogPath.endNode();
                 int pedigreeSize = computePedigreeSize(dogNode);

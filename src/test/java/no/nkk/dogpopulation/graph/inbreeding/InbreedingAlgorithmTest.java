@@ -38,7 +38,7 @@ public class InbreedingAlgorithmTest extends AbstractGraphTest {
          * This gives COI = (0.5)^2 = 0.25 = 25%
          */
 
-        Node breedNode = breed("Unit-test Breed", "1");
+        Node breedNode = breed("Unit-test Breed");
         addDog("A", breedNode);
         addDog("B", breedNode);
         addDog("C", breedNode);
@@ -123,7 +123,7 @@ public class InbreedingAlgorithmTest extends AbstractGraphTest {
          * This gives COI = (0.5)^2 = 0.25 = 25%
          */
 
-        Node breedNode = breed("Unit-test Breed", "1");
+        Node breedNode = breed("Unit-test Breed");
         addDog("A", breedNode);
         addDog("B", breedNode);
         addDog("C", breedNode);

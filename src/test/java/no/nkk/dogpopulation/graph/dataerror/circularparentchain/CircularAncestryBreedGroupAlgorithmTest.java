@@ -18,7 +18,7 @@ public class CircularAncestryBreedGroupAlgorithmTest extends AbstractGraphTest {
 
     @Test
     public void thatCircularAncestryBreedGroupAlgorithmDetectsTheCircle() {
-        Node breedNode = breed("Unit-test Breed", "1");
+        Node breedNode = breed("Unit-test Breed");
         Set<String> breedSet = new LinkedHashSet<>();
         breedSet.add("Unit-test Breed");
         addDog("A", breedNode, new LocalDate(2007, 6, 17));
