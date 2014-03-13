@@ -277,7 +277,7 @@ public class GraphResource {
     @GET
     @Path("/inconsistencies/gender/all")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getIncorrectOrMissingGender(@PathParam("breedSynonym") String breedSynonym, @QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
+    public Response getIncorrectOrMissingGender(@QueryParam("breed") String breedSynonym, @QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
         LOGGER.trace("getIncorrectOrMissingGender()");
         if (skip == null || skip < 0) {
             skip = 0;
@@ -316,9 +316,9 @@ public class GraphResource {
 
 
     @GET
-    @Path("/inconsistencies/breed/{breedSynonym}")
+    @Path("/inconsistencies/breed/all")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getIncorrectBreed(@PathParam("breedSynonym") String breedSynonym, @QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
+    public Response getIncorrectBreed(@PathParam("breed") String breedSynonym, @QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
         LOGGER.trace("getIncorrectOrMissingGender()");
         if (skip == null || skip < 0) {
             skip = 0;
