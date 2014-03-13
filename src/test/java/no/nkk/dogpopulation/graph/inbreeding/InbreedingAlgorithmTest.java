@@ -184,4 +184,52 @@ public class InbreedingAlgorithmTest extends AbstractGraphTest {
         Assert.assertEquals(coi, 0.3125, 0.000001);
     }
 
+
+    @Test
+    public void thatCircularPedigreeDoesNotOverflowStack() {
+        // given
+
+        /*
+         *  --- --- --- ---
+         * |   |   |   | B |
+         * |   |   | A
+         * |   |   |   | C |
+         * |   | B  --- ---
+         * |   |   |   | B |
+         * |   |   | C  ---
+         * |   |   |   |   |
+         * | A  --- --- ---
+         * |   |   |   | A |
+         * |   |   | B  ---
+         * |   |   |   | C |
+         * |   | C  --- ---
+         * |   |   |   |   |
+         * |   |   |    ---
+         * |   |   |   |   |
+         *  --- --- --- ---
+         *
+         *  The above pedigree will produce stack-overflow using a straightforward recursive inbreeding algorithm.
+         */
+
+        Node breedNode = breed("Unit-test Breed");
+        addDog("A", breedNode);
+        addDog("B", breedNode);
+        addDog("C", breedNode);
+
+        connectChildToFather("A", "B");
+        connectChildToMother("A", "C");
+        connectChildToFather("C", "B");
+
+        connectChildToMother("B", "A");
+        connectChildToFather("B", "C");
+
+        GraphQueryService graphQueryService = new GraphQueryService(graphDb);
+
+        // when
+        double coi = graphQueryService.computeCoefficientOfInbreeding("A", 3).getCoi();
+
+        // then
+        // If we get here without producing StackOverflowError, then the test should pass
+    }
+
 }
