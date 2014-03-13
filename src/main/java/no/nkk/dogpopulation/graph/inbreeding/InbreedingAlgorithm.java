@@ -34,6 +34,13 @@ public class InbreedingAlgorithm {
 
 
     /**
+     * State that should be shared across recursive inbreeding computations
+     */
+    private static class InbreedingState {
+        private final Set<CommonAncestorPath> alreadyVisited = new HashSet<>(); // used to avoid loops
+    }
+
+    /**
      * Create an algorithm that will work on a specific graph using a fixed number of generations when computing
      * inbreeding coefficient. The number of generations will be used recursively, i.e. if we use 6 generations, then
      * an ancestor's inbreeding contribution must also use 6 "new" generations.
@@ -54,7 +61,7 @@ public class InbreedingAlgorithm {
      * @return the Coefficient Of Inbreeding.
      */
     public InbreedingResult computeSewallWrightCoefficientOfInbreeding(Node dog) {
-        return computeCoefficientOfInbreeding(dog, PEDIGREE_GENERATIONS, 0);
+        return computeCoefficientOfInbreeding(new InbreedingState(), dog, PEDIGREE_GENERATIONS, 0);
     }
 
 
@@ -67,11 +74,11 @@ public class InbreedingAlgorithm {
      * @return the Coefficient Of Inbreeding of the inbredDogId.
      */
     public InbreedingResult computeSewallWrightCoefficientOfInbreeding(String inbredDogId, Node firstParent, Node secondParent) {
-        return computeCoefficientOfInbreeding(inbredDogId, PEDIGREE_GENERATIONS, 0, firstParent, secondParent);
+        return computeCoefficientOfInbreeding(new InbreedingState(), inbredDogId, PEDIGREE_GENERATIONS, 0, firstParent, secondParent);
     }
 
 
-    private InbreedingResult computeCoefficientOfInbreeding(Node dog, int toDepth, int recursionLevel) {
+    private InbreedingResult computeCoefficientOfInbreeding(InbreedingState state, Node dog, int toDepth, int recursionLevel) {
         Iterable<Relationship> relationships = dog.getRelationships(Direction.OUTGOING, DogGraphRelationshipType.HAS_PARENT);
 
         Iterator<Relationship> parents = relationships.iterator();
@@ -94,20 +101,20 @@ public class InbreedingAlgorithm {
 
         String inbredDogId = (String) dog.getProperty(DogGraphConstants.DOG_UUID);
 
-        return computeCoefficientOfInbreeding(inbredDogId, toDepth, recursionLevel, firstParent, secondParent);
+        return computeCoefficientOfInbreeding(state, inbredDogId, toDepth, recursionLevel, firstParent, secondParent);
     }
 
 
-    private InbreedingResult computeCoefficientOfInbreeding(String inbredDogId, int toDepth, int recursionLevel, Node firstParent, Node secondParent) {
+    private InbreedingResult computeCoefficientOfInbreeding(InbreedingState state, String inbredDogId, int toDepth, int recursionLevel, Node firstParent, Node secondParent) {
         Map<String, List<Path>> firstParentPathsByUuid = mapAncestryPathsByAncestorUuid(firstParent, toDepth - 1, recursionLevel);
 
-        InbreedingResult coi = computeInbreedingCoefficient(inbredDogId, secondParent, firstParentPathsByUuid, toDepth - 1, recursionLevel);
+        InbreedingResult coi = computeInbreedingCoefficient(state, inbredDogId, secondParent, firstParentPathsByUuid, toDepth - 1, recursionLevel);
 
         return coi;
     }
 
 
-    private InbreedingResult computeInbreedingCoefficient(String inbredDogId, Node secondParent, Map<String, List<Path>> firstParentPathsByUuid, int generations, int recursionLevel) {
+    private InbreedingResult computeInbreedingCoefficient(InbreedingState state, String inbredDogId, Node secondParent, Map<String, List<Path>> firstParentPathsByUuid, int generations, int recursionLevel) {
         CommonAncestorEvaluator commonAncestorEvaluator = new CommonAncestorEvaluator(firstParentPathsByUuid, recursionLevel);
 
         double coi = 0;
@@ -136,11 +143,17 @@ public class InbreedingAlgorithm {
                     continue; // there are more than one common ancestor in the two paths
                 }
 
+                CommonAncestorPath commonAncestorPath = new CommonAncestorPath(firstParentPath, secondParentPath);
+                if (state.alreadyVisited.contains(commonAncestorPath)) {
+                    continue; // break recursive forever loop
+                }
+                state.alreadyVisited.add(commonAncestorPath);
+
                 int n = secondParentPath.length() + firstParentPath.length();
 
                 double contribution = Math.pow(0.5, n + 1);
 
-                InbreedingResult ancestorCoi = computeCoefficientOfInbreeding(commonAncestor, PEDIGREE_GENERATIONS, recursionLevel + 1);
+                InbreedingResult ancestorCoi = computeCoefficientOfInbreeding(state, commonAncestor, PEDIGREE_GENERATIONS, recursionLevel + 1);
                 contributingAncestors.putAll(ancestorCoi.getCoiByContributingAncestor());
 
                 coi += contribution * (1 + ancestorCoi.getCoi());
