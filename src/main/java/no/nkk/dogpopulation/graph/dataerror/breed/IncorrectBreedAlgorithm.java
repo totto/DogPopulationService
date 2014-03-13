@@ -2,6 +2,7 @@ package no.nkk.dogpopulation.graph.dataerror.breed;
 
 import no.nkk.dogpopulation.graph.DogGraphConstants;
 import no.nkk.dogpopulation.graph.DogGraphRelationshipType;
+import no.nkk.dogpopulation.graph.GraphUtils;
 import no.nkk.dogpopulation.graph.dataerror.gender.ChildRecord;
 import no.nkk.dogpopulation.graph.dataerror.gender.IncorrectGenderRecord;
 import no.nkk.dogpopulation.graph.dataerror.gender.LitterRecord;
@@ -32,7 +33,7 @@ public class IncorrectBreedAlgorithm {
     public List<String> findDataError(int skip, int limit, String breedSynonym) {
         List<String> list = new ArrayList<>();
 
-        Long idOfBreed = getBreedNodeId(breedSynonym);
+        Long idOfBreed = GraphUtils.getBreedNodeId(engine, breedSynonym);
         if (idOfBreed == null) {
             return list;
         }
@@ -62,23 +63,6 @@ public class IncorrectBreedAlgorithm {
             }
         }
         return list;
-    }
-
-    private Long getBreedNodeId(String breedSynonym) {
-        Map<String, Object> params = new LinkedHashMap<>();
-        params.put("synonym", breedSynonym);
-        StringBuilder synonymQuery = new StringBuilder();
-        synonymQuery.append("MATCH \n");
-        synonymQuery.append("  (s:BREED_SYNONYM {synonym:{synonym}})-[:MEMBER_OF]->(b:BREED) \n");
-        synonymQuery.append("RETURN \n");
-        synonymQuery.append("  ID(b)\n");
-        ExecutionResult syonymResult = engine.execute(synonymQuery.toString(), params);
-        try (ResourceIterator<Map<String,Object>> iterator = syonymResult.iterator()) {
-            for (Map<String,Object> record : IteratorUtil.asIterable(iterator)) {
-                return (Long) record.get("ID(b)");
-            }
-        }
-        return null;
     }
 
     public IncorrectBreedRecord findDataError(String uuid) {
