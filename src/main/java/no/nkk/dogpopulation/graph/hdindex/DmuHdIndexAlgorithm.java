@@ -97,6 +97,9 @@ public class DmuHdIndexAlgorithm {
             LOGGER.warn("Unable to produce HDIndex files. No valid breed-code registered for breed: \"{}\"", breedName);
             throw new UnknownBreedCodeException(breedName);
         }
+
+        writeBreedCodeMappingRecord(breedMappingWriter, breedName, breedNkkId);
+
         for (Path path : commonTraversals.traverseDogsOfBreed(breedSynonymNode)) {
             Node dogNode = path.endNode();
 
@@ -192,8 +195,6 @@ public class DmuHdIndexAlgorithm {
 
             writeUuidMappingRecord(id, uuid, uuidMappingWriter);
 
-            writeBreedCodeMappingRecord(id, uuid, breedMappingWriter, breedName, breedNkkId);
-
         }
     }
 
@@ -206,7 +207,7 @@ public class DmuHdIndexAlgorithm {
         uuidMappingWriter.print(NEWLINE);
     }
 
-    private void writeBreedCodeMappingRecord(int id, String uuid, PrintWriter breedMappingWriter, String breedName, int breedCode) {
+    private void writeBreedCodeMappingRecord(PrintWriter breedMappingWriter, String breedName, int breedCode) {
         final String NEWLINE = "\r\n";
         breedMappingWriter.print(breedCode);
         breedMappingWriter.print(" ");
