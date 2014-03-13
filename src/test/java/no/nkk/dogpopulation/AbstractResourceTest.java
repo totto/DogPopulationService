@@ -1,6 +1,9 @@
 package no.nkk.dogpopulation;
 
 import com.jayway.restassured.RestAssured;
+import no.nkk.dogpopulation.graph.DogGraphConstants;
+import no.nkk.dogpopulation.graph.DogGraphLabel;
+import no.nkk.dogpopulation.graph.DogGraphRelationshipType;
 import no.nkk.dogpopulation.graph.GraphQueryService;
 import no.nkk.dogpopulation.graph.dogbuilder.BreedSynonymNodeCache;
 import no.nkk.dogpopulation.graph.dogbuilder.Dogs;
@@ -33,8 +36,11 @@ public class AbstractResourceTest {
     public void startServer() {
         int httpPort = 10000 + Main.DEFAULT_HTTP_PORT;
         String dbPath = "target/unittestdogdb";
+        final String hdIndexFolderPath = "target/hdindex-test";
         File dbFolder = new File(dbPath);
+        File hdIndexFolder = new File(dbPath);
         FileUtils.deleteQuietly(dbFolder);
+        FileUtils.deleteQuietly(hdIndexFolder);
         graphDb = Main.createGraphDb(dbPath);
         ResourceConfigFactory resourceConfigFactory = new ResourceConfigFactory() {
             @Override
@@ -42,7 +48,7 @@ public class AbstractResourceTest {
                 ResourceConfig resourceConfig = new ResourceConfig();
                 GraphQueryService graphQueryService = new GraphQueryService(graphDb);
                 resourceConfig.registerInstances(new PedigreeResource(new PedigreeService(graphDb, graphQueryService, new DogTestImporterFactory())));
-                resourceConfig.registerInstances(new HdIndexResource(graphQueryService, "target/hdindex-test"));
+                resourceConfig.registerInstances(new HdIndexResource(graphQueryService, hdIndexFolderPath));
                 return resourceConfig;
             }
         };
@@ -60,6 +66,17 @@ public class AbstractResourceTest {
         }
     }
 
+    protected Node addBreed(String breed, String nkkBreedId) {
+        Node breedSynonymNode = breedSynonymNodeCache.getBreed(breed);
+        try (Transaction tx = graphDb.beginTx()) {
+            Node breedNode = graphDb.createNode(DogGraphLabel.BREED);
+            breedNode.setProperty(DogGraphConstants.BREED_BREED_NAME, breed);
+            breedNode.setProperty(DogGraphConstants.BREED_NKK_BREED_ID, nkkBreedId);
+            breedSynonymNode.createRelationshipTo(breedNode, DogGraphRelationshipType.MEMBER_OF);
+            tx.success();
+        }
+        return breedSynonymNode;
+    }
 
     protected Node breed(String breedName) {
         return breedSynonymNodeCache.getBreed(breedName);

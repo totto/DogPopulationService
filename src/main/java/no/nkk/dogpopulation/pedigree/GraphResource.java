@@ -316,9 +316,9 @@ public class GraphResource {
 
 
     @GET
-    @Path("/inconsistencies/breed/all")
+    @Path("/inconsistencies/breed/{breedSynonym}")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getIncorrectBreed(@QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
+    public Response getIncorrectBreed(@QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit, @PathParam("breedSynonym") String breedSynonym) {
         LOGGER.trace("getIncorrectOrMissingGender()");
         if (skip == null || skip < 0) {
             skip = 0;
@@ -327,7 +327,7 @@ public class GraphResource {
             limit = 10;
         }
 
-        List<String> result = graphQueryService.getAllDogsWithInconsistentBreed(skip, limit);
+        List<String> result = graphQueryService.getAllDogsWithInconsistentBreed(skip, limit, breedSynonym);
 
         try {
             String json = prettyPrintingObjectWriter.writeValueAsString(result);

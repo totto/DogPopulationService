@@ -15,8 +15,8 @@ public class IncorrectBreedAlgorithmTest  extends AbstractGraphTest {
 
     @Test
     public void thatDobermannChildOfTwoDalmatinersIsConsideredIncorrectBreed() {
-        Node dalmatiner = breed("Dalmatiner");
-        Node dobermann = breed("Dobermann");
+        Node dalmatiner = addBreed("Dalmatiner", "123");
+        Node dobermann = addBreed("Dobermann", "456");
         addDog("A", dobermann);
         addDog("B", dalmatiner);
         addDog("C", dalmatiner);
@@ -25,7 +25,7 @@ public class IncorrectBreedAlgorithmTest  extends AbstractGraphTest {
 
         GraphQueryService graphQueryService = new GraphQueryService(graphDb);
 
-        List<String> result = graphQueryService.getAllDogsWithInconsistentBreed(0, 10);
+        List<String> result = graphQueryService.getAllDogsWithInconsistentBreed(0, 10, "Dobermann");
         Assert.assertNotNull(result);
         Assert.assertEquals(result.size(), 1);
 

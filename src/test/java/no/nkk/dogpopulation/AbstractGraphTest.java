@@ -1,5 +1,8 @@
 package no.nkk.dogpopulation;
 
+import no.nkk.dogpopulation.graph.DogGraphConstants;
+import no.nkk.dogpopulation.graph.DogGraphLabel;
+import no.nkk.dogpopulation.graph.DogGraphRelationshipType;
 import no.nkk.dogpopulation.graph.dogbuilder.BreedSynonymNodeCache;
 import no.nkk.dogpopulation.graph.dogbuilder.Dogs;
 import org.apache.commons.io.FileUtils;
@@ -38,6 +41,18 @@ public abstract class AbstractGraphTest {
     @AfterMethod
     public void closeGraph() {
         graphDb.shutdown();
+    }
+
+    protected Node addBreed(String breed, String nkkBreedId) {
+        Node breedSynonymNode = breedSynonymNodeCache.getBreed(breed);
+        try (Transaction tx = graphDb.beginTx()) {
+            Node breedNode = graphDb.createNode(DogGraphLabel.BREED);
+            breedNode.setProperty(DogGraphConstants.BREED_BREED_NAME, breed);
+            breedNode.setProperty(DogGraphConstants.BREED_NKK_BREED_ID, nkkBreedId);
+            breedSynonymNode.createRelationshipTo(breedNode, DogGraphRelationshipType.MEMBER_OF);
+            tx.success();
+        }
+        return breedSynonymNode;
     }
 
     protected Node breed(String breedName) {

@@ -333,10 +333,10 @@ public class GraphQueryService {
     }
 
 
-    public List<String> getAllDogsWithInconsistentBreed(int skip, int limit) {
+    public List<String> getAllDogsWithInconsistentBreed(int skip, int limit, String breedSynonym) {
         try (Transaction tx = graphDb.beginTx()) {
             IncorrectBreedAlgorithm algorithm = new IncorrectBreedAlgorithm(graphDb, engine);
-            List<String> result = algorithm.findDataError(skip, limit);
+            List<String> result = algorithm.findDataError(skip, limit, breedSynonym);
             tx.success();
             return result;
         }
