@@ -8,8 +8,6 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -70,31 +68,36 @@ public class DmuHdIndexAlgorithm {
 
     public void writeFiles(PrintWriter dataWriter, PrintWriter pedigreeWriter, PrintWriter uuidMappingWriter, PrintWriter breedMappingWriter) {
         Set<Long> visitedNodes = new HashSet<>();
-        for (Path breedPath : commonTraversals.traverseAllBreedSynonymNodesThatAreMembersOfTheSameBreedGroupAsSynonymsInSet(breed)) {
-            writeBreedToFiles(dataWriter, pedigreeWriter, uuidMappingWriter, breedMappingWriter, visitedNodes, breedPath);
+        for (Path breedSynonymPath : commonTraversals.traverseAllBreedSynonymNodesThatAreMembersOfTheSameBreedGroupAsSynonymsInSet(breed)) {
+            writeBreedToFiles(dataWriter, pedigreeWriter, uuidMappingWriter, breedMappingWriter, visitedNodes, breedSynonymPath);
         }
     }
 
-    private void writeBreedToFiles(PrintWriter dataWriter, PrintWriter pedigreeWriter, PrintWriter uuidMappingWriter, PrintWriter breedMappingWriter, Set<Long> visitedNodes, Path breedPath) {
-        Map<String, Integer> breedCodeMap = new LinkedHashMap<>();
-        int breedCode = -1;
-        Node breedNode = breedPath.endNode();
+    private void writeBreedToFiles(PrintWriter dataWriter, PrintWriter pedigreeWriter, PrintWriter uuidMappingWriter, PrintWriter breedMappingWriter, Set<Long> visitedNodes, Path breedSynonymPath) {
+        int breedNkkId = -1;
+        Node breedSynonymNode = breedSynonymPath.endNode();
         String breedName = "Breed Node does not have breed name set!";
-        if (breedNode.hasProperty(DogGraphConstants.BREEDSYNONYM_SYNONYM)) {
-            breedName = (String) breedNode.getProperty(DogGraphConstants.BREEDSYNONYM_SYNONYM);
+        if (breedSynonymNode.hasProperty(DogGraphConstants.BREEDSYNONYM_SYNONYM)) {
+            breedName = (String) breedSynonymNode.getProperty(DogGraphConstants.BREEDSYNONYM_SYNONYM);
         }
-        if (breedNode.hasProperty(DogGraphConstants.BREED_FCI_BREED_ID)) {
-            String breedIdStr = (String) breedNode.getProperty(DogGraphConstants.BREED_FCI_BREED_ID);
+        Relationship memberOf = breedSynonymNode.getSingleRelationship(DogGraphRelationshipType.MEMBER_OF, Direction.OUTGOING);
+        if (memberOf == null) {
+            LOGGER.warn("Unable to produce HDIndex files. Breed synonym node not connected to breed node: \"{}\"", breedName);
+            throw new UnknownBreedCodeException(breedName);
+        }
+        Node breedNode = memberOf.getEndNode();
+        if (breedNode.hasProperty(DogGraphConstants.BREED_NKK_BREED_ID)) {
+            String breedIdStr = (String) breedNode.getProperty(DogGraphConstants.BREED_NKK_BREED_ID);
             try {
-                breedCode = Integer.parseInt(breedIdStr);
+                breedNkkId = Integer.parseInt(breedIdStr);
             } catch (RuntimeException ignore) {
             }
         }
-        if (breedCode <= 0) {
+        if (breedNkkId <= 0) {
             LOGGER.warn("Unable to produce HDIndex files. No valid breed-code registered for breed: \"{}\"", breedName);
             throw new UnknownBreedCodeException(breedName);
         }
-        for (Path path : commonTraversals.traverseDogsOfBreed(breedNode)) {
+        for (Path path : commonTraversals.traverseDogsOfBreed(breedSynonymNode)) {
             Node dogNode = path.endNode();
 
             if (visitedNodes.contains(dogNode.getId())) {
@@ -146,7 +149,7 @@ public class DmuHdIndexAlgorithm {
                     gender = 1; // MALE
                 }
             }
-            int breedBornYearGender = (100000 * breedCode) + (10 * bornYear) + gender;
+            int breedBornYearGender = (100000 * breedNkkId) + (10 * bornYear) + gender;
 
 
             int litterId = DmuDataRecord.UNKNOWN;
@@ -158,8 +161,8 @@ public class DmuHdIndexAlgorithm {
                 }
             }
 
-            int motherId = -breedCode;
-            int fatherId = -breedCode;
+            int motherId = -breedNkkId;
+            int fatherId = -breedNkkId;
             if (dogNode.hasRelationship(DogGraphRelationshipType.HAS_PARENT)) {
                 for (Relationship hasParent : dogNode.getRelationships(DogGraphRelationshipType.HAS_PARENT, Direction.OUTGOING)) {
                     Node parentNode = hasParent.getEndNode();
@@ -180,16 +183,16 @@ public class DmuHdIndexAlgorithm {
 
             if (hdScore != DmuDataRecord.UNKNOWN) {
                 // only use records with known HD score in data file.
-                DmuDataRecord dmuDataRecord = new DmuDataRecord(id, breedCode, bornYear, gender, breedBornYearGender, litterId, motherId, hdScore);
+                DmuDataRecord dmuDataRecord = new DmuDataRecord(id, breedNkkId, bornYear, gender, breedBornYearGender, litterId, motherId, hdScore);
                 dmuDataRecord.writeTo(dataWriter);
             }
 
-            DmuPedigreeRecord dmuPedigreeRecord = new DmuPedigreeRecord(id, fatherId, motherId, born, breedCode);
+            DmuPedigreeRecord dmuPedigreeRecord = new DmuPedigreeRecord(id, fatherId, motherId, born, breedNkkId);
             dmuPedigreeRecord.writeTo(pedigreeWriter);
 
             writeUuidMappingRecord(id, uuid, uuidMappingWriter);
 
-            writeBreedCodeMappingRecord(id, uuid, breedMappingWriter, breedName, breedCode);
+            writeBreedCodeMappingRecord(id, uuid, breedMappingWriter, breedName, breedNkkId);
 
         }
     }
