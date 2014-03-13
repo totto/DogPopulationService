@@ -54,7 +54,7 @@ See https://wiki.cantara.no/display/NKKFS/Datafeil+som+oppdages+og+rettes+i+hund
 
 | Resource        | Action | Result           | Attributes  |
 |:------------- |:------------- |:----- |:------ |
-|**Incorrect or missing gender - list all**<br/>http://dogid.nkk.no/dogpopulation/graph/inconsistencies/gender/all?skip=0&limit=10 | get | Lists all uuids of dogs that have some sort of gender inconsistency | **skip**: Used for paging the list<br/>**limit**: used to limit number of results returned at once.|
+|**Incorrect or missing gender - list inconsistencies for specific breed**<br/>http://dogid.nkk.no/dogpopulation/graph/inconsistencies/gender/Rottweiler?skip=0&limit=10 | get | Lists all uuids of dogs that have some sort of gender inconsistency | **skip**: Used for paging the list<br/>**limit**: used to limit number of results returned at once.|
 |**Incorrect or missing gender - unique dog**<br/>http://dogid.nkk.no/dogpopulation/graph/inconsistencies/gender/654cecf2-2eb1-4bc0-9d93-5046ed2f82ec | get | Get details related to gender inconsistencies of dog. | uuid: unique id of dog |
 |**Incorrect or missing breed - list all inconsistencies for specific breed**<br/>http://dogid.nkk.no/dogpopulation/graph/inconsistencies/breed/Rottweiler?skip=0&limit=10 | get | List all uuids of dogs that have some sort of breed inconsistency | Same as above |
 |**Incorrect or missing breed - unique dog**<br/>http://dogid.nkk.no/dogpopulation/graph/inconsistencies/breed/0426517e-3833-4a29-a620-075ebb1b8b68 | get | Get details related to breed inconsistencies of dog. | uuid: unique id of dog |

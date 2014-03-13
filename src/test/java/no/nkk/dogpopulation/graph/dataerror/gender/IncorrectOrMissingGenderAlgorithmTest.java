@@ -17,7 +17,7 @@ public class IncorrectOrMissingGenderAlgorithmTest extends AbstractGraphTest {
 
     @Test
     public void thatFemaleFatherIsIllegal() {
-        Node breedNode = breed("Unit-test Breed");
+        Node breedNode = addBreed("Unit-test Breed", "12");
         Node A = addDog("A", breedNode);
         setProperty(A, DogGraphConstants.DOG_GENDER, DogGender.FEMALE.name().toLowerCase());
         Node B = addDog("B", breedNode);
@@ -29,7 +29,7 @@ public class IncorrectOrMissingGenderAlgorithmTest extends AbstractGraphTest {
 
         GraphQueryService graphQueryService = new GraphQueryService(graphDb);
 
-        List<String> result = graphQueryService.getAllDogsWithInconsistentGender(0, 10);
+        List<String> result = graphQueryService.getAllDogsWithInconsistentGender(0, 10, "Unit-test Breed");
         Assert.assertNotNull(result);
         Assert.assertEquals(result.size(), 1);
 

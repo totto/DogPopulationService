@@ -313,10 +313,10 @@ public class GraphQueryService {
     }
 
 
-    public List<String> getAllDogsWithInconsistentGender(int skip, int limit) {
+    public List<String> getAllDogsWithInconsistentGender(int skip, int limit, String breedSynonym) {
         try (Transaction tx = graphDb.beginTx()) {
             IncorrectOrMissingGenderAlgorithm algorithm = new IncorrectOrMissingGenderAlgorithm(graphDb, engine);
-            List<String> result = algorithm.findDataError(skip, limit);
+            List<String> result = algorithm.findDataError(skip, limit, breedSynonym);
             tx.success();
             return result;
         }

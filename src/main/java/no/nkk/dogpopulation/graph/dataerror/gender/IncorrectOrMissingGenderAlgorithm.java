@@ -2,6 +2,7 @@ package no.nkk.dogpopulation.graph.dataerror.gender;
 
 import no.nkk.dogpopulation.graph.DogGraphConstants;
 import no.nkk.dogpopulation.graph.DogGraphRelationshipType;
+import no.nkk.dogpopulation.graph.GraphUtils;
 import org.joda.time.LocalDate;
 import org.neo4j.cypher.javacompat.ExecutionEngine;
 import org.neo4j.cypher.javacompat.ExecutionResult;
@@ -26,9 +27,28 @@ public class IncorrectOrMissingGenderAlgorithm {
         this.engine = engine;
     }
 
-    public List<String> findDataError(int skip, int limit) {
+    public List<String> findDataError(int skip, int limit, String breedSynonym) {
         List<String> list = new ArrayList<>();
-        ExecutionResult result1 = engine.execute("MATCH (p:DOG)<-[r:HAS_PARENT]-(c) WHERE (p.gender='female' AND r.role='father') OR (p.gender='male' AND r.role='mother') RETURN DISTINCT p.uuid SKIP " + skip + " LIMIT " + limit);
+
+        Long idOfBreed = GraphUtils.getBreedNodeId(engine, breedSynonym);
+        if (idOfBreed == null) {
+            return list;
+        }
+
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("id", idOfBreed);
+        StringBuilder query = new StringBuilder();
+        query.append("MATCH \n");
+        query.append("  (p:DOG)<-[r:HAS_PARENT]-(c), \n");
+        query.append("  (p)-[:IS_BREED]->()-[:MEMBER_OF]->(theBreed:BREED) \n");
+        query.append("WHERE \n");
+        query.append("  ID(theBreed)={id} \n");
+        query.append("  AND ((p.gender='female' AND r.role='father') OR (p.gender='male' AND r.role='mother')) \n");
+        query.append("RETURN DISTINCT \n");
+        query.append("  p.uuid\n");
+        query.append("SKIP ").append(skip).append(" \n");
+        query.append("LIMIT ").append(limit).append(" \n");
+        ExecutionResult result1 = engine.execute(query.toString(), params);
         try (ResourceIterator<Map<String,Object>> iterator = result1.iterator()) {
             for (Map<String,Object> record : IteratorUtil.asIterable(iterator)) {
                 list.add((String) record.get("p.uuid"));
