@@ -318,7 +318,7 @@ public class GraphResource {
     @GET
     @Path("/inconsistencies/breed/all")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getIncorrectBreed(@PathParam("breed") String breedSynonym, @QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
+    public Response getIncorrectBreed(@QueryParam("breed") String breedSynonym, @QueryParam("skip") Integer skip, @QueryParam("limit") Integer limit) {
         LOGGER.trace("getIncorrectOrMissingGender()");
         if (skip == null || skip < 0) {
             skip = 0;
