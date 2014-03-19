@@ -20,7 +20,7 @@ public class DogNodeBuilder extends AbstractNodeBuilder implements PostStepBuild
 
     private final BreedSynonymNodeCache breedSynonymNodeCache;
 
-    private String uuid;
+    private final String uuid;
     private String regNo;
     private Node breedNode;
     private String name;
@@ -29,9 +29,14 @@ public class DogNodeBuilder extends AbstractNodeBuilder implements PostStepBuild
     private String hdDiag;
     private LocalDate hdXray;
     private Runnable task;
+    private String json;
 
-    DogNodeBuilder(BreedSynonymNodeCache breedSynonymNodeCache) {
+    DogNodeBuilder(BreedSynonymNodeCache breedSynonymNodeCache, String uuid) {
+        if (uuid == null) {
+            throw new IllegalArgumentException("uuid cannot be null");
+        }
         this.breedSynonymNodeCache = breedSynonymNodeCache;
+        this.uuid = uuid;
     }
 
     @Override
@@ -55,6 +60,9 @@ public class DogNodeBuilder extends AbstractNodeBuilder implements PostStepBuild
         if (uuid == null) {
             throw new MissingFieldException("uuid");
         }
+        if (name == null) {
+            throw new MissingFieldException("name");
+        }
 
         Node dogNode = GraphUtils.findOrCreateNode(graphDb, DogGraphLabel.DOG, DogGraphConstants.DOG_UUID, uuid);
 
@@ -67,6 +75,9 @@ public class DogNodeBuilder extends AbstractNodeBuilder implements PostStepBuild
         // new dog
 
         dogNode.setProperty(DogGraphConstants.DOG_NAME, name);
+        if (json != null) {
+            dogNode.setProperty(DogGraphConstants.DOG_JSON, json);
+        }
         if (gender != null) {
             dogNode.setProperty(DogGraphConstants.DOG_GENDER, gender.name().toLowerCase());
         }
@@ -119,11 +130,11 @@ public class DogNodeBuilder extends AbstractNodeBuilder implements PostStepBuild
     }
 
     public DogNodeBuilder all(DogDetails dogDetails) {
-        return uuid(dogDetails).name(dogDetails).gender(dogDetails).breed(dogDetails).regNo(dogDetails).born(dogDetails).health(dogDetails.getHealth());
+        return json(dogDetails).name(dogDetails).gender(dogDetails).breed(dogDetails).regNo(dogDetails).born(dogDetails).health(dogDetails.getHealth());
     }
 
-    public DogNodeBuilder uuid(DogDetails dogDetails) {
-        return uuid(dogDetails.getId());
+    public DogNodeBuilder json(DogDetails dogDetails) {
+        return json(dogDetails.getJson());
     }
 
     public DogNodeBuilder name(DogDetails dogDetails) {
@@ -219,11 +230,8 @@ public class DogNodeBuilder extends AbstractNodeBuilder implements PostStepBuild
     }
 
 
-    public DogNodeBuilder uuid(String uuid) {
-        if (uuid == null) {
-            throw new IllegalArgumentException("uuid cannot be null");
-        }
-        this.uuid = uuid;
+    public DogNodeBuilder json(String json) {
+        this.json = json;
         return this;
     }
     public DogNodeBuilder regNo(String regNo) {

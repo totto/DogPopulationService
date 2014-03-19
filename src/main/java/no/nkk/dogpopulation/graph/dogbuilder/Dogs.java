@@ -11,8 +11,8 @@ public class Dogs {
         this.breedSynonymNodeCache = breedSynonymNodeCache;
     }
 
-    public DogNodeBuilder dog() {
-        return new DogNodeBuilder(breedSynonymNodeCache);
+    public DogNodeBuilder dog(String uuid) {
+        return new DogNodeBuilder(breedSynonymNodeCache, uuid);
     }
 
     public LitterNodeBuilder litter() {
@@ -25,6 +25,10 @@ public class Dogs {
 
     public HasParentRelationshipBuilder hasParent() {
         return new HasParentRelationshipBuilder();
+    }
+
+    public HasParentRelationshipDeleteBuilder deleteParent() {
+        return new HasParentRelationshipDeleteBuilder();
     }
 
     public InLitterRelationshipBuilder inLitter() {
