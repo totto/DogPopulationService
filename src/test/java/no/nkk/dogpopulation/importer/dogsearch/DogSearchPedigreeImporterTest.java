@@ -26,6 +26,7 @@ import java.util.concurrent.*;
 public class DogSearchPedigreeImporterTest {
 
     GraphDatabaseService graphDb;
+    ExecutorService executorService;
 
     @BeforeMethod
     public void initGraph() {
@@ -33,11 +34,13 @@ public class DogSearchPedigreeImporterTest {
         File dbFolder = new File(dbPath);
         FileUtils.deleteQuietly(dbFolder);
         graphDb = Main.createGraphDb(dbPath);
+        executorService = Executors.newFixedThreadPool(5);
     }
 
     @AfterMethod
     public void closeGraph() {
         graphDb.shutdown();
+        executorService.shutdown();
     }
 
     @Test
@@ -45,29 +48,49 @@ public class DogSearchPedigreeImporterTest {
         ExecutorService executorService = Executors.newFixedThreadPool(5);
         DogSearchClient dogSearchClient = new DogSearchClient() {
             @Override
-            public Set<String> listIdsForBreed(String breed) {
+            public Future<Set<String>> listIdsForBreed(String breed) {
                 throw new UnsupportedOperationException();
             }
 
             @Override
-            public DogDetails findDog(String id) {
+            public Future<DogDetails> findDog(String id) {
                 if (!"AB/12345/67".equals(id)) {
                     return null;
                 }
                 ObjectMapper objectMapper = new ObjectMapper();
                 try {
-                    return objectMapper.readValue(new File("src/test/resources/dog_with_offspring.json"), DogDetails.class);
+                    return new ImmediateFuture<>(objectMapper.readValue(new File("src/test/resources/dog_with_offspring.json"), DogDetails.class));
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
+            }
+
+            @Override
+            public Set<String> listIdsForLastWeek() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public Set<String> listIdsForLastDay() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public Set<String> listIdsForLastHour() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public Set<String> listIdsForLastMinute() {
+                throw new UnsupportedOperationException();
             }
         };
 
         BreedSynonymNodeCache breedSynonymNodeCache = new BreedSynonymNodeCache(graphDb);
         Dogs dogs = new Dogs(breedSynonymNodeCache);
-        BulkWriteService bulkWriteService = new BulkWriteService(graphDb);
+        BulkWriteService bulkWriteService = new BulkWriteService(executorService, graphDb).start();
 
-        DogSearchPedigreeImporter importer = new DogSearchPedigreeImporter(executorService, graphDb, dogSearchClient, dogs, breedSynonymNodeCache, bulkWriteService);
+        DogSearchPedigreeImporter importer = new DogSearchPedigreeImporter(executorService, executorService, graphDb, dogSearchClient, dogs, breedSynonymNodeCache, bulkWriteService);
         Future<String> future = importer.importPedigree("AB/12345/67");
         String uuid = future.get(30, TimeUnit.SECONDS);
         importer.stop();

@@ -65,7 +65,7 @@ public abstract class AbstractGraphTest {
 
     protected Node addDog(String uuid, String name, Node breedSynonymNode) {
         try (Transaction tx = graphDb.beginTx()) {
-            Node dog = dogs.dog().uuid(uuid).name(name).breed(breedSynonymNode).build(graphDb);
+            Node dog = dogs.dog(uuid).name(name).breed(breedSynonymNode).build(graphDb);
             tx.success();
             return dog;
         }
@@ -73,7 +73,7 @@ public abstract class AbstractGraphTest {
 
     protected Node addDog(String uuid, Node breedSynonymNode, LocalDate born) {
         try (Transaction tx = graphDb.beginTx()) {
-            Node dog = dogs.dog().uuid(uuid).name(uuid).breed(breedSynonymNode).born(born).build(graphDb);
+            Node dog = dogs.dog(uuid).name(uuid).breed(breedSynonymNode).born(born).build(graphDb);
             tx.success();
             return dog;
         }

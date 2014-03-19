@@ -8,7 +8,7 @@ import no.nkk.dogpopulation.graph.GraphQueryService;
 import no.nkk.dogpopulation.graph.dogbuilder.BreedSynonymNodeCache;
 import no.nkk.dogpopulation.graph.dogbuilder.Dogs;
 import no.nkk.dogpopulation.hdindex.HdIndexResource;
-import no.nkk.dogpopulation.importer.dogsearch.DogTestImporterFactory;
+import no.nkk.dogpopulation.importer.dogsearch.DogTestImporter;
 import no.nkk.dogpopulation.pedigree.PedigreeResource;
 import no.nkk.dogpopulation.pedigree.PedigreeService;
 import org.apache.commons.io.FileUtils;
@@ -47,7 +47,7 @@ public class AbstractResourceTest {
             public ResourceConfig createResourceConfig() {
                 ResourceConfig resourceConfig = new ResourceConfig();
                 GraphQueryService graphQueryService = new GraphQueryService(graphDb);
-                resourceConfig.registerInstances(new PedigreeResource(new PedigreeService(graphDb, graphQueryService, new DogTestImporterFactory())));
+                resourceConfig.registerInstances(new PedigreeResource(new PedigreeService(graphDb, graphQueryService, new DogTestImporter())));
                 resourceConfig.registerInstances(new HdIndexResource(graphQueryService, hdIndexFolderPath));
                 return resourceConfig;
             }
@@ -88,7 +88,7 @@ public class AbstractResourceTest {
 
     protected Node addDog(String uuid, String name, Node breedSynonymNode) {
         try (Transaction tx = graphDb.beginTx()) {
-            Node dog = dogs.dog().uuid(uuid).name(name).breed(breedSynonymNode).build(graphDb);
+            Node dog = dogs.dog(uuid).name(name).breed(breedSynonymNode).build(graphDb);
             tx.success();
             return dog;
         }
@@ -96,7 +96,7 @@ public class AbstractResourceTest {
 
     protected Node addDog(String uuid, Node breedSynonymNode, LocalDate born) {
         try (Transaction tx = graphDb.beginTx()) {
-            Node dog = dogs.dog().uuid(uuid).name(uuid).breed(breedSynonymNode).born(born).build(graphDb);
+            Node dog = dogs.dog(uuid).name(uuid).breed(breedSynonymNode).born(born).build(graphDb);
             tx.success();
             return dog;
         }

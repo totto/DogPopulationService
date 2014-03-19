@@ -2,6 +2,7 @@ package no.nkk.dogpopulation.importer.dogsearch;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import no.nkk.dogpopulation.Main;
+import no.nkk.dogpopulation.concurrent.ManageableExecutor;
 import no.nkk.dogpopulation.graph.bulkwrite.BulkWriteService;
 import no.nkk.dogpopulation.graph.dogbuilder.BreedSynonymNodeCache;
 import no.nkk.dogpopulation.graph.dogbuilder.Dogs;
@@ -21,6 +22,7 @@ import java.util.concurrent.*;
  */
 public class PedigreeImporterTest {
     GraphDatabaseService graphDb;
+    ExecutorService executorService;
 
     @BeforeMethod
     public void initGraph() {
@@ -28,16 +30,18 @@ public class PedigreeImporterTest {
         File dbFolder = new File(dbPath);
         FileUtils.deleteQuietly(dbFolder);
         graphDb = Main.createGraphDb(dbPath);
+        executorService = Executors.newFixedThreadPool(5);
     }
 
     @AfterMethod
     public void closeGraph() {
         graphDb.shutdown();
+        executorService.shutdown();
     }
 
     @Test
     public void thatImportOfSchaferWorks() throws InterruptedException, ExecutionException, TimeoutException {
-        ExecutorService executorService = Executors.newFixedThreadPool(5);
+        ExecutorService executorService = new ManageableExecutor(5, 30);
 
         String dogUuid = "93683d2b-3ad9-4531-bb3d-d8c43f9d99f0";
 
@@ -47,9 +51,9 @@ public class PedigreeImporterTest {
 
         BreedSynonymNodeCache breedSynonymNodeCache = new BreedSynonymNodeCache(graphDb);
         Dogs dogs = new Dogs(breedSynonymNodeCache);
-        BulkWriteService bulkWriteService = new BulkWriteService(graphDb);
+        BulkWriteService bulkWriteService = new BulkWriteService(executorService, graphDb).start();
 
-        DogSearchPedigreeImporter importer = new DogSearchPedigreeImporter(executorService, graphDb, dogSearchClient, dogs, breedSynonymNodeCache, bulkWriteService);
+        DogSearchPedigreeImporter importer = new DogSearchPedigreeImporter(executorService, executorService, graphDb, dogSearchClient, dogs, breedSynonymNodeCache, bulkWriteService);
         Future<String> future = importer.importPedigree(dogUuid);
         String uuid = future.get(300, TimeUnit.SECONDS);
         importer.stop();
@@ -58,12 +62,12 @@ public class PedigreeImporterTest {
     private DogSearchClient createFileReadingDogSearchClient(final String folderName) {
         return new DogSearchClient() {
                 @Override
-                public Set<String> listIdsForBreed(String breed) {
+                public Future<Set<String>> listIdsForBreed(String breed) {
                     throw new UnsupportedOperationException();
                 }
 
                 @Override
-                public DogDetails findDog(String id) {
+                public Future<DogDetails> findDog(String id) {
                     File directory = new File("src/test/resources/dogsearch/" + folderName);
                     File file = new File(directory, id + ".json");
                     if (!file.isFile()) {
@@ -71,12 +75,32 @@ public class PedigreeImporterTest {
                     }
                     ObjectMapper objectMapper = new ObjectMapper();
                     try {
-                        return objectMapper.readValue(file, DogDetails.class);
+                        return new ImmediateFuture<>(objectMapper.readValue(file, DogDetails.class));
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
                 }
-            };
+
+            @Override
+            public Set<String> listIdsForLastWeek() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public Set<String> listIdsForLastDay() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public Set<String> listIdsForLastHour() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public Set<String> listIdsForLastMinute() {
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 
     /**
@@ -87,7 +111,7 @@ public class PedigreeImporterTest {
     private DogSearchClient createExternalDogSearchClient(String folderName) {
         final File directory = new File("src/test/resources/dogsearch/" + folderName);
         directory.mkdirs();
-        return new DogSearchSolrClient("http://dogsearch.nkk.no/dogservice/dogs") {
+        return new DogSearchSolrClient(executorService, "http://dogsearch.nkk.no/dogservice/dogs") {
             protected void preProcess(String id, String json_detailed) {
                 File file = new File(directory, id + ".json");
                 try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), Charset.forName("UTF-8")))) {
