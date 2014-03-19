@@ -2,6 +2,7 @@ package no.nkk.dogpopulation.pedigree;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import no.nkk.dogpopulation.concurrent.ExecutorManager;
 import no.nkk.dogpopulation.graph.GraphQueryService;
 import no.nkk.dogpopulation.graph.bulkwrite.BulkWriteService;
 import no.nkk.dogpopulation.graph.dataerror.breed.IncorrectBreedRecord;
@@ -10,12 +11,14 @@ import no.nkk.dogpopulation.graph.dataerror.gender.IncorrectGenderRecord;
 import no.nkk.dogpopulation.graph.hdxray.HDXrayStatistics;
 import no.nkk.dogpopulation.graph.inbreeding.InbreedingOfGroup;
 import no.nkk.dogpopulation.graph.litter.LitterStatistics;
+import no.nkk.dogpopulation.graph.pedigree.TopLevelDog;
 import no.nkk.dogpopulation.graph.pedigreecompleteness.PedigreeCompleteness;
 import no.nkk.dogpopulation.importer.PedigreeImporter;
 import no.nkk.dogpopulation.importer.PedigreeImporterFactory;
 import no.nkk.dogpopulation.importer.dogsearch.BreedImportStatus;
-import no.nkk.dogpopulation.importer.dogsearch.DogSearchBreedImporter;
+import no.nkk.dogpopulation.importer.dogsearch.BreedImporterTask;
 import no.nkk.dogpopulation.importer.dogsearch.DogSearchClient;
+import no.nkk.dogpopulation.importer.dogsearch.UpdatesImporterTask;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +28,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
 
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
@@ -43,18 +45,119 @@ public class GraphResource {
 
     private final Map<String, BreedImportStatus> breedImportStatus = new LinkedHashMap<>(); // keep references forever
 
-    private final ExecutorService executorService;
+    private final ExecutorManager executorManager;
     private final PedigreeImporterFactory pedigreeImporterFactory;
     private final DogSearchClient dogSearchClient;
 
-    public GraphResource(GraphDatabaseService graphDb, GraphQueryService graphQueryService, ExecutorService executorService, PedigreeImporterFactory pedigreeImporterFactory, DogSearchClient dogSearchClient) {
+    private final PedigreeImporter pedigreeImporter;
+
+    public GraphResource(GraphDatabaseService graphDb, GraphQueryService graphQueryService, ExecutorManager executorManager, PedigreeImporterFactory pedigreeImporterFactory, DogSearchClient dogSearchClient, PedigreeImporter pedigreeImporter) {
         objectMapper = new ObjectMapper();
         prettyPrintingObjectWriter = objectMapper.writerWithDefaultPrettyPrinter();
         this.graphDb = graphDb;
         this.graphQueryService = graphQueryService;
-        this.executorService = executorService;
+        this.executorManager = executorManager;
         this.pedigreeImporterFactory = pedigreeImporterFactory;
         this.dogSearchClient = dogSearchClient;
+        this.pedigreeImporter = pedigreeImporter;
+    }
+
+    @GET
+    @Path("/import/dog/{id}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response reimportDog(@PathParam("id") String id) {
+        LOGGER.trace("reimportDog for dog with id " + id);
+
+        pedigreeImporter.importDogPedigree(id);
+
+        TopLevelDog dog = null; //pedigreeService.getPedigree(id);
+
+        if (dog == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+
+        try {
+            String json = prettyPrintingObjectWriter.writeValueAsString(dog);
+            return Response.ok(json).build();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @GET
+    @Path("/import/latest/week")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response updateLastWeek() {
+        LOGGER.trace("updateLastWeek");
+
+        Set<String> uuids = dogSearchClient.listIdsForLastWeek();
+
+        UpdatesImporterTask updatesImporterTask = new UpdatesImporterTask(executorManager, pedigreeImporter, dogSearchClient, uuids);
+        int n = updatesImporterTask.call();
+
+        try {
+            String json = prettyPrintingObjectWriter.writeValueAsString(n);
+            return Response.ok(json).build();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @GET
+    @Path("/import/latest/day")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response updateLastDay() {
+        LOGGER.trace("updateLastDay");
+
+        Set<String> uuids = dogSearchClient.listIdsForLastDay();
+
+        UpdatesImporterTask updatesImporterTask = new UpdatesImporterTask(executorManager, pedigreeImporter, dogSearchClient, uuids);
+        int n = updatesImporterTask.call();
+
+        try {
+            String json = prettyPrintingObjectWriter.writeValueAsString(n);
+            return Response.ok(json).build();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @GET
+    @Path("/import/latest/hour")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response updateLastHour() {
+        LOGGER.trace("updateLastHour");
+
+        Set<String> uuids = dogSearchClient.listIdsForLastHour();
+
+        UpdatesImporterTask updatesImporterTask = new UpdatesImporterTask(executorManager, pedigreeImporter, dogSearchClient, uuids);
+        int n = updatesImporterTask.call();
+
+        try {
+            String json = prettyPrintingObjectWriter.writeValueAsString(n);
+            return Response.ok(json).build();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @GET
+    @Path("/import/latest/minute")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response updateLastMinute() {
+        LOGGER.trace("updateLastMinute");
+
+        Set<String> uuids = dogSearchClient.listIdsForLastMinute();
+
+        UpdatesImporterTask updatesImporterTask = new UpdatesImporterTask(executorManager, pedigreeImporter, dogSearchClient, uuids);
+        int n = updatesImporterTask.call();
+
+        try {
+            String json = prettyPrintingObjectWriter.writeValueAsString(n);
+            return Response.ok(json).build();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @GET
@@ -97,10 +200,10 @@ public class GraphResource {
         }
 
         if (shouldImport) {
-            BulkWriteService bulkWriteService = new BulkWriteService(graphDb);
+            BulkWriteService bulkWriteService = new BulkWriteService(executorManager.getExecutor(ExecutorManager.BULK_WRITER_MAP_KEY), graphDb).start();
             PedigreeImporter pedigreeImporter = pedigreeImporterFactory.createInstance(bulkWriteService);
-            DogSearchBreedImporter dogSearchBreedImporter = new DogSearchBreedImporter(executorService, pedigreeImporter, dogSearchClient);
-            dogSearchBreedImporter.importBreed(breed, progress);
+            BreedImporterTask breedImporterTask = new BreedImporterTask(executorManager, pedigreeImporter, dogSearchClient, breed, progress);
+            executorManager.getExecutor(ExecutorManager.BREED_IMPORTER_MAP_KEY).submit(breedImporterTask);
         }
 
         try {

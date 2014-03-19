@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
-@JsonPropertyOrder({"numberOfActiveImports", "activeList", "dogsPerSecond", "breedList"})
+@JsonPropertyOrder({"numberOfActiveImports", "activeList", "dogsPerSecond", "dogsearchLookupsPerSecond", "graphLookupsPerSecond", "graphBuildOperationsPerSecond", "breedList"})
 public class BreedImportStatusAggregate {
 
     private final List<BreedImportStatus> breedList;
@@ -34,6 +34,36 @@ public class BreedImportStatusAggregate {
         for (BreedImportStatus progress : breedList) {
             if (progress.isActive()) {
                 combinedThroughput += progress.computeDogsPerSecond();
+            }
+        }
+        return new DecimalFormat("0.0").format(combinedThroughput);
+    }
+
+    public String getDogsearchLookupsPerSecond() {
+        double combinedThroughput = 0;
+        for (BreedImportStatus progress : breedList) {
+            if (progress.isActive()) {
+                combinedThroughput += progress.computeDogsearchLookupsPerSecond();
+            }
+        }
+        return new DecimalFormat("0.0").format(combinedThroughput);
+    }
+
+    public String getGraphLookupsPerSecond() {
+        double combinedThroughput = 0;
+        for (BreedImportStatus progress : breedList) {
+            if (progress.isActive()) {
+                combinedThroughput += progress.computeGraphLookupsPerSecond();
+            }
+        }
+        return new DecimalFormat("0.0").format(combinedThroughput);
+    }
+
+    public String getGraphBuildOperationsPerSecond() {
+        double combinedThroughput = 0;
+        for (BreedImportStatus progress : breedList) {
+            if (progress.isActive()) {
+                combinedThroughput += progress.computeGraphBuildOperationsPerSecond();
             }
         }
         return new DecimalFormat("0.0").format(combinedThroughput);
