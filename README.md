@@ -22,6 +22,7 @@ All results are returned in JSON format with the header: "Content-Type: applicat
 | Resource        | Action | Result           | Attributes  |
 |:------------- |:------------- |:----- |:------ |
 | **Import of specified breed to graph**<br/>http://dogpopulation.nkk.no/dogpopulation/graph/breed/import/Pointer| get |  Start an import, reload too see nr of tasks and status. | **breed**: Case sensitive breed name |
+| **(Re)import a specific dog (with pedigree) to graph**<br/>http://dogpopulation.nkk.no/dogpopulation/graph/import/dog/ff433553-b14a-4f9d-9408-c10addbefac4 | get |  Start an import, reload too see nr of tasks and status. | **breed**: Case sensitive breed name |
 | **Status of all imports**<br/>http://dogpopulation.nkk.no/dogpopulation/graph/breed/import| get | See status of all ongoing and finished imports | None |
 | **Status of thread-pools**<br/>http://dogpopulation.nkk.no/dogpopulation/concurrent/executor/status| get | See status of all thread-pools | None |
 | **Import updates from SOLR (last week)**<br/>http://dogpopulation.nkk.no/dogpopulation/graph/import/latest/week| get | Import updates from last week, shows number of updates | None |

@@ -70,7 +70,7 @@ public class GraphResource {
 
         pedigreeImporter.importDogPedigree(id);
 
-        TopLevelDog dog = null; //pedigreeService.getPedigree(id);
+        TopLevelDog dog = graphQueryService.getPedigree(id);
 
         if (dog == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
