@@ -10,14 +10,18 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
-public class BulkWriteService {
+public class BulkWriteService implements Runnable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BulkWriteService.class);
     private static final AtomicLong bulkWriterServiceSequence = new AtomicLong(1);
@@ -26,14 +30,19 @@ public class BulkWriteService {
 
     private final GraphDatabaseService graphDb;
 
-    // guards nextBulk and requestQueue
-    private final Object lock = new Object();
+    // guards nextBulk and requestQueue and pendingCount
+    private final Lock lock = new ReentrantLock(true);
+    private final Condition fullQueue;
+    private final Condition emptyQueue;
 
     // access is guarded by lock
     private final Queue<WriteTask<?>> requestQueue = new ArrayDeque<>();
 
     // access is guarded by lock
     private CountDownLatch nextBulk = new CountDownLatch(1);
+
+    // access is guarded by lock
+    private int pendingCount;
 
     // access to this map is guarded by locking the map instance itself
     private final Map<String, BuilderProgress> inProgress = new LinkedHashMap<>();
@@ -45,49 +54,82 @@ public class BulkWriteService {
 
     private final Random rnd;
 
-    public BulkWriteService(GraphDatabaseService graphDb) {
+    private final long mySequence;
+
+    private final ExecutorService executorService;
+
+    private final AtomicLong bulkCount = new AtomicLong();
+    private final AtomicLong builderCount = new AtomicLong();
+
+    private final long start;
+
+    public BulkWriteService(ExecutorService executorService, GraphDatabaseService graphDb) {
+        this.executorService = executorService;
         this.graphDb = graphDb;
-        Thread thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (!done.get()) {
-                    final int MAX_RETRIES = 10;
-                    for (int retry=0; !done.get() && retry<MAX_RETRIES; retry++) {
+        fullQueue = lock.newCondition();
+        emptyQueue = lock.newCondition();
+        mySequence = bulkWriterServiceSequence.getAndIncrement();
+        rnd = new Random(System.currentTimeMillis() + mySequence);
+        start = System.currentTimeMillis();
+    }
+
+    @Override
+    public void run() {
+        while (!done.get()) {
+            bulkCount.incrementAndGet();
+            final int MAX_RETRIES = 10;
+            for (int retry = 0; !done.get() && retry < MAX_RETRIES; retry++) {
+                try {
+                    writeNextBulk();
+                    break; // success, no need for retry
+                } catch (RuntimeException e) {
+                    if (retry + 1 == MAX_RETRIES) {
+                        // last retry failed
+                        LOGGER.error("", e);
+                        currentBulk = null; // discard poisonous bulk
+                        break;
+                    } else {
+                        int waitMs = 300 + rnd.nextInt(2701);
+                        LOGGER.debug("Exception causing a retry in {} milliseconds: {}", waitMs, e.getMessage());
                         try {
-                            writeNextBulk();
-                            break; // success, no need for retry
-                        } catch (RuntimeException e) {
-                            if (retry + 1 == MAX_RETRIES) {
-                                // last retry failed
-                                LOGGER.error("", e);
-                                currentBulk = null; // discard poisonous bulk
-                                break;
-                            } else {
-                                int waitMs = 300 + rnd.nextInt(2701);
-                                LOGGER.debug("Exception causing a retry in {} milliseconds: {}", waitMs, e.getMessage());
-                                try {
-                                    // wait between 0.3 and 3 seconds before retrying again
-                                    Thread.sleep(waitMs);
-                                } catch (InterruptedException ignore) {
-                                }
-                            }
+                            // wait between 0.3 and 3 seconds before retrying again
+                            Thread.sleep(waitMs);
+                        } catch (InterruptedException ignore) {
                         }
                     }
                 }
-                LOGGER.info("{} shutting down.", Thread.currentThread().getName());
             }
-        });
-        long mySequence = bulkWriterServiceSequence.getAndIncrement();
-        rnd = new Random(System.currentTimeMillis() + mySequence);
-        thread.setName("Bulk-Graph-Writer--" + mySequence);
-        thread.start();
+        }
+        LOGGER.info("{} shutting down.", Thread.currentThread().getName());
     }
 
+    @Override
+    public String toString() {
+        int currentPendingCount;
+        lock.lock();
+        try {
+            currentPendingCount = pendingCount;
+        } finally {
+            lock.unlock();
+        }
+        long currentBulkCount = bulkCount.get();
+        long load = builderCount.get() / (1 + ((System.currentTimeMillis() - start) / 1000));
+        return String.format("BulkWriteService-%d (bulk %d, pending %d, load %d builders/sec)", mySequence, currentBulkCount, currentPendingCount, load);
+    }
+
+    public BulkWriteService start() {
+        executorService.submit(this);
+        return this;
+    }
 
     public void stop() {
         done.set(true);
-        synchronized (lock) {
-            lock.notifyAll();
+        lock.lock();
+        try {
+            fullQueue.signalAll();
+            emptyQueue.signalAll();
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -179,52 +221,68 @@ public class BulkWriteService {
 
 
     private void throttle() {
-        synchronized (lock) {
+        lock.lock();
+        try {
             while (requestQueue.size() > MAX_PENDING_BUILDERS) {
+                pendingCount++;
                 try {
-                    lock.wait();
+                    fullQueue.await();
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
+                } finally {
+                    pendingCount--;
                 }
             }
+        } finally {
+            lock.unlock();
         }
     }
 
     private <V> WriteTask<V> addTaskToQueue(Builder<V> builder) {
         WriteTask<V> task;
-        synchronized (lock) {
+        lock.lock();
+        try {
             task = new WriteTask<>(nextBulk, builder);
             requestQueue.add(task);
-            lock.notifyAll();
+            emptyQueue.signal();
+        } finally {
+            lock.unlock();
         }
         return task;
     }
 
     private void waitForAtLeastOneTaskInQueue() {
-        synchronized (lock) {
+        lock.lock();
+        try {
             while (!done.get() && requestQueue.isEmpty()) {
                 try {
-                    lock.wait();
+                    emptyQueue.await();
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
             }
+        } finally {
+            lock.unlock();
         }
     }
 
     private BulkState getNextBulk() {
         BulkState bulkState;
-        synchronized (lock) {
+        lock.lock();
+        try {
             bulkState = new BulkState(nextBulk);
             WriteTask<?> task;
             // drain queue - it is very important to drain entire queue here, otherwise we end up with wrong count-down-latch assignments.
             // all tasks on queue belong to same count-down-latch!
             while ((task = requestQueue.poll()) != null) {
                 bulkState.addBuilder(task);
+                builderCount.incrementAndGet();
             }
 
             nextBulk = new CountDownLatch(1);
-            lock.notifyAll();
+            fullQueue.signalAll();
+        } finally {
+            lock.unlock();
         }
         return bulkState;
     }
