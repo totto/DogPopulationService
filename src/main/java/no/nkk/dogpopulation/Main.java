@@ -2,14 +2,18 @@ package no.nkk.dogpopulation;
 
 import no.nkk.dogpopulation.breedgroupimport.BreedGroupJsonImporter;
 import no.nkk.dogpopulation.concurrent.ExecutorManager;
+import no.nkk.dogpopulation.concurrent.ManageableExecutor;
 import no.nkk.dogpopulation.graph.DogGraphConstants;
 import no.nkk.dogpopulation.graph.DogGraphLabel;
 import no.nkk.dogpopulation.graph.GraphSchemaMigration;
+import no.nkk.dogpopulation.graph.bulkwrite.BulkWriteService;
 import no.nkk.dogpopulation.graph.dogbuilder.BreedSynonymNodeCache;
 import no.nkk.dogpopulation.graph.dogbuilder.Dogs;
+import no.nkk.dogpopulation.importer.PedigreeImporter;
 import no.nkk.dogpopulation.importer.dogsearch.DogSearchClient;
 import no.nkk.dogpopulation.importer.dogsearch.DogSearchPedigreeImporterFactory;
 import no.nkk.dogpopulation.importer.dogsearch.DogSearchSolrClient;
+import no.nkk.dogpopulation.importer.dogsearch.UpdatesImporterTask;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.glassfish.jersey.jetty.JettyHttpContainerFactory;
@@ -31,6 +35,8 @@ import java.net.URI;
 import java.net.URL;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -191,6 +197,23 @@ public class Main {
 
             Main main = new Main(db, new DogPopulationResourceConfigFactory(db, dogImporterFactory, executorManager, dogSearchClient));
             main.start();
+
+            final PedigreeImporter graphUpdaterImporter = dogImporterFactory.createInstance(new BulkWriteService(executorManager.getExecutor(ExecutorManager.BULK_WRITER_MAP_KEY), db).start());
+            Timer timer = new Timer("Recurring graph updater", true);
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    try {
+                        Set<String> ids = dogSearchClient.listIdsForLastMinute();
+                        UpdatesImporterTask updatesImporterTask = new UpdatesImporterTask(executorManager, graphUpdaterImporter, dogSearchClient, ids);
+                        ManageableExecutor executor = executorManager.getExecutor(ExecutorManager.UPDATES_LIST_UPDATES_MAP_KEY);
+                        executor.submit(updatesImporterTask);
+                    } catch (RuntimeException e) {
+                        LOGGER.error("", e);
+                    }
+                }
+            }, 5 * 1000, 45 * 1000);
+
             main.join();
         } finally {
             db.shutdown();
