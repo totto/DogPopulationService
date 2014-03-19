@@ -1,6 +1,7 @@
 package no.nkk.dogpopulation;
 
 import no.nkk.dogpopulation.breedgroupimport.BreedGroupJsonImporter;
+import no.nkk.dogpopulation.concurrent.ExecutorManager;
 import no.nkk.dogpopulation.graph.DogGraphConstants;
 import no.nkk.dogpopulation.graph.DogGraphLabel;
 import no.nkk.dogpopulation.graph.GraphSchemaMigration;
@@ -30,8 +31,6 @@ import java.net.URI;
 import java.net.URL;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -175,14 +174,22 @@ public class Main {
                     db.shutdown();
                 }
             }));
-            ExecutorService executorService = Executors.newFixedThreadPool(300);
-            DogSearchClient dogSearchClient = new DogSearchSolrClient("http://dogsearch.nkk.no/dogservice/dogs");
+            final int MAX_CONCURRENT_BREED_IMPORTS = 5;
+            final ExecutorManager executorManager = new ExecutorManager();
+            executorManager.addDirectHandoffExecutor(ExecutorManager.BULK_WRITER_MAP_KEY);
+            executorManager.addDirectHandoffExecutor(ExecutorManager.SOLR_MAP_KEY);
+            executorManager.addDirectHandoffExecutor(ExecutorManager.GRAPH_QUERY_MAP_KEY);
+            executorManager.addUnboundedQueueExecutor(ExecutorManager.BREED_IMPORTER_MAP_KEY, MAX_CONCURRENT_BREED_IMPORTS);
+            executorManager.addDirectHandoffExecutor(ExecutorManager.TRAVERSER_MAP_KEY);
+            executorManager.addUnboundedQueueExecutor(ExecutorManager.UPDATES_IMPORTER_MAP_KEY, 3);
+            executorManager.addUnboundedQueueExecutor(ExecutorManager.UPDATES_LIST_UPDATES_MAP_KEY, 1);
+            final DogSearchClient dogSearchClient = new DogSearchSolrClient(executorManager.getExecutor(ExecutorManager.SOLR_MAP_KEY), "http://dogsearch.nkk.no/dogservice/dogs");
 
             BreedSynonymNodeCache breedSynonymNodeCache = new BreedSynonymNodeCache(db);
             Dogs dogs = new Dogs(breedSynonymNodeCache);
-            DogSearchPedigreeImporterFactory dogImporterFactory = new DogSearchPedigreeImporterFactory(executorService, db, dogSearchClient, dogs, breedSynonymNodeCache);
+            DogSearchPedigreeImporterFactory dogImporterFactory = new DogSearchPedigreeImporterFactory(executorManager, db, dogSearchClient, dogs, breedSynonymNodeCache);
 
-            Main main = new Main(db, new DogPopulationResourceConfigFactory(db, dogImporterFactory, executorService, dogSearchClient));
+            Main main = new Main(db, new DogPopulationResourceConfigFactory(db, dogImporterFactory, executorManager, dogSearchClient));
             main.start();
             main.join();
         } finally {
