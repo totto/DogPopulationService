@@ -7,18 +7,18 @@ import org.neo4j.graphdb.Node;
  */
 public class GraphDogLookupResult {
     private final Node dogNode;
-    private final boolean atLeastOneParent;
+    private final boolean upToDate;
 
-    public GraphDogLookupResult(Node dogNode, boolean atLeastOneParent) {
+    public GraphDogLookupResult(Node dogNode, boolean upToDate) {
         this.dogNode = dogNode;
-        this.atLeastOneParent = atLeastOneParent;
+        this.upToDate = upToDate;
     }
 
     public Node getDogNode() {
         return dogNode;
     }
 
-    public boolean isAtLeastOneParent() {
-        return atLeastOneParent;
+    public boolean isUpToDate() {
+        return upToDate;
     }
 }

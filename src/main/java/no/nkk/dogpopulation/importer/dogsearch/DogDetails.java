@@ -21,6 +21,7 @@ public class DogDetails {
     private DogId[] ids;
     private DogHealth health;
     private int quality;
+    private String json;
 
     public String getId() {
         return id;
@@ -132,5 +133,13 @@ public class DogDetails {
 
     public void setQuality(int quality) {
         this.quality = quality;
+    }
+
+    public String getJson() {
+        return json;
+    }
+
+    public void setJson(String json) {
+        this.json = json;
     }
 }

@@ -22,6 +22,7 @@ import no.nkk.dogpopulation.graph.pedigree.PedigreeAlgorithm;
 import no.nkk.dogpopulation.graph.pedigree.TopLevelDog;
 import no.nkk.dogpopulation.graph.pedigreecompleteness.PedigreeCompleteness;
 import no.nkk.dogpopulation.graph.pedigreecompleteness.PedigreeCompletenessAlgorithm;
+import no.nkk.dogpopulation.importer.dogsearch.DogDetails;
 import org.neo4j.cypher.javacompat.ExecutionEngine;
 import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.traversal.Evaluators;
@@ -113,17 +114,45 @@ public class GraphQueryService {
     }
 
 
-    public GraphDogLookupResult lookupDog(String id) {
+    public GraphDogLookupResult lookupDogIfUpToDate(String id, DogDetails updated) {
         try (Transaction tx = graphDb.beginTx()) {
             Node dog = getDogNode(id);
             if (dog == null) {
                 tx.success();
                 return null;
             }
+            if (!dog.hasProperty(DogGraphConstants.DOG_JSON)) {
+                // no json in graph
+                tx.success();
+                return new GraphDogLookupResult(dog, false);
+            }
+            String json = (String) dog.getProperty(DogGraphConstants.DOG_JSON);
+            if (!json.equals(updated.getJson())) {
+                // dog details on dogsearch have been updated since last import
+                tx.success();
+                return new GraphDogLookupResult(dog, false);
+            }
             Iterable<Relationship> parentRelationships = dog.getRelationships(Direction.OUTGOING, DogGraphRelationshipType.HAS_PARENT);
-            boolean atLeastOneConnectedParent = parentRelationships.iterator().hasNext();
+            boolean noConnectedParents = !parentRelationships.iterator().hasNext();
+            if (updated.getAncestry() == null && !noConnectedParents) {
+                // no parent relationships neither in graph nor in ancestry of updated details
+                tx.success();
+                return new GraphDogLookupResult(dog, true);
+            }
+            boolean shouldBeFather = updated.getAncestry().getFather() != null;
+            boolean shouldBeMother = updated.getAncestry().getMother() != null;
+            boolean upToDateFatherRelationship = !shouldBeFather;
+            boolean upToDateMotherRelationship = !shouldBeMother;
+            for (Relationship hasParent : parentRelationships) {
+                ParentRole parentRole = ParentRole.valueOf(((String) hasParent.getProperty(DogGraphConstants.HASPARENT_ROLE)).toUpperCase());
+                if (parentRole == ParentRole.FATHER) {
+                    upToDateFatherRelationship = shouldBeFather;
+                } else if (parentRole == ParentRole.MOTHER) {
+                    upToDateMotherRelationship = shouldBeMother;
+                }
+            }
             tx.success();
-            return new GraphDogLookupResult(dog, atLeastOneConnectedParent);
+            return new GraphDogLookupResult(dog, upToDateFatherRelationship && upToDateMotherRelationship);
         }
     }
 
@@ -215,7 +244,7 @@ public class GraphQueryService {
         try (Transaction tx = graphDb.beginTx()) {
             Node fatherNode = getDogNode(fatherUuid);
             if (fatherNode == null) {
-                return null; // preant-1 not found
+                return null; // parent-1 not found
             }
             Node motherNode = getDogNode(motherUuid);
             if (motherNode == null) {

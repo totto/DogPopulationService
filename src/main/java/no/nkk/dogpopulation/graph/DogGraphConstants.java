@@ -26,6 +26,7 @@ public class DogGraphConstants {
 
     // public static final String COUNTRY_COUNTRY = "country";
 
+    public static final String DOG_JSON = "json";
     public static final String DOG_UUID = "uuid";
     public static final String DOG_NAME = "name";
     public static final String DOG_GENDER = "gender";

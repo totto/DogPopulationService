@@ -4,6 +4,7 @@ import no.nkk.dogpopulation.graph.Builder;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -18,13 +19,13 @@ public class DogFuture {
     private final Future<DogFuture> fatherFuture;
     private final Future<DogFuture> motherFuture;
 
-    private final Future<Future<Relationship>>[] puppyFutures;
+    private final List<Future<Future<Relationship>>> puppyFutures;
 
     DogFuture(Builder<Node> dogBuilder, Future<Node> dog) {
         this(dogBuilder, dog, null, null, null);
     }
 
-    DogFuture(Builder<Node> dogBuilder, Future<Node> dog, Future<DogFuture> fatherFuture, Future<DogFuture> motherFuture, Future<Future<Relationship>>[] puppyFutures) {
+    DogFuture(Builder<Node> dogBuilder, Future<Node> dog, Future<DogFuture> fatherFuture, Future<DogFuture> motherFuture, List<Future<Future<Relationship>>> puppyFutures) {
         this.dogBuilder = dogBuilder;
         this.dog = dog;
         this.fatherFuture = fatherFuture;
@@ -76,6 +77,9 @@ public class DogFuture {
             return;
         }
         for (Future<Future<Relationship>> puppyFuture : puppyFutures) {
+            if (puppyFuture == null) {
+                continue;
+            }
             try {
                 Future<Relationship> nodeFuture = puppyFuture.get(); // wait on external-search
                 if (nodeFuture == null) {

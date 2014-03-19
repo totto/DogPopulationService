@@ -15,6 +15,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
@@ -29,40 +32,99 @@ public class DogSearchSolrClient implements DogSearchClient {
 
     private final Random rnd = new Random();
 
-    public DogSearchSolrClient(String dogServiceUrl) {
+    private final ExecutorService executorService;
+
+    public DogSearchSolrClient(ExecutorService executorService, String dogServiceUrl) {
+        this.executorService = executorService;
         solrServer = new HttpSolrServer(dogServiceUrl);
     }
 
-    public Set<String> listIdsForBreed(String breed) {
-        int i=0;
-        long n = 0;
-        Set<String> ids = new LinkedHashSet<>();
-        do {
-            QueryResponse queryResponse = runFindDogIdsQuery(breed, 5000, i);
-            SolrDocumentList solrDocuments = queryResponse.getResults();
-            long numFound = solrDocuments.getNumFound();
-            n = solrDocuments.size();
-            for (SolrDocument solrDocument : solrDocuments) {
-                String id = (String) solrDocument.getFieldValue("id");
-                ids.add(id);
+    public Future<Set<String>> listIdsForBreed(final String breed) {
+        return executorService.submit(new Callable<Set<String>>() {
+            @Override
+            public Set<String> call() throws Exception {
+                int i=0;
+                long n = 0;
+                Set<String> ids = new LinkedHashSet<>();
+                do {
+                    QueryResponse queryResponse = runFindDogIdsQuery(breed, 5000, i);
+                    SolrDocumentList solrDocuments = queryResponse.getResults();
+                    long numFound = solrDocuments.getNumFound();
+                    n = solrDocuments.size();
+                    for (SolrDocument solrDocument : solrDocuments) {
+                        String id = (String) solrDocument.getFieldValue("id");
+                        ids.add(id);
+                    }
+                    LOGGER.trace("i={}, n={}, numFound={}", i, n, numFound);
+                    i += n;
+                } while (n > 0);
+                return ids;
             }
-            LOGGER.trace("i={}, n={}, numFound={}", i, n, numFound);
-            i += n;
-        } while (n > 0);
-        return ids;
+
+            @Override
+            public String toString() {
+                return "SOLR listing of all uuids of breed  " + breed;
+            }
+        });
     }
 
     @Override
-    public DogDetails findDog(String id) {
-        try {
-            QueryResponse queryResponse = runFindDogQuery(id);
-            SolrDocumentList results = queryResponse.getResults();
-            DogDetails chosenCandidate = getFirstValidCandidate(id, results);
-            return chosenCandidate;
-        } catch (RuntimeException e) {
-            LOGGER.warn("", e);
-            return null; // not found
+    public Future<DogDetails> findDog(final String id) {
+        return executorService.submit(new Callable<DogDetails>() {
+            @Override
+            public DogDetails call() throws Exception {
+                try {
+                    QueryResponse queryResponse = runFindDogQuery(id);
+                    SolrDocumentList results = queryResponse.getResults();
+                    DogDetails chosenCandidate = getFirstValidCandidate(id, results);
+                    return chosenCandidate;
+                } catch (RuntimeException e) {
+                    LOGGER.warn("", e);
+                    return null; // not found
+                }
+            }
+
+            @Override
+            public String toString() {
+                return "SOLR lookup of dog " + id;
+            }
+        });
+    }
+
+    @Override
+    public Set<String> listIdsForLastWeek() {
+        return runListIdsForLastTimeQuery(7*24*60*60);
+    }
+
+    @Override
+    public Set<String> listIdsForLastDay() {
+        return runListIdsForLastTimeQuery(24*60*60);
+    }
+
+    @Override
+    public Set<String> listIdsForLastHour() {
+        return runListIdsForLastTimeQuery(60*60);
+    }
+
+    @Override
+    public Set<String> listIdsForLastMinute() {
+        return runListIdsForLastTimeQuery(60);
+    }
+
+    public Set<String> runListIdsForLastTimeQuery(int second) {
+        SolrQuery solrQuery = new SolrQuery(String.format("timestamp:[NOW-%dSECOND TO NOW]", second));
+        solrQuery.setSort("timestamp", SolrQuery.ORDER.desc);
+        solrQuery.setFields("id");
+        solrQuery.setRows(1000000);
+        solrQuery.setStart(0);
+        QueryResponse queryResponse = runSolrQueryWithRetries(solrQuery);
+        SolrDocumentList results = queryResponse.getResults();
+        Set<String> result = new LinkedHashSet<String>();
+        for (SolrDocument solrDocument : results) {
+            String uuid = (String) solrDocument.get("id");
+            result.add(uuid);
         }
+        return result;
     }
 
     private QueryResponse runFindDogQuery(String id) {
@@ -136,12 +198,14 @@ public class DogSearchSolrClient implements DogSearchClient {
             try {
                 preProcess(id, json_detailed);
                 DogDetails dogDetails = objectMapper.readValue(json_detailed, DogDetails.class);
+                dogDetails.setJson(json_detailed);
                 candidates.add(dogDetails); // found candidate
             } catch (IOException e) {
                 if (json_detailed.startsWith("{{")) {
                     String intended_json_detailed = json_detailed.substring(1, json_detailed.length() - 1);
                     try {
                         DogDetails dogDetails = objectMapper.readValue(intended_json_detailed, DogDetails.class);
+                        dogDetails.setJson(intended_json_detailed);
                         candidates.add(dogDetails); // found candidate
                     } catch (IOException e1) {
                         DOGSEARCH.warn("BAD JSON: {}", json_detailed);

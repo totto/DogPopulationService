@@ -14,6 +14,11 @@ public class DogLookupResult {
         this.graphResult = graphResult;
     }
 
+    DogLookupResult(DogDetails dogsearchResult) {
+        this.dogsearchResult = dogsearchResult;
+        this.graphResult = null;
+    }
+
     public DogDetails getDogsearchResult() {
         return dogsearchResult;
     }

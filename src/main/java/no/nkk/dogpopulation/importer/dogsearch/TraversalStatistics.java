@@ -23,9 +23,22 @@ public class TraversalStatistics {
     final AtomicInteger mothersAdded = new AtomicInteger();
     final AtomicInteger maxDepth = new AtomicInteger();
     final AtomicInteger minDepth = new AtomicInteger(Integer.MAX_VALUE);
+    final AtomicInteger graphBuildCount = new AtomicInteger();
 
     TraversalStatistics(String id) {
         this.id = id;
+    }
+
+    public void recordMinimumDepth(int depth) {
+        if ((depth - 1) < minDepth.get()) {
+            minDepth.set(depth - 1); // TODO perform this check-then-add operation in atomically
+        }
+    }
+
+    public void recordMaximumDepth(int depth) {
+        if (depth > maxDepth.get()) {
+            maxDepth.set(depth); // TODO perform this check-then-add operation in atomically
+        }
     }
 
     @Override

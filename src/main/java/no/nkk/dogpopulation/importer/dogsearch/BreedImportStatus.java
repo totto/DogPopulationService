@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
 @JsonPropertyOrder({"breed", "active", "progress", "tasksCompleted", "totalTasks", "dogsAddedToGraph", "elapsedSeconds", "dogsPerSecond",
-        "dogsAdded", "dogsUpdated", "litterCount", "puppiesAdded", "dogsearchHit", "dogsearchMiss", "graphHit", "graphMiss", "fathersAdded", "mothersAdded"})
+        "dogsAdded", "dogsUpdated", "litterCount", "puppiesAdded", "dogsearchHit", "dogsearchMiss", "graphHit", "graphMiss", "fathersAdded", "mothersAdded", "graphBuildCount"})
 public class BreedImportStatus {
 
     private final AtomicInteger totalTasks = new AtomicInteger();
@@ -68,12 +68,37 @@ public class BreedImportStatus {
         return (int) (elapsedTimeMs.get() / 1000);
     }
 
+
+    public double computeGraphLookupsPerSecond() {
+        int elapsedSeconds = getElapsedSeconds();
+        if (elapsedSeconds <= 0) {
+            return 0;
+        }
+        return (double) (ts.graphHit.get() + ts.graphMiss.get() + ts.graphPuppyHit.get() + ts.graphPuppyMiss.get()) / elapsedSeconds;
+    }
+
+    public double computeDogsearchLookupsPerSecond() {
+        int elapsedSeconds = getElapsedSeconds();
+        if (elapsedSeconds <= 0) {
+            return 0;
+        }
+        return (double) (ts.dogsearchHit.get() + ts.dogsearchMiss.get() + ts.dogsearchPuppyHit.get() + ts.dogsearchPuppyMiss.get()) / elapsedSeconds;
+    }
+
+    public double computeGraphBuildOperationsPerSecond() {
+        int elapsedSeconds = getElapsedSeconds();
+        if (elapsedSeconds <= 0) {
+            return 0;
+        }
+        return (double) ts.graphBuildCount.get() / elapsedSeconds;
+    }
+
     public double computeDogsPerSecond() {
         int elapsedSeconds = getElapsedSeconds();
         if (elapsedSeconds <= 0) {
             return 0;
         }
-        return (double) (ts.dogsAdded.get() + ts.puppiesAdded.get()) / elapsedSeconds;
+        return (double) (ts.dogsAdded.get() + ts.dogsUpdated.get() + ts.puppiesAdded.get()) / elapsedSeconds;
     }
 
     public String getDogsPerSecond() {
@@ -85,6 +110,11 @@ public class BreedImportStatus {
             return "0.00";
         }
         return new DecimalFormat("0.00").format(100.0 * tasksCompleted.get() / totalTasks.get());
+    }
+
+    @Override
+    public String toString() {
+        return "(" + breed + " " + getProgress() + "%)";
     }
 
     @JsonIgnore
@@ -150,5 +180,9 @@ public class BreedImportStatus {
 
     public int getGraphPuppyMiss() {
         return ts.graphPuppyMiss.get();
+    }
+
+    public int getGraphBuildCount() {
+        return ts.graphBuildCount.get();
     }
 }
