@@ -13,6 +13,7 @@ public class ChildRecord {
     private String otherParentUuid;
     private String otherParentName;
     private String otherParentRole;
+    private String otherParentGender;
 
     public String getUuid() {
         return uuid;
@@ -60,5 +61,13 @@ public class ChildRecord {
 
     public String getParentRole() {
         return parentRole;
+    }
+
+    public String getOtherParentGender() {
+        return otherParentGender;
+    }
+
+    public void setOtherParentGender(String otherParentGender) {
+        this.otherParentGender = otherParentGender;
     }
 }

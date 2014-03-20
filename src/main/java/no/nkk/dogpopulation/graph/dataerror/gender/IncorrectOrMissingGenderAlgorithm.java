@@ -144,6 +144,9 @@ public class IncorrectOrMissingGenderAlgorithm {
                 Node otherParentNode = otherHasParent.getEndNode();
                 childRecord.setOtherParentUuid((String) otherParentNode.getProperty(DogGraphConstants.DOG_UUID));
                 childRecord.setOtherParentName((String) otherParentNode.getProperty(DogGraphConstants.DOG_NAME));
+                if (otherParentNode.hasProperty(DogGraphConstants.DOG_GENDER)) {
+                    childRecord.setOtherParentGender((String) otherParentNode.getProperty(DogGraphConstants.DOG_GENDER));
+                }
                 childRecord.setOtherParentRole((String) otherHasParent.getProperty(DogGraphConstants.HASPARENT_ROLE));
                 break; // only consider first other hasParent relationship
             }
