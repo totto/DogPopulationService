@@ -21,6 +21,7 @@ import org.glassfish.jersey.server.ResourceConfig;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.graphdb.factory.GraphDatabaseBuilder;
 import org.neo4j.graphdb.factory.GraphDatabaseFactory;
 import org.neo4j.graphdb.schema.ConstraintDefinition;
 import org.neo4j.graphdb.schema.IndexDefinition;
@@ -30,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import javax.ws.rs.core.UriBuilder;
+import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
@@ -114,10 +116,18 @@ public class Main {
         URL neo4jPropertiesUrl = ClassLoader.getSystemClassLoader().getResource("neo4j.properties");
         long startTime = System.currentTimeMillis();
         LOGGER.debug("Neo4j Initializing...");
-        GraphDatabaseService graphDatabaseService = new GraphDatabaseFactory()
-                .newEmbeddedDatabaseBuilder(dogDbFolder)
-                .loadPropertiesFromURL(neo4jPropertiesUrl)
-                .newGraphDatabase();
+        GraphDatabaseBuilder graphDatabaseBuilder = new GraphDatabaseFactory().newEmbeddedDatabaseBuilder(dogDbFolder);
+        graphDatabaseBuilder.loadPropertiesFromURL(neo4jPropertiesUrl); // load default configuration
+        File neo4jConfigOverrideFile = new File("neo4j.properties");
+        if (neo4jConfigOverrideFile.isFile()) {
+            // load neo4j override settings
+            try {
+                graphDatabaseBuilder.loadPropertiesFromURL(neo4jConfigOverrideFile.toURI().toURL());
+            } catch (MalformedURLException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        GraphDatabaseService graphDatabaseService = graphDatabaseBuilder.newGraphDatabase();
         long graphDbDelay = System.currentTimeMillis() - startTime;
         LOGGER.debug("Neo4j core engine up in {} seconds, initializing indexes...", graphDbDelay / 1000);
         try (Transaction tx = graphDatabaseService.beginTx()) {
