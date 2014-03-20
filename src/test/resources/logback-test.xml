@@ -1,5 +1,5 @@
 <configuration scan="true" scanPeriod="60 seconds">
-    <property name="LOG_DIR" value="logs" />
+    <property name="LOG_DIR" value="target/unittestlogs" />
     <property name="APP_NAME" value="dogpopulation" />
 
     <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
@@ -11,7 +11,7 @@
     <appender name="logfile" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_DIR}/${APP_NAME}.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_DIR}/${APP_NAME}-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>${LOG_DIR}/${APP_NAME}-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <maxHistory>10</maxHistory>
             <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
                 <maxFileSize>20MB</maxFileSize>
@@ -25,7 +25,7 @@
     <appender name="dogsearch" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_DIR}/dogsearch.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_DIR}/dogsearch-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>${LOG_DIR}/dogsearch-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
             <maxHistory>10</maxHistory>
             <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
                 <maxFileSize>20MB</maxFileSize>
@@ -42,7 +42,7 @@
 
     <logger name="org.glassfish.jersey" level="INFO"/>
 
-    <logger name="no.nkk.dogpopulation" level="TRACE"/>
+    <logger name="no.nkk.dogpopulation" level="DEBUG"/>
 
     <logger name="dogsearch" additivity="false" level="INFO">
         <appender-ref ref="dogsearch" />
