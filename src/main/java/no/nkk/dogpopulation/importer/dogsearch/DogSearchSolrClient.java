@@ -1,6 +1,10 @@
 package no.nkk.dogpopulation.importer.dogsearch;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.google.inject.name.Named;
+import no.nkk.dogpopulation.concurrent.ExecutorManager;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -22,6 +26,7 @@ import java.util.concurrent.Future;
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
+@Singleton
 public class DogSearchSolrClient implements DogSearchClient {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DogSearchSolrClient.class);
@@ -34,7 +39,8 @@ public class DogSearchSolrClient implements DogSearchClient {
 
     private final ExecutorService executorService;
 
-    public DogSearchSolrClient(ExecutorService executorService, String dogServiceUrl) {
+    @Inject
+    public DogSearchSolrClient(@Named(ExecutorManager.SOLR_MAP_KEY) ExecutorService executorService, @Named("dogServiceUrl") String dogServiceUrl) {
         this.executorService = executorService;
         solrServer = new HttpSolrServer(dogServiceUrl);
     }

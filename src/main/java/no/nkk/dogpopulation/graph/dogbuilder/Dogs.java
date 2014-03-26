@@ -1,12 +1,17 @@
 package no.nkk.dogpopulation.graph.dogbuilder;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
+@Singleton
 public class Dogs {
 
     private final BreedSynonymNodeCache breedSynonymNodeCache;
 
+    @Inject
     public Dogs(BreedSynonymNodeCache breedSynonymNodeCache) {
         this.breedSynonymNodeCache = breedSynonymNodeCache;
     }

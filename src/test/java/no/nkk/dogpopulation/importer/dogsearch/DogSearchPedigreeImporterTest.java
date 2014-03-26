@@ -1,14 +1,17 @@
 package no.nkk.dogpopulation.importer.dogsearch;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import no.nkk.dogpopulation.Main;
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
+import no.nkk.dogpopulation.UnittestModule;
 import no.nkk.dogpopulation.graph.DogGraphConstants;
 import no.nkk.dogpopulation.graph.GraphQueryService;
+import no.nkk.dogpopulation.graph.Neo4jModule;
 import no.nkk.dogpopulation.graph.bulkwrite.BulkWriteService;
 import no.nkk.dogpopulation.graph.dogbuilder.BreedSynonymNodeCache;
 import no.nkk.dogpopulation.graph.dogbuilder.Dogs;
 import no.nkk.dogpopulation.graph.pedigree.TopLevelDog;
-import org.apache.commons.io.FileUtils;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -25,15 +28,17 @@ import java.util.concurrent.*;
  */
 public class DogSearchPedigreeImporterTest {
 
+    @Inject
     GraphDatabaseService graphDb;
     ExecutorService executorService;
 
     @BeforeMethod
     public void initGraph() {
-        String dbPath = "target/unittestdogdb";
-        File dbFolder = new File(dbPath);
-        FileUtils.deleteQuietly(dbFolder);
-        graphDb = Main.createGraphDb(dbPath);
+        final Injector injector = Guice.createInjector(
+                new UnittestModule(),
+                new Neo4jModule()
+        );
+        injector.injectMembers(this);
         executorService = Executors.newFixedThreadPool(5);
     }
 

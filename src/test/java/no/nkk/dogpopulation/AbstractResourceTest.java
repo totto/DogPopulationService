@@ -1,18 +1,16 @@
 package no.nkk.dogpopulation;
 
-import com.jayway.restassured.RestAssured;
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
+import no.nkk.dogpopulation.concurrent.ExecutorManager;
+import no.nkk.dogpopulation.concurrent.ThreadingModule;
 import no.nkk.dogpopulation.graph.DogGraphConstants;
 import no.nkk.dogpopulation.graph.DogGraphLabel;
 import no.nkk.dogpopulation.graph.DogGraphRelationshipType;
-import no.nkk.dogpopulation.graph.GraphQueryService;
+import no.nkk.dogpopulation.graph.Neo4jModule;
 import no.nkk.dogpopulation.graph.dogbuilder.BreedSynonymNodeCache;
 import no.nkk.dogpopulation.graph.dogbuilder.Dogs;
-import no.nkk.dogpopulation.hdindex.HdIndexResource;
-import no.nkk.dogpopulation.importer.dogsearch.DogTestImporter;
-import no.nkk.dogpopulation.pedigree.PedigreeResource;
-import no.nkk.dogpopulation.pedigree.PedigreeService;
-import org.apache.commons.io.FileUtils;
-import org.glassfish.jersey.server.ResourceConfig;
 import org.joda.time.LocalDate;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
@@ -21,48 +19,41 @@ import org.neo4j.graphdb.Transaction;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 
-import java.io.File;
-
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
 public class AbstractResourceTest {
+
+    @Inject
     protected Main main;
+    @Inject
     protected GraphDatabaseService graphDb;
+    @Inject
     protected BreedSynonymNodeCache breedSynonymNodeCache;
+    @Inject
     protected Dogs dogs;
+    @Inject
+    protected ExecutorManager executorManager;
 
     @BeforeClass
     public void startServer() {
-        int httpPort = 10000 + Main.DEFAULT_HTTP_PORT;
-        String dbPath = "target/unittestdogdb";
-        final String hdIndexFolderPath = "target/hdindex-test";
-        File dbFolder = new File(dbPath);
-        File hdIndexFolder = new File(dbPath);
-        FileUtils.deleteQuietly(dbFolder);
-        FileUtils.deleteQuietly(hdIndexFolder);
-        graphDb = Main.createGraphDb(dbPath);
-        ResourceConfigFactory resourceConfigFactory = new ResourceConfigFactory() {
-            @Override
-            public ResourceConfig createResourceConfig() {
-                ResourceConfig resourceConfig = new ResourceConfig();
-                GraphQueryService graphQueryService = new GraphQueryService(graphDb);
-                resourceConfig.registerInstances(new PedigreeResource(new PedigreeService(graphDb, graphQueryService, new DogTestImporter())));
-                resourceConfig.registerInstances(new HdIndexResource(graphQueryService, hdIndexFolderPath));
-                return resourceConfig;
-            }
-        };
-        breedSynonymNodeCache = new BreedSynonymNodeCache(graphDb);
-        dogs = new Dogs(breedSynonymNodeCache);
-        main = new Main(graphDb, resourceConfigFactory, httpPort);
+        final Injector injector = Guice.createInjector(
+                new UnittestModule(),
+                new ThreadingModule(),
+                new Neo4jModule(),
+                new WebModule()
+        );
+        injector.injectMembers(this);
         main.start();
-        RestAssured.port = httpPort;
     }
 
     @AfterClass
     public void stopServer() throws Exception {
         if (main != null) {
             main.stop();
+        }
+        if (executorManager != null) {
+            executorManager.shutdown();
         }
     }
 

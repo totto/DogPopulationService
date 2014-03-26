@@ -1,5 +1,9 @@
 package no.nkk.dogpopulation.graph.bulkwrite;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.google.inject.name.Named;
+import no.nkk.dogpopulation.concurrent.ExecutorManager;
 import no.nkk.dogpopulation.graph.Builder;
 import no.nkk.dogpopulation.graph.PostStepBuilder;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -21,6 +25,7 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
+@Singleton
 public class BulkWriteService implements Runnable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BulkWriteService.class);
@@ -63,7 +68,9 @@ public class BulkWriteService implements Runnable {
 
     private final long start;
 
-    public BulkWriteService(ExecutorService executorService, GraphDatabaseService graphDb) {
+
+    @Inject
+    public BulkWriteService(@Named(ExecutorManager.BULK_WRITER_MAP_KEY) ExecutorService executorService, GraphDatabaseService graphDb) {
         this.executorService = executorService;
         this.graphDb = graphDb;
         fullQueue = lock.newCondition();
@@ -72,6 +79,7 @@ public class BulkWriteService implements Runnable {
         rnd = new Random(System.currentTimeMillis() + mySequence);
         start = System.currentTimeMillis();
     }
+
 
     @Override
     public void run() {

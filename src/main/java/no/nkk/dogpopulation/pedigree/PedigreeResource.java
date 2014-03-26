@@ -2,6 +2,8 @@ package no.nkk.dogpopulation.pedigree;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import no.nkk.dogpopulation.graph.pedigree.TopLevelDog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +17,7 @@ import java.io.IOException;
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
 @Path("/dogpopulation/pedigree")
+@Singleton
 public class PedigreeResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PedigreeResource.class);
@@ -24,6 +27,7 @@ public class PedigreeResource {
 
     private final PedigreeService pedigreeService;
 
+    @Inject
     public PedigreeResource(PedigreeService pedigreeService) {
         objectMapper = new ObjectMapper();
         prettyPrintingObjectWriter = objectMapper.writerWithDefaultPrettyPrinter();

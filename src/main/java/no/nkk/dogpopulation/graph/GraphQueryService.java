@@ -1,5 +1,7 @@
 package no.nkk.dogpopulation.graph;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import no.nkk.dogpopulation.graph.dataerror.breed.IncorrectBreedAlgorithm;
 import no.nkk.dogpopulation.graph.dataerror.breed.IncorrectBreedRecord;
 import no.nkk.dogpopulation.graph.dataerror.circularparentchain.CircularAncestryBreedGroupAlgorithm;
@@ -39,6 +41,7 @@ import java.util.*;
  *
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
+@Singleton
 public class GraphQueryService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GraphQueryService.class);
@@ -47,7 +50,7 @@ public class GraphQueryService {
     private final GraphDatabaseService graphDb;
     private final ExecutionEngine engine;
 
-
+    @Inject
     public GraphQueryService(GraphDatabaseService graphDb) {
         this.graphDb = graphDb;
         engine = new ExecutionEngine(graphDb);

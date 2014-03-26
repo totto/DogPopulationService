@@ -2,6 +2,8 @@ package no.nkk.dogpopulation.concurrent;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -16,12 +18,14 @@ import java.util.Map;
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
 @Path("/dogpopulation/concurrent")
+@Singleton
 public class ThreadingResource {
 
     private final ExecutorManager executorManager;
     private final ObjectMapper objectMapper;
     private final ObjectWriter prettyPrintingObjectWriter;
 
+    @Inject
     public ThreadingResource(ExecutorManager executorManager) {
         this.executorManager = executorManager;
         objectMapper = new ObjectMapper();

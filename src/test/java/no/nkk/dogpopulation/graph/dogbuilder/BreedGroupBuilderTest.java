@@ -1,7 +1,6 @@
 package no.nkk.dogpopulation.graph.dogbuilder;
 
 import no.nkk.dogpopulation.AbstractGraphTest;
-import org.neo4j.cypher.javacompat.ExecutionEngine;
 import org.neo4j.graphdb.Node;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -26,24 +25,23 @@ public class BreedGroupBuilderTest extends AbstractGraphTest {
         addDog("uuid-6", breedSynonym2);
 
         // then
-        ExecutionEngine engine = new ExecutionEngine(graphDb);
-        for (Map<String, Object> result : engine.execute("MATCH (n:BREED) RETURN count(n)")) {
+        for (Map<String, Object> result : executionEngine.execute("MATCH (n:BREED) RETURN count(n)")) {
             long n = (Long) result.get("count(n)");
             Assert.assertEquals(n, 0);
         }
-        for (Map<String, Object> result : engine.execute("MATCH (n:BREED_SYNONYM) RETURN count(n)")) {
+        for (Map<String, Object> result : executionEngine.execute("MATCH (n:BREED_SYNONYM) RETURN count(n)")) {
             long n = (Long) result.get("count(n)");
             Assert.assertEquals(n, 2);
         }
-        for (Map<String, Object> result : engine.execute("MATCH (n:BREED_GROUP) RETURN count(n)")) {
+        for (Map<String, Object> result : executionEngine.execute("MATCH (n:BREED_GROUP) RETURN count(n)")) {
             long n = (Long) result.get("count(n)");
             Assert.assertEquals(n, 0);
         }
-        for (Map<String, Object> result : engine.execute("MATCH (n:CATEGORY) RETURN count(n)")) {
+        for (Map<String, Object> result : executionEngine.execute("MATCH (n:CATEGORY) RETURN count(n)")) {
             long n = (Long) result.get("count(n)");
             Assert.assertEquals(n, 0);
         }
-        for (Map<String, Object> result : engine.execute("MATCH (n:DOG) RETURN count(n)")) {
+        for (Map<String, Object> result : executionEngine.execute("MATCH (n:DOG) RETURN count(n)")) {
             long n = (Long) result.get("count(n)");
             Assert.assertEquals(n, 6);
         }

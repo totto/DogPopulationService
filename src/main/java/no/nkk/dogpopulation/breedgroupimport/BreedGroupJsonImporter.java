@@ -1,6 +1,8 @@
 package no.nkk.dogpopulation.breedgroupimport;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import no.nkk.dogpopulation.graph.DogGraphConstants;
 import no.nkk.dogpopulation.graph.DogGraphLabel;
 import no.nkk.dogpopulation.graph.DogGraphRelationshipType;
@@ -21,7 +23,8 @@ public class BreedGroupJsonImporter {
     private final URL url;
     private final GraphDatabaseService graphDb;
 
-    public BreedGroupJsonImporter(URL url, GraphDatabaseService graphDb) {
+    @Inject
+    public BreedGroupJsonImporter(@Named("breedJsonUrl") URL url, GraphDatabaseService graphDb) {
         this.url = url;
         this.graphDb = graphDb;
     }

@@ -1,5 +1,9 @@
 package no.nkk.dogpopulation.importer.dogsearch;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.google.inject.name.Named;
+import no.nkk.dogpopulation.concurrent.ExecutorManager;
 import no.nkk.dogpopulation.graph.bulkwrite.BulkWriteService;
 import no.nkk.dogpopulation.graph.dogbuilder.BreedSynonymNodeCache;
 import no.nkk.dogpopulation.graph.dogbuilder.Dogs;
@@ -16,6 +20,7 @@ import java.util.concurrent.Future;
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
+@Singleton
 public class DogSearchPedigreeImporter implements PedigreeImporter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DogSearchPedigreeImporter.class);
@@ -31,7 +36,12 @@ public class DogSearchPedigreeImporter implements PedigreeImporter {
 
     private final BulkWriteService bulkWriteService;
 
-    public DogSearchPedigreeImporter(ExecutorService graphQueryExectuor, ExecutorService traversingExectuor, GraphDatabaseService graphDb, DogSearchClient dogSearchClient, Dogs dogs, BreedSynonymNodeCache breedSynonymNodeCache, BulkWriteService bulkWriteService) {
+    @Inject
+    public DogSearchPedigreeImporter(
+            @Named(ExecutorManager.GRAPH_QUERY_MAP_KEY) ExecutorService graphQueryExectuor,
+            @Named(ExecutorManager.TRAVERSER_MAP_KEY) ExecutorService traversingExectuor,
+            GraphDatabaseService graphDb, DogSearchClient dogSearchClient, Dogs dogs,
+            BreedSynonymNodeCache breedSynonymNodeCache, BulkWriteService bulkWriteService) {
         this.graphQueryExectuor = graphQueryExectuor;
         this.traversingExectuor = traversingExectuor;
         this.graphDb = graphDb;

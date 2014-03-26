@@ -2,6 +2,7 @@ package no.nkk.dogpopulation.importer.dogsearch;
 
 import no.nkk.dogpopulation.importer.PedigreeImporter;
 
+import javax.inject.Singleton;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -10,6 +11,7 @@ import java.util.concurrent.Future;
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
+@Singleton
 public class DogTestImporter implements PedigreeImporter, Callable<String> {
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
 

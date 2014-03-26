@@ -1,6 +1,5 @@
 package no.nkk.dogpopulation.importer.dogsearch;
 
-import no.nkk.dogpopulation.concurrent.ExecutorManager;
 import no.nkk.dogpopulation.importer.PedigreeImporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +21,7 @@ public class UpdatesImporterTask implements Callable<Integer> {
      * Services
      */
 
-    private final ExecutorManager executorManager;
+    private final ExecutorService executorService;
     private final PedigreeImporter pedigreeImporter;
     private final DogSearchClient dogSearchClient;
 
@@ -32,9 +31,8 @@ public class UpdatesImporterTask implements Callable<Integer> {
      */
     private final Set<String> uuids;
 
-
-    public UpdatesImporterTask(ExecutorManager executorManager, PedigreeImporter pedigreeImporter, DogSearchClient dogSearchClient, Set<String> uuids) {
-        this.executorManager = executorManager;
+    public UpdatesImporterTask(ExecutorService executorService, PedigreeImporter pedigreeImporter, DogSearchClient dogSearchClient, Set<String> uuids) {
+        this.executorService = executorService;
         this.pedigreeImporter = pedigreeImporter;
         this.dogSearchClient = dogSearchClient;
         this.uuids = uuids;
@@ -44,10 +42,9 @@ public class UpdatesImporterTask implements Callable<Integer> {
     @Override
     public Integer call() {
         LOGGER.trace("UPDATING graph for {} uuids", uuids.size());
-        ExecutorService executor = executorManager.getExecutor(ExecutorManager.UPDATES_IMPORTER_MAP_KEY);
         int n = 0;
         for (String id : uuids) {
-            executor.submit(createTaskForImportOfPedigree(id));
+            executorService.submit(createTaskForImportOfPedigree(id));
             n++;
         }
         return n;

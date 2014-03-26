@@ -1,5 +1,7 @@
 package no.nkk.dogpopulation.pedigree;
 
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import no.nkk.dogpopulation.graph.GraphQueryService;
 import no.nkk.dogpopulation.graph.pedigree.TopLevelDog;
 import no.nkk.dogpopulation.importer.PedigreeImporter;
@@ -14,12 +16,14 @@ import java.util.concurrent.TimeoutException;
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
+@Singleton
 public class PedigreeService {
 
     private final GraphQueryService graphQueryService;
 
     private final PedigreeImporter pedigreeImporter;
 
+    @Inject
     public PedigreeService(GraphDatabaseService graphDb, GraphQueryService graphQueryService, PedigreeImporter pedigreeImporter) {
         this.graphQueryService = graphQueryService;
         this.pedigreeImporter = pedigreeImporter;

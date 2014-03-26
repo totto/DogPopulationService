@@ -2,6 +2,7 @@ package no.nkk.dogpopulation.concurrent;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
@@ -68,6 +69,30 @@ public class ExecutorManager {
     public ManageableExecutor removeExecutor(String name) {
         synchronized(executorByName) {
             return executorByName.remove(name);
+        }
+    }
+
+    public void shutdown() {
+        Map<String, ManageableExecutor> map = executorSnapshot();
+        for (Map.Entry<String, ManageableExecutor> e : map.entrySet()) {
+            e.getValue().shutdown();
+        }
+        try {
+            for (Map.Entry<String, ManageableExecutor> e : map.entrySet()) {
+                e.getValue().awaitTermination(10, TimeUnit.MILLISECONDS);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        for (Map.Entry<String, ManageableExecutor> e : map.entrySet()) {
+            e.getValue().shutdownNow();
+        }
+        try {
+            for (Map.Entry<String, ManageableExecutor> e : map.entrySet()) {
+                e.getValue().awaitTermination(1, TimeUnit.MILLISECONDS);
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 }

@@ -1,18 +1,26 @@
 package no.nkk.dogpopulation.graph;
 
+import com.google.inject.Inject;
 import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.traversal.Evaluators;
 
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
-public class GraphSchemaMigration {
+public class GraphSchemaMigrator {
 
-    public static void migrateSchema(GraphDatabaseService graphDb) {
+    private final GraphDatabaseService graphDb;
+
+    @Inject
+    public GraphSchemaMigrator(GraphDatabaseService graphDb) {
+        this.graphDb = graphDb;
+    }
+
+    public void migrateSchema(GraphDatabaseService graphDb) {
         migrateBreedNodesToBreedSynonymNodes(graphDb);
     }
 
-    public static void migrateBreedNodesToBreedSynonymNodes(GraphDatabaseService graphDb) {
+    public void migrateBreedNodesToBreedSynonymNodes(GraphDatabaseService graphDb) {
         try (Transaction tx = graphDb.beginTx()) {
             Node breedCategoryNode = GraphUtils.getSingleNode(graphDb, DogGraphLabel.CATEGORY, DogGraphConstants.CATEGORY_CATEGORY, "Breed");
             if (breedCategoryNode == null) {

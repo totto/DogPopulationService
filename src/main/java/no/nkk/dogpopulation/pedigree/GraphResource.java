@@ -2,9 +2,11 @@ package no.nkk.dogpopulation.pedigree;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import no.nkk.dogpopulation.concurrent.ExecutorManager;
 import no.nkk.dogpopulation.graph.GraphQueryService;
-import no.nkk.dogpopulation.graph.bulkwrite.BulkWriteService;
 import no.nkk.dogpopulation.graph.dataerror.breed.IncorrectBreedRecord;
 import no.nkk.dogpopulation.graph.dataerror.circularparentchain.CircularRecord;
 import no.nkk.dogpopulation.graph.dataerror.gender.IncorrectGenderRecord;
@@ -14,7 +16,6 @@ import no.nkk.dogpopulation.graph.litter.LitterStatistics;
 import no.nkk.dogpopulation.graph.pedigree.TopLevelDog;
 import no.nkk.dogpopulation.graph.pedigreecompleteness.PedigreeCompleteness;
 import no.nkk.dogpopulation.importer.PedigreeImporter;
-import no.nkk.dogpopulation.importer.PedigreeImporterFactory;
 import no.nkk.dogpopulation.importer.dogsearch.BreedImportStatus;
 import no.nkk.dogpopulation.importer.dogsearch.BreedImporterTask;
 import no.nkk.dogpopulation.importer.dogsearch.DogSearchClient;
@@ -28,11 +29,13 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
 @Path("/dogpopulation/graph")
+@Singleton
 public class GraphResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GraphResource.class);
@@ -45,22 +48,29 @@ public class GraphResource {
 
     private final Map<String, BreedImportStatus> breedImportStatus = new LinkedHashMap<>(); // keep references forever
 
-    private final ExecutorManager executorManager;
-    private final PedigreeImporterFactory pedigreeImporterFactory;
     private final DogSearchClient dogSearchClient;
 
     private final PedigreeImporter pedigreeImporter;
 
-    public GraphResource(GraphDatabaseService graphDb, GraphQueryService graphQueryService, ExecutorManager executorManager, PedigreeImporterFactory pedigreeImporterFactory, DogSearchClient dogSearchClient, PedigreeImporter pedigreeImporter) {
+    private final ExecutorManager executorManager;
+    private final ExecutorService updatesImporterExecutorService;
+
+    @Inject
+    public GraphResource(
+            ExecutorManager executorManager,
+            @Named(ExecutorManager.UPDATES_IMPORTER_MAP_KEY) ExecutorService updatesImporterExecutorService,
+            GraphDatabaseService graphDb, GraphQueryService graphQueryService,
+            DogSearchClient dogSearchClient, PedigreeImporter pedigreeImporter) {
         objectMapper = new ObjectMapper();
         prettyPrintingObjectWriter = objectMapper.writerWithDefaultPrettyPrinter();
+        this.executorManager = executorManager;
+        this.updatesImporterExecutorService = updatesImporterExecutorService;
         this.graphDb = graphDb;
         this.graphQueryService = graphQueryService;
-        this.executorManager = executorManager;
-        this.pedigreeImporterFactory = pedigreeImporterFactory;
         this.dogSearchClient = dogSearchClient;
         this.pedigreeImporter = pedigreeImporter;
     }
+
 
     @GET
     @Path("/import/dog/{id}")
@@ -92,7 +102,7 @@ public class GraphResource {
 
         Set<String> uuids = dogSearchClient.listIdsForLastWeek();
 
-        UpdatesImporterTask updatesImporterTask = new UpdatesImporterTask(executorManager, pedigreeImporter, dogSearchClient, uuids);
+        UpdatesImporterTask updatesImporterTask = new UpdatesImporterTask(updatesImporterExecutorService, pedigreeImporter, dogSearchClient, uuids);
         int n = updatesImporterTask.call();
 
         try {
@@ -111,7 +121,7 @@ public class GraphResource {
 
         Set<String> uuids = dogSearchClient.listIdsForLastDay();
 
-        UpdatesImporterTask updatesImporterTask = new UpdatesImporterTask(executorManager, pedigreeImporter, dogSearchClient, uuids);
+        UpdatesImporterTask updatesImporterTask = new UpdatesImporterTask(updatesImporterExecutorService, pedigreeImporter, dogSearchClient, uuids);
         int n = updatesImporterTask.call();
 
         try {
@@ -130,7 +140,7 @@ public class GraphResource {
 
         Set<String> uuids = dogSearchClient.listIdsForLastHour();
 
-        UpdatesImporterTask updatesImporterTask = new UpdatesImporterTask(executorManager, pedigreeImporter, dogSearchClient, uuids);
+        UpdatesImporterTask updatesImporterTask = new UpdatesImporterTask(updatesImporterExecutorService, pedigreeImporter, dogSearchClient, uuids);
         int n = updatesImporterTask.call();
 
         try {
@@ -149,7 +159,7 @@ public class GraphResource {
 
         Set<String> uuids = dogSearchClient.listIdsForLastMinute();
 
-        UpdatesImporterTask updatesImporterTask = new UpdatesImporterTask(executorManager, pedigreeImporter, dogSearchClient, uuids);
+        UpdatesImporterTask updatesImporterTask = new UpdatesImporterTask(updatesImporterExecutorService, pedigreeImporter, dogSearchClient, uuids);
         int n = updatesImporterTask.call();
 
         try {
@@ -200,8 +210,6 @@ public class GraphResource {
         }
 
         if (shouldImport) {
-            BulkWriteService bulkWriteService = new BulkWriteService(executorManager.getExecutor(ExecutorManager.BULK_WRITER_MAP_KEY), graphDb).start();
-            PedigreeImporter pedigreeImporter = pedigreeImporterFactory.createInstance(bulkWriteService);
             BreedImporterTask breedImporterTask = new BreedImporterTask(executorManager, pedigreeImporter, dogSearchClient, breed, progress);
             executorManager.getExecutor(ExecutorManager.BREED_IMPORTER_MAP_KEY).submit(breedImporterTask);
         }

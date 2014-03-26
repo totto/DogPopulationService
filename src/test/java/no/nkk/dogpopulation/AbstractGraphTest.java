@@ -1,11 +1,14 @@
 package no.nkk.dogpopulation;
 
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 import no.nkk.dogpopulation.graph.DogGraphConstants;
 import no.nkk.dogpopulation.graph.DogGraphLabel;
 import no.nkk.dogpopulation.graph.DogGraphRelationshipType;
+import no.nkk.dogpopulation.graph.Neo4jModule;
 import no.nkk.dogpopulation.graph.dogbuilder.BreedSynonymNodeCache;
 import no.nkk.dogpopulation.graph.dogbuilder.Dogs;
-import org.apache.commons.io.FileUtils;
 import org.joda.time.LocalDate;
 import org.neo4j.cypher.javacompat.ExecutionEngine;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -15,27 +18,27 @@ import org.neo4j.graphdb.Transaction;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
-import java.io.File;
-
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
 public abstract class AbstractGraphTest {
 
+    @Inject
     protected GraphDatabaseService graphDb;
-    private BreedSynonymNodeCache breedSynonymNodeCache;
+    @Inject
+    protected BreedSynonymNodeCache breedSynonymNodeCache;
+    @Inject
     protected Dogs dogs;
+    @Inject
     protected ExecutionEngine executionEngine;
 
     @BeforeMethod
     public void initGraph() {
-        String dbPath = "target/unittestdogdb";
-        File dbFolder = new File(dbPath);
-        FileUtils.deleteQuietly(dbFolder);
-        graphDb = Main.createGraphDb(dbPath);
-        executionEngine = new ExecutionEngine(graphDb);
-        breedSynonymNodeCache = new BreedSynonymNodeCache(graphDb);
-        dogs = new Dogs(breedSynonymNodeCache);
+        final Injector injector = Guice.createInjector(
+                new UnittestModule(),
+                new Neo4jModule()
+        );
+        injector.injectMembers(this);
     }
 
     @AfterMethod

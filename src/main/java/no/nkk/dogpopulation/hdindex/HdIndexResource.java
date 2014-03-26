@@ -1,5 +1,7 @@
 package no.nkk.dogpopulation.hdindex;
 
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import no.nkk.dogpopulation.graph.GraphQueryService;
 import no.nkk.dogpopulation.graph.hdindex.UnknownBreedCodeException;
 import org.apache.commons.io.FileUtils;
@@ -36,7 +38,8 @@ public class HdIndexResource {
         DATA, PEDIGREE, UUID_MAPPING, BREED_CODE_MAPPING
     }
 
-    public HdIndexResource(GraphQueryService graphQueryService, String hdIndexFolderPath) {
+    @Inject
+    public HdIndexResource(GraphQueryService graphQueryService, @Named("hdindex-folder") String hdIndexFolderPath) {
         this.graphQueryService = graphQueryService;
         hdIndexFolder = new File(hdIndexFolderPath);
         try {
