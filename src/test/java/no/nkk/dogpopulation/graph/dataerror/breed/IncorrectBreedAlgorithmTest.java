@@ -1,7 +1,6 @@
 package no.nkk.dogpopulation.graph.dataerror.breed;
 
 import no.nkk.dogpopulation.AbstractGraphTest;
-import no.nkk.dogpopulation.graph.GraphQueryService;
 import org.neo4j.graphdb.Node;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -22,8 +21,6 @@ public class IncorrectBreedAlgorithmTest  extends AbstractGraphTest {
         addDog("C", dalmatiner);
         connectChildToFather("A", "B");
         connectChildToMother("A", "C");
-
-        GraphQueryService graphQueryService = new GraphQueryService(graphDb);
 
         List<String> result = graphQueryService.getAllDogsWithInconsistentBreed(0, 10, "Dobermann");
         Assert.assertNotNull(result);

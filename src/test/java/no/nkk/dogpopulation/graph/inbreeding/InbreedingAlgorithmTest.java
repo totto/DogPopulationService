@@ -1,7 +1,6 @@
 package no.nkk.dogpopulation.graph.inbreeding;
 
 import no.nkk.dogpopulation.AbstractGraphTest;
-import no.nkk.dogpopulation.graph.GraphQueryService;
 import org.neo4j.graphdb.Node;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -70,8 +69,6 @@ public class InbreedingAlgorithmTest extends AbstractGraphTest {
         // no need to repeat inbreed Y mother of B
         connectChildToFather("D", "E");
         connectChildToMother("D", "F");
-
-        GraphQueryService graphQueryService = new GraphQueryService(graphDb);
 
         // when
         double coi = graphQueryService.computeCoefficientOfInbreeding("A", 3).getCoi();
@@ -175,8 +172,6 @@ public class InbreedingAlgorithmTest extends AbstractGraphTest {
         connectChildToFather("K", "I");
         connectChildToMother("K", "H");
 
-        GraphQueryService graphQueryService = new GraphQueryService(graphDb);
-
         // when
         double coi = graphQueryService.computeCoefficientOfInbreeding("A", 5).getCoi();
 
@@ -222,8 +217,6 @@ public class InbreedingAlgorithmTest extends AbstractGraphTest {
 
         connectChildToMother("B", "A");
         connectChildToFather("B", "C");
-
-        GraphQueryService graphQueryService = new GraphQueryService(graphDb);
 
         // when
         double coi = graphQueryService.computeCoefficientOfInbreeding("A", 3).getCoi();

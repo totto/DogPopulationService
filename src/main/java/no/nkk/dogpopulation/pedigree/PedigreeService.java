@@ -5,6 +5,7 @@ import com.google.inject.Singleton;
 import no.nkk.dogpopulation.graph.GraphQueryService;
 import no.nkk.dogpopulation.graph.pedigree.TopLevelDog;
 import no.nkk.dogpopulation.importer.PedigreeImporter;
+import no.nkk.dogpopulation.importer.PedigreeImporterFactory;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 
@@ -24,9 +25,9 @@ public class PedigreeService {
     private final PedigreeImporter pedigreeImporter;
 
     @Inject
-    public PedigreeService(GraphDatabaseService graphDb, GraphQueryService graphQueryService, PedigreeImporter pedigreeImporter) {
+    public PedigreeService(GraphDatabaseService graphDb, GraphQueryService graphQueryService, PedigreeImporterFactory pedigreeImporter) {
         this.graphQueryService = graphQueryService;
-        this.pedigreeImporter = pedigreeImporter;
+        this.pedigreeImporter = pedigreeImporter.createInstance("pedigree-service");
     }
 
     public TopLevelDog getPedigree(String id) {

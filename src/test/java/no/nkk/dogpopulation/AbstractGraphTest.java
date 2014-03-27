@@ -3,10 +3,7 @@ package no.nkk.dogpopulation;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
-import no.nkk.dogpopulation.graph.DogGraphConstants;
-import no.nkk.dogpopulation.graph.DogGraphLabel;
-import no.nkk.dogpopulation.graph.DogGraphRelationshipType;
-import no.nkk.dogpopulation.graph.Neo4jModule;
+import no.nkk.dogpopulation.graph.*;
 import no.nkk.dogpopulation.graph.dogbuilder.BreedSynonymNodeCache;
 import no.nkk.dogpopulation.graph.dogbuilder.Dogs;
 import org.joda.time.LocalDate;
@@ -31,6 +28,9 @@ public abstract class AbstractGraphTest {
     protected Dogs dogs;
     @Inject
     protected ExecutionEngine executionEngine;
+    @Inject
+    protected GraphQueryService graphQueryService;
+
 
     @BeforeMethod
     public void initGraph() {

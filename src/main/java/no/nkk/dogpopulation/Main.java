@@ -7,8 +7,8 @@ import no.nkk.dogpopulation.concurrent.ExecutorManager;
 import no.nkk.dogpopulation.concurrent.ThreadingModule;
 import no.nkk.dogpopulation.graph.GraphSchemaMigrator;
 import no.nkk.dogpopulation.graph.Neo4jModule;
-import no.nkk.dogpopulation.graph.bulkwrite.BulkWriteService;
 import no.nkk.dogpopulation.importer.PedigreeImporter;
+import no.nkk.dogpopulation.importer.PedigreeImporterFactory;
 import no.nkk.dogpopulation.importer.dogsearch.DogSearchClient;
 import no.nkk.dogpopulation.importer.dogsearch.UpdatesImporterTask;
 import org.eclipse.jetty.server.Server;
@@ -97,19 +97,17 @@ public class Main {
             BreedGroupJsonImporter breedGroupJsonImporter = injector.getInstance(BreedGroupJsonImporter.class);
             breedGroupJsonImporter.importBreedGroup();
 
-            BulkWriteService bulkWriteService = injector.getInstance(BulkWriteService.class);
-            bulkWriteService.start();
-
             Main main = injector.getInstance(Main.class);
             main.start();
+
+            final ExecutorService executorService = injector.getInstance(Key.get(ExecutorService.class, Names.named(ExecutorManager.UPDATES_IMPORTER_MAP_KEY)));
+            final PedigreeImporter pedigreeImporter = injector.getInstance(PedigreeImporterFactory.class).createInstance("recurring-updater");
+            final DogSearchClient dogSearchClient = injector.getInstance(DogSearchClient.class);
 
             Timer timer = new Timer("Recurring graph updater", true);
             timer.schedule(new TimerTask() {
                 @Override
                 public void run() {
-                    ExecutorService executorService = injector.getInstance(Key.get(ExecutorService.class, Names.named(ExecutorManager.UPDATES_IMPORTER_MAP_KEY)));
-                    PedigreeImporter pedigreeImporter = injector.getInstance(PedigreeImporter.class);
-                    DogSearchClient dogSearchClient = injector.getInstance(DogSearchClient.class);
                     Set<String> uuids = dogSearchClient.listIdsForLastMinute();
                     UpdatesImporterTask updatesImporterTask = new UpdatesImporterTask(executorService, pedigreeImporter, dogSearchClient, uuids);
                     updatesImporterTask.call();

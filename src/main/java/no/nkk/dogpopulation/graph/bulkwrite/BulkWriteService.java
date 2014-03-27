@@ -1,9 +1,5 @@
 package no.nkk.dogpopulation.graph.bulkwrite;
 
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import com.google.inject.name.Named;
-import no.nkk.dogpopulation.concurrent.ExecutorManager;
 import no.nkk.dogpopulation.graph.Builder;
 import no.nkk.dogpopulation.graph.PostStepBuilder;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -25,13 +21,12 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
-@Singleton
 public class BulkWriteService implements Runnable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BulkWriteService.class);
     private static final AtomicLong bulkWriterServiceSequence = new AtomicLong(1);
 
-    private static final int MAX_PENDING_BUILDERS = 50;
+    private static final int MAX_PENDING_BUILDERS = 5;
 
     private final GraphDatabaseService graphDb;
 
@@ -61,18 +56,17 @@ public class BulkWriteService implements Runnable {
 
     private final long mySequence;
 
-    private final ExecutorService executorService;
-
     private final AtomicLong bulkCount = new AtomicLong();
     private final AtomicLong builderCount = new AtomicLong();
 
     private final long start;
 
+    private final String context;
 
-    @Inject
-    public BulkWriteService(@Named(ExecutorManager.BULK_WRITER_MAP_KEY) ExecutorService executorService, GraphDatabaseService graphDb) {
-        this.executorService = executorService;
+
+    public BulkWriteService(GraphDatabaseService graphDb, String context) {
         this.graphDb = graphDb;
+        this.context = context;
         fullQueue = lock.newCondition();
         emptyQueue = lock.newCondition();
         mySequence = bulkWriterServiceSequence.getAndIncrement();
@@ -122,10 +116,10 @@ public class BulkWriteService implements Runnable {
         }
         long currentBulkCount = bulkCount.get();
         long load = builderCount.get() / (1 + ((System.currentTimeMillis() - start) / 1000));
-        return String.format("BulkWriteService-%d (bulk %d, pending %d, load %d builders/sec)", mySequence, currentBulkCount, currentPendingCount, load);
+        return String.format("%d %s (bulk %d, pending %d, load %d builders/sec)", mySequence, context, currentBulkCount, currentPendingCount, load);
     }
 
-    public BulkWriteService start() {
+    public BulkWriteService start(ExecutorService executorService) {
         executorService.submit(this);
         return this;
     }

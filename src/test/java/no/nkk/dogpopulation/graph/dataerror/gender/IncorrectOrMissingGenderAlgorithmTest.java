@@ -3,7 +3,6 @@ package no.nkk.dogpopulation.graph.dataerror.gender;
 import no.nkk.dogpopulation.AbstractGraphTest;
 import no.nkk.dogpopulation.graph.DogGender;
 import no.nkk.dogpopulation.graph.DogGraphConstants;
-import no.nkk.dogpopulation.graph.GraphQueryService;
 import org.neo4j.graphdb.Node;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -26,8 +25,6 @@ public class IncorrectOrMissingGenderAlgorithmTest extends AbstractGraphTest {
         setProperty(C, DogGraphConstants.DOG_GENDER, DogGender.FEMALE.name().toLowerCase());
         connectChildToFather("A", "B");
         connectChildToFather("A", "C");
-
-        GraphQueryService graphQueryService = new GraphQueryService(graphDb);
 
         List<String> result = graphQueryService.getAllDogsWithInconsistentGender(0, 10, "Unit-test Breed");
         Assert.assertNotNull(result);

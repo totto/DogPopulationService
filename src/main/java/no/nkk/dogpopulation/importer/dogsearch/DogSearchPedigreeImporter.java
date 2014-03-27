@@ -4,6 +4,8 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import no.nkk.dogpopulation.concurrent.ExecutorManager;
+import no.nkk.dogpopulation.concurrent.ExecutorServiceHelper;
+import no.nkk.dogpopulation.graph.GraphQueryService;
 import no.nkk.dogpopulation.graph.bulkwrite.BulkWriteService;
 import no.nkk.dogpopulation.graph.dogbuilder.BreedSynonymNodeCache;
 import no.nkk.dogpopulation.graph.dogbuilder.Dogs;
@@ -26,35 +28,37 @@ public class DogSearchPedigreeImporter implements PedigreeImporter {
     private static final Logger LOGGER = LoggerFactory.getLogger(DogSearchPedigreeImporter.class);
 
     private final GraphDatabaseService graphDb;
+    private final GraphQueryService graphQueryService;
     private final DogSearchClient dogSearchClient;
 
     private final Dogs dogs;
     private final BreedSynonymNodeCache breedSynonymNodeCache;
 
-    private final ExecutorService graphQueryExectuor;
-    private final ExecutorService traversingExectuor;
+    private final ExecutorService traversingExecutor;
+    private final ExecutorServiceHelper traversingExecutorHelper;
 
     private final BulkWriteService bulkWriteService;
 
     @Inject
     public DogSearchPedigreeImporter(
-            @Named(ExecutorManager.GRAPH_QUERY_MAP_KEY) ExecutorService graphQueryExectuor,
-            @Named(ExecutorManager.TRAVERSER_MAP_KEY) ExecutorService traversingExectuor,
+            @Named(ExecutorManager.TRAVERSER_MAP_KEY) ExecutorService traversingExecutor,
             GraphDatabaseService graphDb, DogSearchClient dogSearchClient, Dogs dogs,
-            BreedSynonymNodeCache breedSynonymNodeCache, BulkWriteService bulkWriteService) {
-        this.graphQueryExectuor = graphQueryExectuor;
-        this.traversingExectuor = traversingExectuor;
+            BreedSynonymNodeCache breedSynonymNodeCache, BulkWriteService bulkWriteService,
+            GraphQueryService graphQueryService) {
+        this.traversingExecutor = traversingExecutor;
+        this.traversingExecutorHelper = new ExecutorServiceHelper(traversingExecutor);
         this.graphDb = graphDb;
         this.dogSearchClient = dogSearchClient;
         this.dogs = dogs;
         this.breedSynonymNodeCache = breedSynonymNodeCache;
         this.bulkWriteService = bulkWriteService;
+        this.graphQueryService = graphQueryService;
     }
 
 
     @Override
     public Future<String> importPedigree(final String id) {
-        return traversingExectuor.submit(pedigreeImportTaskFor(id));
+        return traversingExecutor.submit(pedigreeImportTaskFor(id));
     }
 
     Callable<String> pedigreeImportTaskFor(final String id) {
@@ -103,7 +107,7 @@ public class DogSearchPedigreeImporter implements PedigreeImporter {
     }
 
     private DogFuture startTraversingDogTask(String id, TraversalStatistics ts) {
-        TraversingDogTask traversingDogTask = new TraversingDogTask(graphQueryExectuor, traversingExectuor, graphDb, dogSearchClient, dogs, breedSynonymNodeCache, bulkWriteService, id, ts, 1);
+        TraversingDogTask traversingDogTask = new TraversingDogTask(traversingExecutorHelper, graphDb, graphQueryService, dogSearchClient, dogs, breedSynonymNodeCache, bulkWriteService, id, ts, 1);
         DogFuture dogFuture;
         try {
             dogFuture = traversingDogTask.call(); // execute in current thread

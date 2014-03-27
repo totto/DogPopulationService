@@ -1,7 +1,6 @@
 package no.nkk.dogpopulation.graph.dataerror.circularparentchain;
 
 import no.nkk.dogpopulation.AbstractGraphTest;
-import no.nkk.dogpopulation.graph.GraphQueryService;
 import org.joda.time.LocalDate;
 import org.neo4j.graphdb.Node;
 import org.testng.Assert;
@@ -23,8 +22,6 @@ public class CircularParentChainAlgorithmTest extends AbstractGraphTest {
         connectChildToFather("A", "B");
         connectChildToFather("B", "C");
         connectChildToFather("C", "A");
-
-        GraphQueryService graphQueryService = new GraphQueryService(graphDb);
 
         List<CircularRecord> circle = graphQueryService.getCircluarParentChainInAncestryOf("A");
         Assert.assertNotNull(circle);
@@ -49,8 +46,6 @@ public class CircularParentChainAlgorithmTest extends AbstractGraphTest {
         connectChildToFather("C", "D");
         connectChildToFather("D", "B");
 
-        GraphQueryService graphQueryService = new GraphQueryService(graphDb);
-
         List<CircularRecord> circle = graphQueryService.getCircluarParentChainInAncestryOf("A");
         Assert.assertNotNull(circle);
         Assert.assertEquals(circle.size(), 3);
@@ -64,8 +59,6 @@ public class CircularParentChainAlgorithmTest extends AbstractGraphTest {
         addDog("C", breedNode, new LocalDate(2002, 10, 21));
         connectChildToFather("A", "B");
         connectChildToFather("B", "C");
-
-        GraphQueryService graphQueryService = new GraphQueryService(graphDb);
 
         List<CircularRecord> circle = graphQueryService.getCircluarParentChainInAncestryOf("A");
         Assert.assertNull(circle);

@@ -12,9 +12,7 @@ public class ExecutorManager {
     public static final String TRAVERSER_MAP_KEY = "system_traverser";
     public static final String BREED_IMPORTER_MAP_KEY = "system_breed";
     public static final String SOLR_MAP_KEY = "system_solrj";
-    public static final String GRAPH_QUERY_MAP_KEY = "system_graphQuery";
     public static final String BULK_WRITER_MAP_KEY = "system_bulkWriter";
-    public static final String UPDATES_LIST_UPDATES_MAP_KEY = "system_update_listing";
     public static final String UPDATES_IMPORTER_MAP_KEY = "system_updates_traverser";
 
     private final Map<String, ManageableExecutor> executorByName = new LinkedHashMap<>();

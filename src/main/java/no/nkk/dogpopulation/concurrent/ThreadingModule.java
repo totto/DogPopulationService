@@ -14,16 +14,14 @@ public class ThreadingModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        final int MAX_CONCURRENT_BREED_IMPORTS = 5;
+        final int MAX_CONCURRENT_BREED_IMPORTS = 20;
         ExecutorManager executorManager = new ExecutorManager();
         bind(ExecutorManager.class).toInstance(executorManager);
         bind(ExecutorService.class).annotatedWith(Names.named(ExecutorManager.BULK_WRITER_MAP_KEY)).toInstance(executorManager.addDirectHandoffExecutor(ExecutorManager.BULK_WRITER_MAP_KEY));
         bind(ExecutorService.class).annotatedWith(Names.named(ExecutorManager.SOLR_MAP_KEY)).toInstance(executorManager.addDirectHandoffExecutor(ExecutorManager.SOLR_MAP_KEY));
-        bind(ExecutorService.class).annotatedWith(Names.named(ExecutorManager.GRAPH_QUERY_MAP_KEY)).toInstance(executorManager.addDirectHandoffExecutor(ExecutorManager.GRAPH_QUERY_MAP_KEY));
         bind(ExecutorService.class).annotatedWith(Names.named(ExecutorManager.BREED_IMPORTER_MAP_KEY)).toInstance(executorManager.addUnboundedQueueExecutor(ExecutorManager.BREED_IMPORTER_MAP_KEY, MAX_CONCURRENT_BREED_IMPORTS));
         bind(ExecutorService.class).annotatedWith(Names.named(ExecutorManager.TRAVERSER_MAP_KEY)).toInstance(executorManager.addDirectHandoffExecutor(ExecutorManager.TRAVERSER_MAP_KEY));
         bind(ExecutorService.class).annotatedWith(Names.named(ExecutorManager.UPDATES_IMPORTER_MAP_KEY)).toInstance(executorManager.addUnboundedQueueExecutor(ExecutorManager.UPDATES_IMPORTER_MAP_KEY, 3));
-        bind(ExecutorService.class).annotatedWith(Names.named(ExecutorManager.UPDATES_LIST_UPDATES_MAP_KEY)).toInstance(executorManager.addUnboundedQueueExecutor(ExecutorManager.UPDATES_LIST_UPDATES_MAP_KEY, 1));
     }
 
     @Provides

@@ -5,6 +5,7 @@ import com.google.inject.Inject;
 import com.google.inject.Injector;
 import no.nkk.dogpopulation.UnittestModule;
 import no.nkk.dogpopulation.concurrent.ManageableExecutor;
+import no.nkk.dogpopulation.graph.GraphQueryService;
 import no.nkk.dogpopulation.graph.Neo4jModule;
 import no.nkk.dogpopulation.graph.bulkwrite.BulkWriteService;
 import no.nkk.dogpopulation.graph.dogbuilder.BreedSynonymNodeCache;
@@ -25,6 +26,12 @@ public class PedigreeImporterTest {
 
     @Inject
     GraphDatabaseService graphDb;
+    @Inject
+    GraphQueryService graphQueryService;
+    @Inject
+    BreedSynonymNodeCache breedSynonymNodeCache;
+    @Inject
+    Dogs dogs;
 
     ExecutorService executorService;
 
@@ -54,11 +61,9 @@ public class PedigreeImporterTest {
 
         DogSearchClient dogSearchClient = new FileReadingDogSearchClient(dogUuid);
 
-        BreedSynonymNodeCache breedSynonymNodeCache = new BreedSynonymNodeCache(graphDb);
-        Dogs dogs = new Dogs(breedSynonymNodeCache);
-        BulkWriteService bulkWriteService = new BulkWriteService(executorService, graphDb).start();
+        BulkWriteService bulkWriteService = new BulkWriteService(graphDb, "unittest").start(executorService);
 
-        DogSearchPedigreeImporter importer = new DogSearchPedigreeImporter(executorService, executorService, graphDb, dogSearchClient, dogs, breedSynonymNodeCache, bulkWriteService);
+        DogSearchPedigreeImporter importer = new DogSearchPedigreeImporter(executorService, graphDb, dogSearchClient, dogs, breedSynonymNodeCache, bulkWriteService, graphQueryService);
         Future<String> future = importer.importPedigree(dogUuid);
         String uuid = future.get(300, TimeUnit.SECONDS);
         importer.stop();

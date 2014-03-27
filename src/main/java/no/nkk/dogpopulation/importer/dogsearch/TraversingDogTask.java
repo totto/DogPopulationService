@@ -19,7 +19,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 /**
@@ -43,9 +42,7 @@ class TraversingDogTask implements Callable<DogFuture> {
     private final DogSearchClient dogSearchClient;
     private final Dogs dogs;
     private final BreedSynonymNodeCache breedSynonymNodeCache;
-    private final ExecutorService traverserExecutor;
     private final ExecutorServiceHelper traverserExecutorHelper;
-    private final ExecutorService graphQueryExecutor;
     private final BulkWriteService bulkWriteService;
 
 
@@ -64,9 +61,9 @@ class TraversingDogTask implements Callable<DogFuture> {
 
 
     TraversingDogTask(
-            ExecutorService graphQueryExecutor,
-            ExecutorService traverserExecutor,
+            ExecutorServiceHelper traverserExecutorHelper,
             GraphDatabaseService graphDb,
+            GraphQueryService graphQueryService,
             DogSearchClient dogSearchClient,
             Dogs dogs,
             BreedSynonymNodeCache breedSynonymNodeCache,
@@ -74,10 +71,8 @@ class TraversingDogTask implements Callable<DogFuture> {
             String id,
             TraversalStatistics ts,
             int depth) {
-        this.graphQueryExecutor = graphQueryExecutor;
-        this.traverserExecutor = traverserExecutor;
         this.graphDb = graphDb;
-        this.graphQueryService = new GraphQueryService(graphDb);
+        this.graphQueryService = graphQueryService;
         this.dogSearchClient = dogSearchClient;
         this.dogs = dogs;
         this.breedSynonymNodeCache = breedSynonymNodeCache;
@@ -85,7 +80,7 @@ class TraversingDogTask implements Callable<DogFuture> {
         this.id = id;
         this.ts = ts;
         this.depth = depth;
-        this.traverserExecutorHelper = new ExecutorServiceHelper(traverserExecutor);
+        this.traverserExecutorHelper = traverserExecutorHelper;
         this.childBuilder = null;
         this.parentRole = null;
     }
@@ -100,8 +95,6 @@ class TraversingDogTask implements Callable<DogFuture> {
      * @param parentRole
      */
     private TraversingDogTask(TraversingDogTask child, String id, Builder<Node> childBuilder, ParentRole parentRole) {
-        this.graphQueryExecutor = child.graphQueryExecutor;
-        this.traverserExecutor = child.traverserExecutor;
         this.graphDb = child.graphDb;
         this.graphQueryService = child.graphQueryService;
         this.dogSearchClient = child.dogSearchClient;
@@ -267,21 +260,7 @@ class TraversingDogTask implements Callable<DogFuture> {
         /*
          * Lookup dog in graph
          */
-        final DogDetails dogDetails = searchResult;
-        Future<GraphDogLookupResult> graphQueryFuture = graphQueryExecutor.submit(new Callable<GraphDogLookupResult>() {
-            @Override
-            public GraphDogLookupResult call() throws Exception {
-                return graphQueryService.lookupDogIfUpToDate(id, dogDetails);
-            }
-        });
-        GraphDogLookupResult graphDogLookupResult = null;
-        try {
-            graphDogLookupResult = graphQueryFuture.get();
-        } catch (InterruptedException e) {
-            LOGGER.error("", e);
-        } catch (ExecutionException e) {
-            LOGGER.error("", e);
-        }
+        GraphDogLookupResult graphDogLookupResult = graphQueryService.lookupDogIfUpToDate(id, searchResult);
         if (graphDogLookupResult != null && graphDogLookupResult.isUpToDate()) {
             ts.graphHit.incrementAndGet();
         } else {

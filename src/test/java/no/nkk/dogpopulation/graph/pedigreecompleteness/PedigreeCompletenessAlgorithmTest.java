@@ -1,7 +1,6 @@
 package no.nkk.dogpopulation.graph.pedigreecompleteness;
 
 import no.nkk.dogpopulation.AbstractGraphTest;
-import no.nkk.dogpopulation.graph.GraphQueryService;
 import org.joda.time.LocalDate;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Transaction;
@@ -158,7 +157,6 @@ public class PedigreeCompletenessAlgorithmTest extends AbstractGraphTest {
         addDog("M", boxer, LocalDate.parse("1999-02-14"));
         addDog("X", boxer, LocalDate.parse("2000-03-12"));
         connectChildToFather("M", "X");
-        GraphQueryService graphQueryService = new GraphQueryService(graphDb);
 
 
         // when

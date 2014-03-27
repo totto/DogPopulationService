@@ -1,7 +1,6 @@
 package no.nkk.dogpopulation.graph.dataerror.circularparentchain;
 
 import no.nkk.dogpopulation.AbstractGraphTest;
-import no.nkk.dogpopulation.graph.GraphQueryService;
 import org.joda.time.LocalDate;
 import org.neo4j.graphdb.Node;
 import org.testng.Assert;
@@ -29,8 +28,6 @@ public class CircularAncestryBreedGroupAlgorithmTest extends AbstractGraphTest {
         connectChildToFather("B", "C");
         connectChildToFather("C", "D");
         connectChildToFather("D", "B");
-
-        GraphQueryService graphQueryService = new GraphQueryService(graphDb);
 
         List<String> uuids = graphQueryService.getCircluarParentChainInAncestryOf(breedSet);
         Assert.assertNotNull(uuids);

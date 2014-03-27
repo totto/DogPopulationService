@@ -1,6 +1,5 @@
 package no.nkk.dogpopulation.importer.dogsearch;
 
-import no.nkk.dogpopulation.graph.bulkwrite.BulkWriteService;
 import no.nkk.dogpopulation.importer.PedigreeImporter;
 import no.nkk.dogpopulation.importer.PedigreeImporterFactory;
 
@@ -9,7 +8,7 @@ import no.nkk.dogpopulation.importer.PedigreeImporterFactory;
  */
 public class DogTestImporterFactory implements PedigreeImporterFactory {
     @Override
-    public PedigreeImporter createInstance(BulkWriteService bulkWriteService) {
+    public PedigreeImporter createInstance(String context) {
         return new DogTestImporter();
     }
 }

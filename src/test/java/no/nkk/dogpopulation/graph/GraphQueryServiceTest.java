@@ -46,7 +46,6 @@ public class GraphQueryServiceTest extends AbstractGraphTest {
         connectChildToMother("M", "I");
         connectChildToMother("N", "M");
         connectChildToMother("O", "M");
-        GraphQueryService graphQueryService = new GraphQueryService(graphDb);
 
         // when
         LinkedHashSet<String> descendants = new LinkedHashSet<>();
@@ -84,7 +83,6 @@ public class GraphQueryServiceTest extends AbstractGraphTest {
         connectChildToFather("C", "B");
         connectChildToFather("D", "C");
         connectChildToFather("E", "C");
-        GraphQueryService graphQueryService = new GraphQueryService(graphDb);
 
         // when
         List<String> dogsOfBreed = graphQueryService.getBreedList("Unit-test Breed");

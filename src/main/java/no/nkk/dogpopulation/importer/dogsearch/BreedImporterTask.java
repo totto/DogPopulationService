@@ -2,6 +2,7 @@ package no.nkk.dogpopulation.importer.dogsearch;
 
 import no.nkk.dogpopulation.concurrent.ExecutorManager;
 import no.nkk.dogpopulation.importer.PedigreeImporter;
+import no.nkk.dogpopulation.importer.PedigreeImporterFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,7 +23,7 @@ public class BreedImporterTask implements Callable<Integer> {
      */
 
     private final ExecutorManager executorManager;
-    private final PedigreeImporter pedigreeImporter;
+    private final PedigreeImporterFactory pedigreeImporterFactory;
     private final DogSearchClient dogSearchClient;
 
 
@@ -33,9 +34,9 @@ public class BreedImporterTask implements Callable<Integer> {
     private final BreedImportStatus progress;
 
 
-    public BreedImporterTask(ExecutorManager executorManager, PedigreeImporter pedigreeImporter, DogSearchClient dogSearchClient, String breed, BreedImportStatus progress) {
+    public BreedImporterTask(PedigreeImporterFactory pedigreeImporterFactory, ExecutorManager executorManager, DogSearchClient dogSearchClient, String breed, BreedImportStatus progress) {
         this.executorManager = executorManager;
-        this.pedigreeImporter = pedigreeImporter;
+        this.pedigreeImporterFactory = pedigreeImporterFactory;
         this.dogSearchClient = dogSearchClient;
         this.breed = breed;
         this.progress = progress;
@@ -67,35 +68,39 @@ public class BreedImporterTask implements Callable<Integer> {
         final int NTHREADS = 5;
         final String executorName = "breed-importer " + breed;
         ExecutorService breedExecutor = executorManager.addUnboundedQueueExecutor(executorName, NTHREADS);
-        int n = 0;
-        for (String id : breedIds) {
-            breedExecutor.submit(createTaskForImportOfPedigree(breed, progress, id));
-            n++;
-        }
-        breedExecutor.shutdown();
+        PedigreeImporter breedSpecificPedigreeImporter = pedigreeImporterFactory.createInstance(breed);
         try {
-            if (!breedExecutor.awaitTermination(3, TimeUnit.DAYS)) {
-                breedExecutor.shutdownNow();
-                if (!breedExecutor.awaitTermination(2, TimeUnit.HOURS)) {
-                    LOGGER.error("Thread-pool did not terminate");
-                }
+            int n = 0;
+            for (String id : breedIds) {
+                breedExecutor.submit(createTaskForImportOfPedigree(breedSpecificPedigreeImporter, breed, progress, id));
+                n++;
             }
-        } catch (InterruptedException e) {
-            breedExecutor.shutdownNow();
-            Thread.currentThread().interrupt();
+            breedExecutor.shutdown();
+            try {
+                if (!breedExecutor.awaitTermination(3, TimeUnit.DAYS)) {
+                    breedExecutor.shutdownNow();
+                    if (!breedExecutor.awaitTermination(2, TimeUnit.HOURS)) {
+                        LOGGER.error("Thread-pool did not terminate");
+                    }
+                }
+            } catch (InterruptedException e) {
+                breedExecutor.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+            executorManager.removeExecutor(executorName);
+            progress.updateComplete();
+            try {
+                Thread.sleep(5 * 60 * 1000); // wait for bulk-writer to complete
+            } catch (InterruptedException ignore) {
+            }
+            LOGGER.info("Submitted {} pedigree tasks to {} threads.", n, NTHREADS);
+            return n;
+        } finally {
+            breedSpecificPedigreeImporter.stop();
         }
-        executorManager.removeExecutor(executorName);
-        progress.updateComplete();
-        try {
-            Thread.sleep(5 * 60 * 1000); // wait for bulk-writer to complete
-        } catch (InterruptedException ignore) {
-        }
-        pedigreeImporter.stop();
-        LOGGER.info("Submitted {} pedigree tasks to {} threads.", n, NTHREADS);
-        return n;
     }
 
-    private Runnable createTaskForImportOfPedigree(final String breed, final BreedImportStatus progress, final String id) {
+    private Runnable createTaskForImportOfPedigree(final PedigreeImporter pedigreeImporter, final String breed, final BreedImportStatus progress, final String id) {
         return new Runnable() {
             @Override
             public void run() {

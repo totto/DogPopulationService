@@ -30,6 +30,13 @@ public class DogSearchPedigreeImporterTest {
 
     @Inject
     GraphDatabaseService graphDb;
+    @Inject
+    GraphQueryService graphQueryService;
+    @Inject
+    BreedSynonymNodeCache breedSynonymNodeCache;
+    @Inject
+    Dogs dogs;
+
     ExecutorService executorService;
 
     @BeforeMethod
@@ -91,16 +98,13 @@ public class DogSearchPedigreeImporterTest {
             }
         };
 
-        BreedSynonymNodeCache breedSynonymNodeCache = new BreedSynonymNodeCache(graphDb);
-        Dogs dogs = new Dogs(breedSynonymNodeCache);
-        BulkWriteService bulkWriteService = new BulkWriteService(executorService, graphDb).start();
+        BulkWriteService bulkWriteService = new BulkWriteService(graphDb, "unittest").start(executorService);
 
-        DogSearchPedigreeImporter importer = new DogSearchPedigreeImporter(executorService, executorService, graphDb, dogSearchClient, dogs, breedSynonymNodeCache, bulkWriteService);
+        DogSearchPedigreeImporter importer = new DogSearchPedigreeImporter(executorService, graphDb, dogSearchClient, dogs, breedSynonymNodeCache, bulkWriteService, graphQueryService);
         Future<String> future = importer.importPedigree("AB/12345/67");
         String uuid = future.get(30, TimeUnit.SECONDS);
         importer.stop();
 
-        GraphQueryService graphQueryService = new GraphQueryService(graphDb);
         TopLevelDog topLevelDog = graphQueryService.getPedigree(uuid);
         Assert.assertEquals(topLevelDog.getName(), "Awesomebitch");
         Assert.assertEquals(topLevelDog.getIds().get(DogGraphConstants.DOG_REGNO), "AB/12345/67");

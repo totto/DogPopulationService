@@ -51,9 +51,9 @@ public class GraphQueryService {
     private final ExecutionEngine engine;
 
     @Inject
-    public GraphQueryService(GraphDatabaseService graphDb) {
+    public GraphQueryService(GraphDatabaseService graphDb, ExecutionEngine executionEngine) {
         this.graphDb = graphDb;
-        engine = new ExecutionEngine(graphDb);
+        engine = executionEngine;
     }
 
 
