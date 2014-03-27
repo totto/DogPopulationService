@@ -1,7 +1,6 @@
 package no.nkk.dogpopulation.importer.breedupdater;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import no.nkk.dogpopulation.importer.dogsearch.BreedImportStatus;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;

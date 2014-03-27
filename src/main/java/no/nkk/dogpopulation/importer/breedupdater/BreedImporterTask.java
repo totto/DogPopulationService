@@ -1,8 +1,11 @@
-package no.nkk.dogpopulation.importer.dogsearch;
+package no.nkk.dogpopulation.importer.breedupdater;
 
 import no.nkk.dogpopulation.concurrent.ExecutorManager;
 import no.nkk.dogpopulation.importer.PedigreeImporter;
 import no.nkk.dogpopulation.importer.PedigreeImporterFactory;
+import no.nkk.dogpopulation.importer.dogsearch.DogSearchClient;
+import no.nkk.dogpopulation.importer.dogsearch.DogSearchPedigreeImporter;
+import no.nkk.dogpopulation.importer.dogsearch.TraversalStatistics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

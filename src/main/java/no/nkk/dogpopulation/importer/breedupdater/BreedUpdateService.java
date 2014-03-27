@@ -4,8 +4,6 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import no.nkk.dogpopulation.concurrent.ExecutorManager;
 import no.nkk.dogpopulation.importer.PedigreeImporterFactory;
-import no.nkk.dogpopulation.importer.dogsearch.BreedImportStatus;
-import no.nkk.dogpopulation.importer.dogsearch.BreedImporterTask;
 import no.nkk.dogpopulation.importer.dogsearch.DogSearchClient;
 
 import java.util.*;

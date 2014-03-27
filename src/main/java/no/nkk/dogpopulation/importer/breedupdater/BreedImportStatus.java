@@ -1,7 +1,8 @@
-package no.nkk.dogpopulation.importer.dogsearch;
+package no.nkk.dogpopulation.importer.breedupdater;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import no.nkk.dogpopulation.importer.dogsearch.TraversalStatistics;
 
 import java.text.DecimalFormat;
 import java.util.concurrent.atomic.AtomicBoolean;

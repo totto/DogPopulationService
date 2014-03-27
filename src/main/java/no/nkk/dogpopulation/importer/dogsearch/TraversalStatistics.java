@@ -6,26 +6,26 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
 public class TraversalStatistics {
-    final String id;
-    final AtomicInteger dogsAdded = new AtomicInteger();
-    final AtomicInteger dogsUpdated = new AtomicInteger();
-    final AtomicInteger litterCount = new AtomicInteger();
-    final AtomicInteger puppiesAdded = new AtomicInteger();
-    final AtomicInteger dogsearchHit = new AtomicInteger();
-    final AtomicInteger dogsearchMiss = new AtomicInteger();
-    final AtomicInteger dogsearchPuppyHit = new AtomicInteger();
-    final AtomicInteger dogsearchPuppyMiss = new AtomicInteger();
-    final AtomicInteger graphPuppyHit = new AtomicInteger();
-    final AtomicInteger graphPuppyMiss = new AtomicInteger();
-    final AtomicInteger graphHit = new AtomicInteger();
-    final AtomicInteger graphMiss = new AtomicInteger();
-    final AtomicInteger fathersAdded = new AtomicInteger();
-    final AtomicInteger mothersAdded = new AtomicInteger();
-    final AtomicInteger maxDepth = new AtomicInteger();
-    final AtomicInteger minDepth = new AtomicInteger(Integer.MAX_VALUE);
-    final AtomicInteger graphBuildCount = new AtomicInteger();
+    public final String id;
+    public final AtomicInteger dogsAdded = new AtomicInteger();
+    public final AtomicInteger dogsUpdated = new AtomicInteger();
+    public final AtomicInteger litterCount = new AtomicInteger();
+    public final AtomicInteger puppiesAdded = new AtomicInteger();
+    public final AtomicInteger dogsearchHit = new AtomicInteger();
+    public final AtomicInteger dogsearchMiss = new AtomicInteger();
+    public final AtomicInteger dogsearchPuppyHit = new AtomicInteger();
+    public final AtomicInteger dogsearchPuppyMiss = new AtomicInteger();
+    public final AtomicInteger graphPuppyHit = new AtomicInteger();
+    public final AtomicInteger graphPuppyMiss = new AtomicInteger();
+    public final AtomicInteger graphHit = new AtomicInteger();
+    public final AtomicInteger graphMiss = new AtomicInteger();
+    public final AtomicInteger fathersAdded = new AtomicInteger();
+    public final AtomicInteger mothersAdded = new AtomicInteger();
+    public final AtomicInteger maxDepth = new AtomicInteger();
+    public final AtomicInteger minDepth = new AtomicInteger(Integer.MAX_VALUE);
+    public final AtomicInteger graphBuildCount = new AtomicInteger();
 
-    TraversalStatistics(String id) {
+    public TraversalStatistics(String id) {
         this.id = id;
     }
 
