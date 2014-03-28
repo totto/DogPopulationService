@@ -1,11 +1,16 @@
 package no.nkk.dogpopulation.graph;
 
+import org.joda.time.LocalDateTime;
+
 /**
  * Constants match either: LABEL_PROPERTY or LABEL_PROPERTY_VALUE
  *
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
 public class DogGraphConstants {
+
+    // A timestamp before the very first timestamp of an entry on dogsearch
+    public static final LocalDateTime BEGINNING_OF_TIME = new LocalDateTime(2013, 12, 19, 0, 0, 0);
 
     public static final String BREEDGROUP_FCIBREEDGROUP = "FCIBreedGroup";
 
@@ -15,6 +20,7 @@ public class DogGraphConstants {
     public static final String BREED_CLUB_ID = "ClubId";
 
     public static final String BREEDSYNONYM_SYNONYM = "synonym";
+    public static final String BREEDSYNONYM_UPDATEDTO = "updatedTo";
 
     public static final String CATEGORY_CATEGORY = "category";
 

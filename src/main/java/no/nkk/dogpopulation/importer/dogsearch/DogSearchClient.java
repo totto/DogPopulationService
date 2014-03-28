@@ -1,6 +1,8 @@
 package no.nkk.dogpopulation.importer.dogsearch;
 
 
+import org.joda.time.LocalDateTime;
+
 import java.util.Set;
 import java.util.concurrent.Future;
 
@@ -9,7 +11,7 @@ import java.util.concurrent.Future;
  */
 public interface DogSearchClient {
 
-    Future<Set<String>> listIdsForBreed(String breed);
+    Set<String> listIdsForBreed(String breed, LocalDateTime from, LocalDateTime to);
     Future<DogDetails> findDog(String id);
 
     Set<String> listIdsForLastWeek();

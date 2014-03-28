@@ -10,16 +10,12 @@ import no.nkk.dogpopulation.graph.Neo4jModule;
 import no.nkk.dogpopulation.importer.PedigreeImporter;
 import no.nkk.dogpopulation.importer.PedigreeImporterFactory;
 import no.nkk.dogpopulation.importer.dogsearch.DogSearchClient;
-import no.nkk.dogpopulation.importer.dogsearch.UpdatesImporterTask;
 import org.eclipse.jetty.server.Server;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -104,6 +100,7 @@ public class Main {
             final PedigreeImporter pedigreeImporter = injector.getInstance(PedigreeImporterFactory.class).createInstance("recurring-updater");
             final DogSearchClient dogSearchClient = injector.getInstance(DogSearchClient.class);
 
+            /*
             Timer timer = new Timer("Recurring graph updater", true);
             timer.schedule(new TimerTask() {
                 @Override
@@ -113,6 +110,7 @@ public class Main {
                     updatesImporterTask.call();
                 }
             }, 5 * 1000, 45 * 1000);
+            */
 
             long durationMs = System.currentTimeMillis() - startTime;
             LOGGER.info("DogPopulation application started in {} seconds", Math.round(durationMs / 1000.0));

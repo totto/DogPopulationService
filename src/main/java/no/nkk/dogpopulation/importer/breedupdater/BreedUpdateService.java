@@ -3,6 +3,7 @@ package no.nkk.dogpopulation.importer.breedupdater;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import no.nkk.dogpopulation.concurrent.ExecutorManager;
+import no.nkk.dogpopulation.graph.GraphQueryService;
 import no.nkk.dogpopulation.importer.PedigreeImporterFactory;
 import no.nkk.dogpopulation.importer.dogsearch.DogSearchClient;
 
@@ -14,7 +15,7 @@ import java.util.*;
 @Singleton
 public class BreedUpdateService {
 
-    private final Map<String, BreedImportStatus> breedImportStatus = new LinkedHashMap<>(); // keep references forever
+    private final Map<String, BreedImportStatus> breedImportStatus = new LinkedHashMap<>();
 
     private final DogSearchClient dogSearchClient;
 
@@ -22,12 +23,14 @@ public class BreedUpdateService {
 
     private final PedigreeImporterFactory pedigreeImporterFactory;
 
+    private final GraphQueryService graphQueryService;
 
     @Inject
-    public BreedUpdateService(DogSearchClient dogSearchClient, ExecutorManager executorManager, PedigreeImporterFactory pedigreeImporterFactory) {
+    public BreedUpdateService(DogSearchClient dogSearchClient, ExecutorManager executorManager, PedigreeImporterFactory pedigreeImporterFactory, GraphQueryService graphQueryService) {
         this.dogSearchClient = dogSearchClient;
         this.executorManager = executorManager;
         this.pedigreeImporterFactory = pedigreeImporterFactory;
+        this.graphQueryService = graphQueryService;
     }
 
 
@@ -57,10 +60,20 @@ public class BreedUpdateService {
         }
 
         if (shouldImport) {
-            BreedImporterTask breedImporterTask = new BreedImporterTask(pedigreeImporterFactory, executorManager, dogSearchClient, breed, progress);
+            Runnable postProcessingTask = createPostProcessingTask(breed);
+            BreedImporterTask breedImporterTask = new BreedImporterTask(postProcessingTask, pedigreeImporterFactory, executorManager, dogSearchClient, breed, progress, graphQueryService);
             executorManager.getExecutor(ExecutorManager.BREED_IMPORTER_MAP_KEY).submit(breedImporterTask);
         }
         return progress;
+    }
+
+    private Runnable createPostProcessingTask(final String breed) {
+        return new Runnable() {
+            @Override
+            public void run() {
+                breedImportStatus.remove(breed);
+            }
+        };
     }
 
 }

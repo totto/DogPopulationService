@@ -9,6 +9,7 @@ import no.nkk.dogpopulation.graph.dataerror.circularparentchain.CircularParentCh
 import no.nkk.dogpopulation.graph.dataerror.circularparentchain.CircularRecord;
 import no.nkk.dogpopulation.graph.dataerror.gender.IncorrectGenderRecord;
 import no.nkk.dogpopulation.graph.dataerror.gender.IncorrectOrMissingGenderAlgorithm;
+import no.nkk.dogpopulation.graph.dogbuilder.BreedSynonymNodeCache;
 import no.nkk.dogpopulation.graph.hdindex.DmuHdIndexAlgorithm;
 import no.nkk.dogpopulation.graph.hdxray.HDXrayStatistics;
 import no.nkk.dogpopulation.graph.hdxray.HDXrayStatisticsAlgorithm;
@@ -25,6 +26,7 @@ import no.nkk.dogpopulation.graph.pedigree.TopLevelDog;
 import no.nkk.dogpopulation.graph.pedigreecompleteness.PedigreeCompleteness;
 import no.nkk.dogpopulation.graph.pedigreecompleteness.PedigreeCompletenessAlgorithm;
 import no.nkk.dogpopulation.importer.dogsearch.DogDetails;
+import org.joda.time.LocalDateTime;
 import org.neo4j.cypher.javacompat.ExecutionEngine;
 import org.neo4j.graphdb.*;
 import org.neo4j.graphdb.traversal.Evaluators;
@@ -49,11 +51,13 @@ public class GraphQueryService {
 
     private final GraphDatabaseService graphDb;
     private final ExecutionEngine engine;
+    private final BreedSynonymNodeCache breedSynonymNodeCache;
 
     @Inject
-    public GraphQueryService(GraphDatabaseService graphDb, ExecutionEngine executionEngine) {
+    public GraphQueryService(GraphDatabaseService graphDb, ExecutionEngine executionEngine, BreedSynonymNodeCache breedSynonymNodeCache) {
         this.graphDb = graphDb;
         engine = executionEngine;
+        this.breedSynonymNodeCache = breedSynonymNodeCache;
     }
 
 
@@ -401,6 +405,32 @@ public class GraphQueryService {
             List<String> uuids = algorithm.run(breedSet);
             tx.success();
             return uuids;
+        }
+    }
+
+
+    private final String pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
+
+    public LocalDateTime getUpdatedTo(String breedSynonym) {
+        Node breedSynonymNode = breedSynonymNodeCache.getBreed(breedSynonym);
+        try (Transaction tx = graphDb.beginTx()) {
+            LocalDateTime result;
+            if (breedSynonymNode.hasProperty(DogGraphConstants.BREEDSYNONYM_UPDATEDTO)) {
+                result = LocalDateTime.parse((String) breedSynonymNode.getProperty(DogGraphConstants.BREEDSYNONYM_UPDATEDTO));
+            } else {
+                result = DogGraphConstants.BEGINNING_OF_TIME;
+            }
+            tx.success();
+            return result;
+        }
+    }
+
+
+    public void setUpdatedTo(String breedSynonym, LocalDateTime updatedTo) {
+        Node breedSynonymNode = breedSynonymNodeCache.getBreed(breedSynonym);
+        try (Transaction tx = graphDb.beginTx()) {
+            breedSynonymNode.setProperty(DogGraphConstants.BREEDSYNONYM_UPDATEDTO, updatedTo.toString(pattern));
+            tx.success();
         }
     }
 

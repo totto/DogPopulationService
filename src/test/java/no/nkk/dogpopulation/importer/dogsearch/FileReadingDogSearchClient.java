@@ -3,6 +3,7 @@ package no.nkk.dogpopulation.importer.dogsearch;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.joda.time.LocalDateTime;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,7 +23,7 @@ public class FileReadingDogSearchClient implements DogSearchClient {
     }
 
     @Override
-    public Future<Set<String>> listIdsForBreed(String breed) {
+    public Set<String> listIdsForBreed(String breed, LocalDateTime from, LocalDateTime to) {
         throw new UnsupportedOperationException();
     }
 

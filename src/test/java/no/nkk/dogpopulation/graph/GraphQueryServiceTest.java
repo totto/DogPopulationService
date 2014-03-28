@@ -1,6 +1,7 @@
 package no.nkk.dogpopulation.graph;
 
 import no.nkk.dogpopulation.AbstractGraphTest;
+import org.joda.time.LocalDateTime;
 import org.neo4j.graphdb.Node;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -95,4 +96,14 @@ public class GraphQueryServiceTest extends AbstractGraphTest {
         Assert.assertTrue(dogsOfBreed.contains("E"));
     }
 
+    @Test
+    public void thatUpdatedToCanBeWrittenAndRead() {
+        String breedSynonym = "some-breed-for-testing";
+        LocalDateTime initialValue = graphQueryService.getUpdatedTo(breedSynonym);
+        Assert.assertEquals(initialValue, DogGraphConstants.BEGINNING_OF_TIME);
+        LocalDateTime to = new LocalDateTime(2013, 12, 19, 0, 15, 0);
+        graphQueryService.setUpdatedTo(breedSynonym, to);
+        LocalDateTime newValue = graphQueryService.getUpdatedTo(breedSynonym);
+        Assert.assertEquals(newValue, to);
+    }
 }

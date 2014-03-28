@@ -12,6 +12,7 @@ import no.nkk.dogpopulation.graph.bulkwrite.BulkWriteService;
 import no.nkk.dogpopulation.graph.dogbuilder.BreedSynonymNodeCache;
 import no.nkk.dogpopulation.graph.dogbuilder.Dogs;
 import no.nkk.dogpopulation.graph.pedigree.TopLevelDog;
+import org.joda.time.LocalDateTime;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
@@ -60,7 +61,7 @@ public class DogSearchPedigreeImporterTest {
         ExecutorService executorService = Executors.newFixedThreadPool(5);
         DogSearchClient dogSearchClient = new DogSearchClient() {
             @Override
-            public Future<Set<String>> listIdsForBreed(String breed) {
+            public Set<String> listIdsForBreed(String breed, LocalDateTime from, LocalDateTime to) {
                 throw new UnsupportedOperationException();
             }
 

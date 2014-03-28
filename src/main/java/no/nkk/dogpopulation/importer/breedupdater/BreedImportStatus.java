@@ -2,26 +2,31 @@ package no.nkk.dogpopulation.importer.breedupdater;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import no.nkk.dogpopulation.graph.DogGraphConstants;
 import no.nkk.dogpopulation.importer.dogsearch.TraversalStatistics;
 
 import java.text.DecimalFormat;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
-@JsonPropertyOrder({"breed", "active", "progress", "tasksCompleted", "totalTasks", "dogsAddedToGraph", "elapsedSeconds", "dogsPerSecond",
+@JsonPropertyOrder({"breed", "active", "updatedTo", "progress", "windowTasks", "windowCompleted", "tasksCompleted", "totalTasks", "dogsAddedToGraph", "elapsedSeconds", "dogsPerSecond",
         "dogsAdded", "dogsUpdated", "litterCount", "puppiesAdded", "dogsearchHit", "dogsearchMiss", "graphHit", "graphMiss", "fathersAdded", "mothersAdded", "graphBuildCount"})
 public class BreedImportStatus {
 
+    private final AtomicInteger windowTasks = new AtomicInteger();
+    private final AtomicInteger windowCompleted = new AtomicInteger();
     private final AtomicInteger totalTasks = new AtomicInteger();
     private final AtomicInteger tasksCompleted = new AtomicInteger();
     private final String breed;
     private final AtomicLong startTimeMs = new AtomicLong();
     private final AtomicLong elapsedTimeMs = new AtomicLong();
     private final AtomicBoolean active = new AtomicBoolean(true);
+    private final AtomicReference<String> updatedTo = new AtomicReference<>(DogGraphConstants.BEGINNING_OF_TIME.toString());
 
     @JsonIgnore
     private final TraversalStatistics ts;
@@ -30,6 +35,22 @@ public class BreedImportStatus {
     public BreedImportStatus(String breed) {
         this.breed = breed;
         this.ts = new TraversalStatistics(breed);
+    }
+
+    public void setWindowTasks(int windowTasks) {
+        this.windowTasks.set(windowTasks);
+    }
+
+    public int getWindowTasks() {
+        return windowTasks.get();
+    }
+
+    public void setWindowCompleted(int windowCompleted) {
+        this.windowCompleted.set(windowCompleted);
+    }
+
+    public int getWindowCompleted() {
+        return windowCompleted.get();
     }
 
     public void setTotalTasks(int totalTasks) {
@@ -58,6 +79,7 @@ public class BreedImportStatus {
 
     public void recordTaskComplete() {
         tasksCompleted.incrementAndGet();
+        windowCompleted.incrementAndGet();
         updateReferenceTime();
     }
 
@@ -107,10 +129,18 @@ public class BreedImportStatus {
     }
 
     public String getProgress() {
-        if (tasksCompleted.get() == 0) {
+        if (windowCompleted.get() == 0) {
             return "0.00";
         }
-        return new DecimalFormat("0.00").format(100.0 * tasksCompleted.get() / totalTasks.get());
+        return new DecimalFormat("0.00").format(100.0 * windowCompleted.get() / windowTasks.get());
+    }
+
+    public void setUpdatedTo(String updatedTo) {
+        this.updatedTo.set(updatedTo);
+    }
+
+    public String getUpdatedTo() {
+        return updatedTo.get();
     }
 
     @Override

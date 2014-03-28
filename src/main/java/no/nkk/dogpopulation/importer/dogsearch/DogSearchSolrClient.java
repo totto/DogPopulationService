@@ -14,12 +14,14 @@ import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrException;
+import org.joda.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
@@ -39,39 +41,53 @@ public class DogSearchSolrClient implements DogSearchClient {
 
     private final ExecutorService executorService;
 
+    private final String pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+
     @Inject
     public DogSearchSolrClient(@Named(ExecutorManager.SOLR_MAP_KEY) ExecutorService executorService, @Named("dogServiceUrl") String dogServiceUrl) {
         this.executorService = executorService;
         solrServer = new HttpSolrServer(dogServiceUrl);
     }
 
-    public Future<Set<String>> listIdsForBreed(final String breed) {
-        return executorService.submit(new Callable<Set<String>>() {
+    public Set<String> listIdsForBreed(final String breed, final LocalDateTime from, final LocalDateTime to) {
+        Future<Set<String>> future = executorService.submit(new Callable<Set<String>>() {
             @Override
             public Set<String> call() throws Exception {
-                int i=0;
-                long n = 0;
                 Set<String> ids = new LinkedHashSet<>();
-                do {
-                    QueryResponse queryResponse = runFindDogIdsQuery(breed, 5000, i);
-                    SolrDocumentList solrDocuments = queryResponse.getResults();
-                    long numFound = solrDocuments.getNumFound();
-                    n = solrDocuments.size();
-                    for (SolrDocument solrDocument : solrDocuments) {
-                        String id = (String) solrDocument.getFieldValue("id");
-                        ids.add(id);
-                    }
-                    LOGGER.trace("i={}, n={}, numFound={}", i, n, numFound);
-                    i += n;
-                } while (n > 0);
+                QueryResponse queryResponse = runFindDogIdsQuery(breed, from, to);
+                SolrDocumentList solrDocuments = queryResponse.getResults();
+                long numFound = solrDocuments.getNumFound();
+                long n = solrDocuments.size();
+                for (SolrDocument solrDocument : solrDocuments) {
+                    String id = (String) solrDocument.getFieldValue("id");
+                    ids.add(id);
+                }
+                LOGGER.trace("n={}, numFound={}", n, numFound);
                 return ids;
             }
 
             @Override
             public String toString() {
-                return "SOLR listing of all uuids of breed  " + breed;
+                return String.format("SOLR listing of uuids of breed %s between %s and %s", breed, from.toString(pattern), to.toString(pattern));
             }
         });
+        try {
+            return future.get();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (ExecutionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof TooManyNumFoundException) {
+                throw (TooManyNumFoundException) cause;
+            }
+            if (cause instanceof RuntimeException) {
+                throw (RuntimeException) cause;
+            }
+            if (cause instanceof Error) {
+                throw (Error) cause;
+            }
+            throw new RuntimeException(cause);
+        }
     }
 
     @Override
@@ -99,7 +115,7 @@ public class DogSearchSolrClient implements DogSearchClient {
 
     @Override
     public Set<String> listIdsForLastWeek() {
-        return runListIdsForLastTimeQuery(7*24*60*60);
+        return runListIdsForLastTimeQuery(7 * 24 * 60 * 60);
     }
 
     @Override
@@ -184,14 +200,19 @@ public class DogSearchSolrClient implements DogSearchClient {
         return 2 * waitTimeMs;
     }
 
-    private QueryResponse runFindDogIdsQuery(String breed, int n, int start) {
+    private QueryResponse runFindDogIdsQuery(String breed, LocalDateTime from, LocalDateTime to) {
         String ebreed = ClientUtils.escapeQueryChars(breed);
-        SolrQuery solrQuery = new SolrQuery(String.format("breed:\"%s\"", ebreed));
-        solrQuery.setSort("id", SolrQuery.ORDER.asc);
-        solrQuery.setFields("id");
-        solrQuery.setRows(n);
-        solrQuery.setStart(start);
-        return runSolrQueryWithRetries(solrQuery);
+        SolrQuery solrQuery = new SolrQuery(String.format("breed:\"%s\" AND timestamp:[%s TO %s]", ebreed, from.toString(pattern), to.toString(pattern)));
+        solrQuery.setSort("timestamp", SolrQuery.ORDER.asc);
+        solrQuery.setFields("id", "timestamp");
+        int MAX_RESULTS = 1000000;
+        solrQuery.setRows(MAX_RESULTS);
+        QueryResponse queryResponse = runSolrQueryWithRetries(solrQuery);
+        long numFound = queryResponse.getResults().getNumFound();
+        if (numFound > MAX_RESULTS) {
+            throw new RuntimeException("Too many responses found, please decrease time-window");
+        }
+        return queryResponse;
     }
 
     private DogDetails getFirstValidCandidate(String id, SolrDocumentList results) {
