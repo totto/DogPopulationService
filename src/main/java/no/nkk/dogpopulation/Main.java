@@ -1,22 +1,19 @@
 package no.nkk.dogpopulation;
 
-import com.google.inject.*;
-import com.google.inject.name.Names;
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
+import com.google.inject.Singleton;
 import no.nkk.dogpopulation.breedgroupimport.BreedGroupJsonImporter;
-import no.nkk.dogpopulation.concurrent.ExecutorManager;
 import no.nkk.dogpopulation.concurrent.ThreadingModule;
 import no.nkk.dogpopulation.graph.GraphSchemaMigrator;
 import no.nkk.dogpopulation.graph.Neo4jModule;
-import no.nkk.dogpopulation.importer.PedigreeImporter;
-import no.nkk.dogpopulation.importer.PedigreeImporterFactory;
-import no.nkk.dogpopulation.importer.dogsearch.DogSearchClient;
+import no.nkk.dogpopulation.importer.breedupdater.BreedUpdateService;
 import org.eclipse.jetty.server.Server;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
-
-import java.util.concurrent.ExecutorService;
 
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
@@ -96,21 +93,8 @@ public class Main {
             Main main = injector.getInstance(Main.class);
             main.start();
 
-            final ExecutorService executorService = injector.getInstance(Key.get(ExecutorService.class, Names.named(ExecutorManager.UPDATES_IMPORTER_MAP_KEY)));
-            final PedigreeImporter pedigreeImporter = injector.getInstance(PedigreeImporterFactory.class).createInstance("recurring-updater");
-            final DogSearchClient dogSearchClient = injector.getInstance(DogSearchClient.class);
-
-            /*
-            Timer timer = new Timer("Recurring graph updater", true);
-            timer.schedule(new TimerTask() {
-                @Override
-                public void run() {
-                    Set<String> uuids = dogSearchClient.listIdsForLastMinute();
-                    UpdatesImporterTask updatesImporterTask = new UpdatesImporterTask(executorService, pedigreeImporter, dogSearchClient, uuids);
-                    updatesImporterTask.call();
-                }
-            }, 5 * 1000, 45 * 1000);
-            */
+            BreedUpdateService breedUpdateService = injector.getInstance(BreedUpdateService.class);
+            breedUpdateService.initializeRecurringUpdates();
 
             long durationMs = System.currentTimeMillis() - startTime;
             LOGGER.info("DogPopulation application started in {} seconds", Math.round(durationMs / 1000.0));

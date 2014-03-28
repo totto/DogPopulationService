@@ -435,6 +435,26 @@ public class GraphQueryService {
     }
 
 
+    public List<String> listAllBreedSynonymsWithExistingPropertyUpdatedTo() {
+        List<String> result = new ArrayList<>();
+        try (Transaction tx = graphDb.beginTx()) {
+            Node breedGroupsNode = getSingleNode(DogGraphLabel.CATEGORY, DogGraphConstants.CATEGORY_CATEGORY, DogGraphConstants.CATEGORY_CATEGORY_BREEDGROUPS);
+            for (Path path : graphDb.traversalDescription()
+                    .uniqueness(Uniqueness.NODE_PATH)
+                    .relationships(DogGraphRelationshipType.MEMBER_OF, Direction.INCOMING)
+                    .evaluator(Evaluators.atDepth(3))
+                    .traverse(breedGroupsNode)) {
+                Node breedSynonymNode = path.endNode();
+                if (breedSynonymNode.hasProperty(DogGraphConstants.BREEDSYNONYM_UPDATEDTO)) {
+                    result.add((String) breedSynonymNode.getProperty(DogGraphConstants.BREEDSYNONYM_SYNONYM));
+                }
+            }
+            tx.success();
+            return result;
+        }
+    }
+
+
     private void populateDescendantIds(Node dog, Collection<? super String> descendants) {
         for (Path position : graphDb.traversalDescription()
                 .depthFirst()
@@ -462,4 +482,5 @@ public class GraphQueryService {
         }
         return getSingleNode(DogGraphLabel.DOG, DogGraphConstants.DOG_REGNO, id);
     }
+
 }

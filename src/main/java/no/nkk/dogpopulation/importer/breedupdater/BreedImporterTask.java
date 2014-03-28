@@ -43,10 +43,10 @@ public class BreedImporterTask implements Callable<Integer> {
 
     private final String executorName;
 
-    private ManageableExecutor manageableExecutor;
-
     private final Runnable postProcessingTask;
 
+    private ManageableExecutor manageableExecutor;
+    private PedigreeImporter breedSpecificPedigreeImporter;
 
     public BreedImporterTask(Runnable postProcessingTask, PedigreeImporterFactory pedigreeImporterFactory, ExecutorManager executorManager, DogSearchClient dogSearchClient, String breed, BreedImportStatus progress, GraphQueryService graphQueryService) {
         this.executorManager = executorManager;
@@ -63,14 +63,12 @@ public class BreedImporterTask implements Callable<Integer> {
     @Override
     public Integer call() {
         try {
-            PedigreeImporter breedSpecificPedigreeImporter = null;
             LocalDateTime from = graphQueryService.getUpdatedTo(breed);
-            LOGGER.info("Looking up new UUIDs on dogsearch for breed {} after {}", breed, from.toString());
+            LOGGER.trace("Looking up new UUIDs on dogsearch for breed {} after {}", breed, from.toString());
             int timeWindowMinutes = 60;
             LocalDateTime to = from.plusMinutes(timeWindowMinutes);
             int n = 0;
             try {
-                breedSpecificPedigreeImporter = pedigreeImporterFactory.createInstance(breed);
                 progress.updateStartTime();
                 while (LocalDateTime.now().isAfter(to)) {
                     LOGGER.trace("Searching {} dogs timestamped between {} and {}, importing pedigrees...", breed, from, to);
@@ -80,6 +78,7 @@ public class BreedImporterTask implements Callable<Integer> {
                         progress.setTotalTasks(progress.getTotalTasks() + breedIds.size());
                         progress.setWindowTasks(breedIds.size());
                         progress.setWindowCompleted(0);
+                        breedSpecificPedigreeImporter = getPedigreeImporter();
                         ExecutorService breedExecutor = getExecutorService(executorName);
                         List<Future<?>> futures = new ArrayList<>();
                         for (String id : breedIds) {
@@ -115,6 +114,13 @@ public class BreedImporterTask implements Callable<Integer> {
             LOGGER.error("", e);
             throw e;
         }
+    }
+
+    private PedigreeImporter getPedigreeImporter() {
+        if (breedSpecificPedigreeImporter == null) {
+            breedSpecificPedigreeImporter = pedigreeImporterFactory.createInstance(breed);
+        }
+        return breedSpecificPedigreeImporter;
     }
 
 

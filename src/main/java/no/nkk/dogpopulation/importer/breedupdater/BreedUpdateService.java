@@ -34,6 +34,22 @@ public class BreedUpdateService {
     }
 
 
+    public void initializeRecurringUpdates() {
+        Timer timer = new Timer("Recurring graph updater", true);
+        final int initialDelaySeconds = 5;
+        final int periodSeconds = 2 * 60;
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                List<String> breedSynonyms = graphQueryService.listAllBreedSynonymsWithExistingPropertyUpdatedTo();
+                for (String breedSynonym : breedSynonyms) {
+                    importBreed(breedSynonym);
+                }
+            }
+        }, initialDelaySeconds * 1000, periodSeconds * 1000);
+    }
+
+
     public BreedImportStatusAggregate statusAggregate() {
         List<BreedImportStatus> statusList;
         synchronized (breedImportStatus) {
