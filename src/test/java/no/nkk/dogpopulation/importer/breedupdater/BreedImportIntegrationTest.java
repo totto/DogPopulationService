@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.annotations.Test;
 
+import java.text.NumberFormat;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -69,15 +70,44 @@ public class BreedImportIntegrationTest {
                 shutdownExecutorAndAwaitTermination(breedImporterExecutor, 24 * 60);
             } catch (OutOfMemoryError e) {
 
-                fail("Unstable version, out of memory");
+                Runtime runtime = Runtime.getRuntime();
 
+                NumberFormat format = NumberFormat.getInstance();
+
+                StringBuilder sb = new StringBuilder();
+                long maxMemory = runtime.maxMemory();
+                long allocatedMemory = runtime.totalMemory();
+                long freeMemory = runtime.freeMemory();
+
+                sb.append("free memory: " + format.format(freeMemory / 1024) + "<br/>");
+                sb.append("allocated memory: " + format.format(allocatedMemory / 1024) + "<br/>");
+                sb.append("max memory: " + format.format(maxMemory / 1024) + "<br/>");
+                sb.append("total free memory: " + format.format((freeMemory + (maxMemory - allocatedMemory)) / 1024) + "<br/>");
+
+
+                fail("Unstable version, out of memory. before shotdown\n"+sb);
 
             } finally {
                 db.shutdown();
             }
         } catch (OutOfMemoryError e) {
 
-            fail("Unstable version, out of memory");
+            Runtime runtime = Runtime.getRuntime();
+
+            NumberFormat format = NumberFormat.getInstance();
+
+            StringBuilder sb = new StringBuilder();
+            long maxMemory = runtime.maxMemory();
+            long allocatedMemory = runtime.totalMemory();
+            long freeMemory = runtime.freeMemory();
+
+            sb.append("free memory: " + format.format(freeMemory / 1024) + "<br/>");
+            sb.append("allocated memory: " + format.format(allocatedMemory / 1024) + "<br/>");
+            sb.append("max memory: " + format.format(maxMemory / 1024) + "<br/>");
+            sb.append("total free memory: " + format.format((freeMemory + (maxMemory - allocatedMemory)) / 1024) + "<br/>");
+
+
+            fail("Unstable version, out of memory.\n"+sb);
 
         }
     }
