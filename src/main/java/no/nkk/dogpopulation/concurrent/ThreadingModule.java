@@ -12,16 +12,23 @@ import java.util.concurrent.ExecutorService;
  */
 public class ThreadingModule extends AbstractModule {
 
+    final int maxConcurrentBreedImports;
+    final int maxConcurrentPedigreePerBreedImports;
+
+    public ThreadingModule(int maxConcurrentBreedImports, int maxConcurrentPedigreePerBreedImports) {
+        this.maxConcurrentBreedImports = maxConcurrentBreedImports;
+        this.maxConcurrentPedigreePerBreedImports = maxConcurrentPedigreePerBreedImports;
+    }
+
     @Override
     protected void configure() {
-        final int MAX_CONCURRENT_BREED_IMPORTS = 20;
         ExecutorManager executorManager = new ExecutorManager();
         bind(ExecutorManager.class).toInstance(executorManager);
         bind(ExecutorService.class).annotatedWith(Names.named(ExecutorManager.BULK_WRITER_MAP_KEY)).toInstance(executorManager.addDirectHandoffExecutor(ExecutorManager.BULK_WRITER_MAP_KEY));
         bind(ExecutorService.class).annotatedWith(Names.named(ExecutorManager.SOLR_MAP_KEY)).toInstance(executorManager.addDirectHandoffExecutor(ExecutorManager.SOLR_MAP_KEY));
-        bind(ExecutorService.class).annotatedWith(Names.named(ExecutorManager.BREED_IMPORTER_MAP_KEY)).toInstance(executorManager.addUnboundedQueueExecutor(ExecutorManager.BREED_IMPORTER_MAP_KEY, MAX_CONCURRENT_BREED_IMPORTS));
+        bind(ExecutorService.class).annotatedWith(Names.named(ExecutorManager.BREED_IMPORTER_MAP_KEY)).toInstance(executorManager.addUnboundedQueueExecutor(ExecutorManager.BREED_IMPORTER_MAP_KEY, maxConcurrentBreedImports));
         bind(ExecutorService.class).annotatedWith(Names.named(ExecutorManager.TRAVERSER_MAP_KEY)).toInstance(executorManager.addDirectHandoffExecutor(ExecutorManager.TRAVERSER_MAP_KEY));
-        bind(ExecutorService.class).annotatedWith(Names.named(ExecutorManager.UPDATES_IMPORTER_MAP_KEY)).toInstance(executorManager.addUnboundedQueueExecutor(ExecutorManager.UPDATES_IMPORTER_MAP_KEY, 3));
+        bind(ExecutorService.class).annotatedWith(Names.named(ExecutorManager.UPDATES_IMPORTER_MAP_KEY)).toInstance(executorManager.addUnboundedQueueExecutor(ExecutorManager.UPDATES_IMPORTER_MAP_KEY, maxConcurrentPedigreePerBreedImports));
     }
 
     @Provides

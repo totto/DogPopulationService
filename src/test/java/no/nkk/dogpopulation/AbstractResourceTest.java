@@ -39,7 +39,7 @@ public class AbstractResourceTest {
     public void startServer() {
         final Injector injector = Guice.createInjector(
                 new UnittestModule(),
-                new ThreadingModule(),
+                new ThreadingModule(20, 3),
                 new Neo4jModule(),
                 new WebModule()
         );
