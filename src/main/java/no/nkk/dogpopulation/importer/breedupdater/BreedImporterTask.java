@@ -64,8 +64,8 @@ public class BreedImporterTask implements Callable<Integer> {
     public Integer call() {
         try {
             LocalDateTime from = graphQueryService.getUpdatedTo(breed);
-            LOGGER.trace("Looking up new UUIDs on dogsearch for breed {} after {}", breed, from.toString());
-            int timeWindowMinutes = 60;
+            LOGGER.debug("Starting update of breed {}, from {}", breed, from.toString());
+            int timeWindowMinutes = 24 * 60;
             LocalDateTime to = from.plusMinutes(timeWindowMinutes);
             int n = 0;
             try {
@@ -74,7 +74,7 @@ public class BreedImporterTask implements Callable<Integer> {
                     LOGGER.trace("Searching {} dogs timestamped between {} and {}, importing pedigrees...", breed, from, to);
                     Set<String> breedIds = dogSearchClient.listIdsForBreed(breed, from, to);
                     if (!breedIds.isEmpty()) {
-                        LOGGER.trace("Found {} {} dogs timestamped between {} and {}, importing pedigrees...", breedIds.size(), breed, from, to);
+                        LOGGER.debug("Found {} {} dogs timestamped between {} and {}, importing pedigrees...", breedIds.size(), breed, from, to);
                         progress.setTotalTasks(progress.getTotalTasks() + breedIds.size());
                         progress.setWindowTasks(breedIds.size());
                         progress.setWindowCompleted(0);
@@ -96,6 +96,7 @@ public class BreedImporterTask implements Callable<Integer> {
                     from = graphQueryService.getUpdatedTo(breed);
                     to = from.plusMinutes(timeWindowMinutes);
                 }
+                LOGGER.debug("Completed updating breed {}, to {}", breed, to.toString());
                 shutdownExecutor();
                 return n;
             } finally {

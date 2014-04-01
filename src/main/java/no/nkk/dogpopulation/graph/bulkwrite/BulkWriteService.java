@@ -77,6 +77,7 @@ public class BulkWriteService implements Runnable {
 
     @Override
     public void run() {
+        LOGGER.debug("Started {}", context);
         while (!done.get()) {
             bulkCount.incrementAndGet();
             final int MAX_RETRIES = 10;
@@ -102,7 +103,7 @@ public class BulkWriteService implements Runnable {
                 }
             }
         }
-        LOGGER.info("{} shutting down.", Thread.currentThread().getName());
+        LOGGER.debug("Shutting down {}", context);
     }
 
     @Override
