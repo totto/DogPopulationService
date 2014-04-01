@@ -31,8 +31,8 @@ public class BreedImportIntegrationTest {
     @Test(groups = "integration")
     public void thatImportOfAllBreedsCompletesWithoutExceptions() {
         try {
-            int maxConcurrentBreedImports = 50;
-            int maxConcurrentPedigreePerBreedImports = 5;
+            int maxConcurrentBreedImports = 500;
+            int maxConcurrentPedigreePerBreedImports = 500;
             final Injector injector = Guice.createInjector(
                     new IntegrationtestModule(),
                     new ThreadingModule(maxConcurrentBreedImports, maxConcurrentPedigreePerBreedImports),
@@ -67,12 +67,15 @@ public class BreedImportIntegrationTest {
              * Wait at most 24 hours for test to complete
              */
                 shutdownExecutorAndAwaitTermination(breedImporterExecutor, 24 * 60);
+            } catch (OutOfMemoryError e) {
+
+                fail("Unstable version, out of memory");
 
 
             } finally {
                 db.shutdown();
             }
-        } catch (Exception e) {
+        } catch (OutOfMemoryError e) {
 
             fail("Unstable version, out of memory");
 
