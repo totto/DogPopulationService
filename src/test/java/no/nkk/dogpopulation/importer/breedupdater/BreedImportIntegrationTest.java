@@ -28,11 +28,11 @@ public class BreedImportIntegrationTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BreedImportIntegrationTest.class);
 
-    @Test  //(groups = "integration")
+    @Test(groups = "integration")
     public void thatImportOfAllBreedsCompletesWithoutExceptions() {
         try {
-            int maxConcurrentBreedImports = 500;
-            int maxConcurrentPedigreePerBreedImports = 500;
+            int maxConcurrentBreedImports = 50;
+            int maxConcurrentPedigreePerBreedImports = 5;
             final Injector injector = Guice.createInjector(
                     new IntegrationtestModule(),
                     new ThreadingModule(maxConcurrentBreedImports, maxConcurrentPedigreePerBreedImports),
