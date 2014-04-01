@@ -16,7 +16,7 @@ import java.util.Iterator;
  */
 public class PedigreeBuilderTest extends AbstractGraphTest {
 
-    @Test
+    @Test(groups = "fast")
     public void thatAddDogOnEmptyGraphCreatesCorrectLineageToRoot() throws InterruptedException {
         // given
         String uuid = "uuid-1234567890";
@@ -31,7 +31,7 @@ public class PedigreeBuilderTest extends AbstractGraphTest {
         validateCorrectBreedLineage(uuid, name, breed);
     }
 
-    @Test
+    @Test(groups = "fast")
     public void thatAddDogTwiceDoesNotGenerateAdditionalNodes() throws InterruptedException {
         // given
         String uuid = "uuid-1234567890";
@@ -48,7 +48,7 @@ public class PedigreeBuilderTest extends AbstractGraphTest {
         validateCorrectBreedLineage(uuid, name, breed);
     }
 
-    @Test
+    @Test(groups = "fast")
     public void thatAddDogAndConnectParentGeneratesCorrectPedigree() throws InterruptedException {
         // given
         String breed = "Rottweiler";

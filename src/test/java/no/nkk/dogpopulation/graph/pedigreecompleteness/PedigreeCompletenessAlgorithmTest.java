@@ -15,7 +15,7 @@ import java.util.Set;
  */
 public class PedigreeCompletenessAlgorithmTest extends AbstractGraphTest {
 
-    @Test
+    @Test(groups = "fast")
     public void thatPedigreeWithInbreedingComputesWithCorrectSize() {
         // given
 
@@ -126,7 +126,7 @@ public class PedigreeCompletenessAlgorithmTest extends AbstractGraphTest {
         Assert.assertEquals(pedigreeSize, 21);
     }
 
-    @Test
+    @Test(groups = "fast")
     public void thatPedigreeCompletenessOfRottweilerAndPointerComputesCorrectlyWithoutAlsoIncludingBoxer() {
         // given
         Node rottweiler = breed("Rottweiler");

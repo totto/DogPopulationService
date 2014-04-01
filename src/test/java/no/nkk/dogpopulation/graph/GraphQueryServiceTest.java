@@ -14,7 +14,7 @@ import java.util.List;
  */
 public class GraphQueryServiceTest extends AbstractGraphTest {
 
-    @Test
+    @Test(groups = "fast")
     public void thatPopulateDescendantsIncludesAllButItself() {
         // given
         Node breedNode = breed("Unit-test Breed");
@@ -71,7 +71,7 @@ public class GraphQueryServiceTest extends AbstractGraphTest {
         Assert.assertTrue(descendants.contains("O"));
     }
 
-    @Test
+    @Test(groups = "fast")
     public void thatGetBreedDogsWorks() {
         // given
         Node breedNode = breed("Unit-test Breed");
@@ -96,7 +96,7 @@ public class GraphQueryServiceTest extends AbstractGraphTest {
         Assert.assertTrue(dogsOfBreed.contains("E"));
     }
 
-    @Test
+    @Test(groups = "fast")
     public void thatUpdatedToCanBeWrittenAndRead() {
         String breedSynonym = "some-breed-for-testing";
         LocalDateTime initialValue = graphQueryService.getUpdatedTo(breedSynonym);

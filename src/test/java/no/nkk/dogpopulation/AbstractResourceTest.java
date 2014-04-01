@@ -16,8 +16,8 @@ import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
@@ -35,7 +35,7 @@ public class AbstractResourceTest {
     @Inject
     protected ExecutorManager executorManager;
 
-    @BeforeClass
+    @BeforeMethod
     public void startServer() {
         final Injector injector = Guice.createInjector(
                 new UnittestModule(),
@@ -47,7 +47,7 @@ public class AbstractResourceTest {
         main.start();
     }
 
-    @AfterClass
+    @AfterMethod
     public void stopServer() throws Exception {
         if (main != null) {
             main.stop();

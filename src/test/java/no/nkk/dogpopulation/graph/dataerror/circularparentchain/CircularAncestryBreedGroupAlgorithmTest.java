@@ -15,7 +15,7 @@ import java.util.Set;
  */
 public class CircularAncestryBreedGroupAlgorithmTest extends AbstractGraphTest {
 
-    @Test
+    @Test(groups = "fast")
     public void thatCircularAncestryBreedGroupAlgorithmDetectsTheCircle() {
         Node breedNode = breed("Unit-test Breed");
         Set<String> breedSet = new LinkedHashSet<>();

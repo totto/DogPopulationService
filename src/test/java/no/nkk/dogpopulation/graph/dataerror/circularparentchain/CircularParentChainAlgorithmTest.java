@@ -13,7 +13,7 @@ import java.util.List;
  */
 public class CircularParentChainAlgorithmTest extends AbstractGraphTest {
 
-    @Test
+    @Test(groups = "fast")
     public void thatSimpleCircleCanBeDetected() {
         Node breedNode = breed("Unit-test Breed");
         addDog("A", breedNode, new LocalDate(2007, 6, 17));
@@ -34,7 +34,7 @@ public class CircularParentChainAlgorithmTest extends AbstractGraphTest {
         Assert.assertEquals(circle3.size(), 3);
     }
 
-    @Test
+    @Test(groups = "fast")
     public void thatCircleInAncestryNotIncludingDogItselfCanBeDetected() {
         Node breedNode = breed("Unit-test Breed");
         addDog("A", breedNode, new LocalDate(2007, 6, 17));
@@ -51,7 +51,7 @@ public class CircularParentChainAlgorithmTest extends AbstractGraphTest {
         Assert.assertEquals(circle.size(), 3);
     }
 
-    @Test
+    @Test(groups = "fast")
     public void thatCorrectPedigreeWontBedetectedAsHavingCircle() {
         Node breedNode = breed("Unit-test Breed");
         addDog("A", breedNode, new LocalDate(2007, 6, 17));

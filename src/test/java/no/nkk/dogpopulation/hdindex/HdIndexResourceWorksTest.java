@@ -10,7 +10,7 @@ import org.testng.annotations.Test;
  */
 public class HdIndexResourceWorksTest extends AbstractResourceTest {
 
-    @Test
+    @Test(groups = "fast")
     public void thatCreatingHdFilesForOneDogWithBreedCodeWorks() throws Exception {
         String breed = "Rottweiler";
         String uuid = "uuid-1234567890";
