@@ -38,7 +38,11 @@ public class BreedUpdateService {
         Timer timer = new Timer("Recurring graph updater", true);
         final int initialDelaySeconds = 5;
         final int periodSeconds = 2 * 60;
-        timer.schedule(new TimerTask() {
+        timer.schedule(createBreedUpdaterTask(), initialDelaySeconds * 1000, periodSeconds * 1000);
+    }
+
+    TimerTask createBreedUpdaterTask() {
+        return new TimerTask() {
             @Override
             public void run() {
                 List<String> breedSynonyms = graphQueryService.listAllBreedSynonymsWithExistingPropertyUpdatedTo();
@@ -46,7 +50,7 @@ public class BreedUpdateService {
                     importBreed(breedSynonym);
                 }
             }
-        }, initialDelaySeconds * 1000, periodSeconds * 1000);
+        };
     }
 
 
