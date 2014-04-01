@@ -435,6 +435,24 @@ public class GraphQueryService {
     }
 
 
+    public List<String> listAllBreedSynonyms() {
+        List<String> result = new ArrayList<>();
+        try (Transaction tx = graphDb.beginTx()) {
+            Node breedGroupsNode = getSingleNode(DogGraphLabel.CATEGORY, DogGraphConstants.CATEGORY_CATEGORY, DogGraphConstants.CATEGORY_CATEGORY_BREEDGROUPS);
+            for (Path path : graphDb.traversalDescription()
+                    .uniqueness(Uniqueness.NODE_PATH)
+                    .relationships(DogGraphRelationshipType.MEMBER_OF, Direction.INCOMING)
+                    .evaluator(Evaluators.atDepth(3))
+                    .traverse(breedGroupsNode)) {
+                Node breedSynonymNode = path.endNode();
+                result.add((String) breedSynonymNode.getProperty(DogGraphConstants.BREEDSYNONYM_SYNONYM));
+            }
+            tx.success();
+            return result;
+        }
+    }
+
+
     public List<String> listAllBreedSynonymsWithExistingPropertyUpdatedTo() {
         List<String> result = new ArrayList<>();
         try (Transaction tx = graphDb.beginTx()) {
