@@ -79,10 +79,10 @@ public class BreedImportIntegrationTest {
                 long allocatedMemory = runtime.totalMemory();
                 long freeMemory = runtime.freeMemory();
 
-                sb.append("free memory: " + format.format(freeMemory / 1024) + "/n");
-                sb.append("allocated memory: " + format.format(allocatedMemory / 1024) + "/n");
-                sb.append("max memory: " + format.format(maxMemory / 1024) + "/n");
-                sb.append("total free memory: " + format.format((freeMemory + (maxMemory - allocatedMemory)) / 1024) + "/n");
+                sb.append("free memory: " + format.format(freeMemory / 1024) + "  ");
+                sb.append("allocated memory: " + format.format(allocatedMemory / 1024) + "  ");
+                sb.append("max memory: " + format.format(maxMemory / 1024) + "  ");
+                sb.append("total free memory: " + format.format((freeMemory + (maxMemory - allocatedMemory)) / 1024) + "  ");
 
 
                 fail("Unstable version, out of memory. before shotdown\n"+sb);
@@ -101,10 +101,10 @@ public class BreedImportIntegrationTest {
             long allocatedMemory = runtime.totalMemory();
             long freeMemory = runtime.freeMemory();
 
-            sb.append("free memory: " + format.format(freeMemory / 1024) + "/n");
-            sb.append("allocated memory: " + format.format(allocatedMemory / 1024) + "/n");
-            sb.append("max memory: " + format.format(maxMemory / 1024) + "/n");
-            sb.append("total free memory: " + format.format((freeMemory + (maxMemory - allocatedMemory)) / 1024) + "/n");
+            sb.append("free memory: " + format.format(freeMemory / 1024) + "  ");
+            sb.append("allocated memory: " + format.format(allocatedMemory / 1024) + "  ");
+            sb.append("max memory: " + format.format(maxMemory / 1024) + "  ");
+            sb.append("total free memory: " + format.format((freeMemory + (maxMemory - allocatedMemory)) / 1024) + "  ");
 
 
             fail("Unstable version, out of memory.\n"+sb);
