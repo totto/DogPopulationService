@@ -14,7 +14,7 @@ import java.util.List;
  */
 public class IncorrectOrMissingGenderAlgorithmTest extends AbstractGraphTest {
 
-    @Test
+    @Test(groups = "fast")
     public void thatFemaleFatherIsIllegal() {
         Node breedNode = addBreed("Unit-test Breed", "12");
         Node A = addDog("A", breedNode);

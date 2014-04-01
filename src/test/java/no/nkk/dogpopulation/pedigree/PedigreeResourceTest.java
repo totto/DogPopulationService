@@ -12,7 +12,7 @@ import org.testng.annotations.Test;
  */
 public class PedigreeResourceTest extends AbstractResourceTest {
 
-    @Test
+    @Test(groups = "fast")
     public void thatPedigreeIsWellFormed() throws Exception {
         String breed = "Rottweiler";
         String childUuid = "uuid-1234567890";

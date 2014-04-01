@@ -10,7 +10,7 @@ import org.testng.annotations.Test;
  */
 public class InbreedingAlgorithmTest extends AbstractGraphTest {
 
-    @Test
+    @Test(groups = "fast")
     public void thatCoefficientOfInbreedingIsCorrectForOffspringOfAFatherWithDaughterMatingUsingPedigreeOfThreeGenerations() {
         // given
 
@@ -77,7 +77,7 @@ public class InbreedingAlgorithmTest extends AbstractGraphTest {
         Assert.assertEquals(coi, 0.25, 0.000001);
     }
 
-    @Test
+    @Test(groups = "fast")
     public void thatCoefficientOfInbreedingIsCorrectForOffspringOfAComplexInbreedingUsingPedigreeOfFourGenerations() {
         // given
 
@@ -180,7 +180,7 @@ public class InbreedingAlgorithmTest extends AbstractGraphTest {
     }
 
 
-    @Test
+    @Test(groups = "fast")
     public void thatCircularPedigreeDoesNotOverflowStack() {
         // given
 

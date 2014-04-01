@@ -27,7 +27,7 @@ public class BreedGroupJsonImporterTest extends AbstractGraphTest {
     private static final int BREED_IN_FILE = 411;
     private static final int SYNONYMS_IN_FILE = 923;
 
-    @Test
+    @Test(groups = "fast")
     public void thatJsonCanBeImportedIntoEmptyDatabase() throws IOException {
         //URL url = new URL("http://dogid.nkk.no/ras/Raser.json");
          URL url = new File("src/test/resources/breedimport/Raser.json").toURI().toURL();
@@ -39,7 +39,7 @@ public class BreedGroupJsonImporterTest extends AbstractGraphTest {
         validateFCIBreedGroupCount(GROUPS_IN_FILE);
     }
 
-    @Test
+    @Test(groups = "fast")
     public void thatJsonCanBeImportedWithExistingBreedSynonyms() throws IOException {
         Node australianCattleDogSynonymNode;
         try (Transaction tx = graphDb.beginTx()) {

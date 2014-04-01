@@ -28,7 +28,7 @@ public class BreedImportIntegrationTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BreedImportIntegrationTest.class);
 
-    @Test(groups = "integration")
+    @Test(groups = "oome")
     public void thatImportOfAllBreedsCompletesWithoutExceptions() {
         try {
             int maxConcurrentBreedImports = 500;

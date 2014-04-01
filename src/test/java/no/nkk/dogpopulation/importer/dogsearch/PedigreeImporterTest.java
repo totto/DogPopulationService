@@ -51,7 +51,7 @@ public class PedigreeImporterTest {
         executorService.shutdown();
     }
 
-    @Test
+    @Test(groups = "fast")
     public void thatImportOfSchaferWorks() throws InterruptedException, ExecutionException, TimeoutException {
         ExecutorService executorService = new ManageableExecutor(5, 30);
 

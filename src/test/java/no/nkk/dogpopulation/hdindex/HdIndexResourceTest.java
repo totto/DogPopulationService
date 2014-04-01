@@ -10,7 +10,7 @@ import org.testng.annotations.Test;
  */
 public class HdIndexResourceTest extends AbstractResourceTest {
 
-    @Test
+    @Test(groups = "fast")
     public void thatCreatingHdFilesWithMissingBreedCodeDoesNotWork() throws Exception {
         String breed = "Rottweiler";
         String uuid = "uuid-1234567890";

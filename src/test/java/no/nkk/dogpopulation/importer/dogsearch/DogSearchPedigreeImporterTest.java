@@ -56,7 +56,7 @@ public class DogSearchPedigreeImporterTest {
         executorService.shutdown();
     }
 
-    @Test
+    @Test(groups = "fast")
     public void thatAllRelevantFieldsArePresentInGraph() throws InterruptedException, ExecutionException, TimeoutException {
         ExecutorService executorService = Executors.newFixedThreadPool(5);
         DogSearchClient dogSearchClient = new DogSearchClient() {

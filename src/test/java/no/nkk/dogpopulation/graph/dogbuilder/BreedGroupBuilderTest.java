@@ -12,7 +12,7 @@ import java.util.Map;
  */
 public class BreedGroupBuilderTest extends AbstractGraphTest {
 
-    @Test
+    @Test(groups = "fast")
     public void thatAddingDogsCreatesBreedSynonymsOnly() {
         // when
         Node breedSynonym1 = breed("australian cattledog");
@@ -47,11 +47,11 @@ public class BreedGroupBuilderTest extends AbstractGraphTest {
         }
     }
 
-    @Test
+    @Test(groups = "fast")
     public void thatBreedGroupsCanBeCreatedInEmptyGraph() {
     }
 
-    @Test
+    @Test(groups = "fast")
     public void thatBreedGroupsCanBeAddedToExistingSynonyms() {
     }
 

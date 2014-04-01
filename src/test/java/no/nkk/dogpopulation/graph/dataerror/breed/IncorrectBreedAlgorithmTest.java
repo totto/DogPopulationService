@@ -12,7 +12,7 @@ import java.util.List;
  */
 public class IncorrectBreedAlgorithmTest  extends AbstractGraphTest {
 
-    @Test
+    @Test(groups = "fast")
     public void thatDobermannChildOfTwoDalmatinersIsConsideredIncorrectBreed() {
         Node dalmatiner = addBreed("Dalmatiner", "123");
         Node dobermann = addBreed("Dobermann", "456");
