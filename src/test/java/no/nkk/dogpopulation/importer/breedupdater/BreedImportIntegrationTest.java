@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import static org.testng.Assert.fail;
+
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
@@ -26,48 +28,54 @@ public class BreedImportIntegrationTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BreedImportIntegrationTest.class);
 
-    @Test(groups = "integration")
+    @Test  //(groups = "integration")
     public void thatImportOfAllBreedsCompletesWithoutExceptions() {
-        int maxConcurrentBreedImports = 50;
-        int maxConcurrentPedigreePerBreedImports = 5;
-        final Injector injector = Guice.createInjector(
-                new IntegrationtestModule(),
-                new ThreadingModule(maxConcurrentBreedImports, maxConcurrentPedigreePerBreedImports),
-                new Neo4jModule()
-        );
-
-        final GraphDatabaseService db = injector.getInstance(GraphDatabaseService.class);
         try {
-            BreedGroupJsonImporter breedGroupJsonImporter = injector.getInstance(BreedGroupJsonImporter.class);
-            BreedUpdateService breedUpdateService = injector.getInstance(BreedUpdateService.class);
-            ExecutorService breedImporterExecutor = injector.getInstance(Key.get(ExecutorService.class, Names.named(ExecutorManager.BREED_IMPORTER_MAP_KEY)));
-            GraphQueryService graphQueryService = injector.getInstance(GraphQueryService.class);
+            int maxConcurrentBreedImports = 500;
+            int maxConcurrentPedigreePerBreedImports = 500;
+            final Injector injector = Guice.createInjector(
+                    new IntegrationtestModule(),
+                    new ThreadingModule(maxConcurrentBreedImports, maxConcurrentPedigreePerBreedImports),
+                    new Neo4jModule()
+            );
+
+            final GraphDatabaseService db = injector.getInstance(GraphDatabaseService.class);
+            try {
+                BreedGroupJsonImporter breedGroupJsonImporter = injector.getInstance(BreedGroupJsonImporter.class);
+                BreedUpdateService breedUpdateService = injector.getInstance(BreedUpdateService.class);
+                ExecutorService breedImporterExecutor = injector.getInstance(Key.get(ExecutorService.class, Names.named(ExecutorManager.BREED_IMPORTER_MAP_KEY)));
+                GraphQueryService graphQueryService = injector.getInstance(GraphQueryService.class);
 
             /*
              * Test initialization
              */
 
-            breedGroupJsonImporter.importBreedGroup();
+                breedGroupJsonImporter.importBreedGroup();
 
-            markAllBreedSynonymNodesAsUpdatedToBeginningOfTime(graphQueryService); // will cause all breeds to be part of the import test
+                markAllBreedSynonymNodesAsUpdatedToBeginningOfTime(graphQueryService); // will cause all breeds to be part of the import test
 
-            Runnable theTaskToTest = breedUpdateService.createBreedUpdaterTask();
+                Runnable theTaskToTest = breedUpdateService.createBreedUpdaterTask();
 
             /*
              * Start the test asynchronously
              */
 
-            theTaskToTest.run(); // will queue tasks to update all breeds known to Raser.json
+                theTaskToTest.run(); // will queue tasks to update all breeds known to Raser.json
 
 
             /*
              * Wait at most 24 hours for test to complete
              */
-            shutdownExecutorAndAwaitTermination(breedImporterExecutor, 24 * 60);
+                shutdownExecutorAndAwaitTermination(breedImporterExecutor, 24 * 60);
 
 
-        } finally {
-            db.shutdown();
+            } finally {
+                db.shutdown();
+            }
+        } catch (Exception e) {
+
+            fail("Unstable version, out of memory");
+
         }
     }
 
