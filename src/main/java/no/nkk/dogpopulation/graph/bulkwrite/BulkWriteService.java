@@ -1,6 +1,7 @@
 package no.nkk.dogpopulation.graph.bulkwrite;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import no.nkk.dogpopulation.graph.Builder;
 import no.nkk.dogpopulation.graph.PostStepBuilder;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -21,6 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
+@Singleton
 public class BulkWriteService implements Runnable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BulkWriteService.class);
@@ -210,18 +212,15 @@ public class BulkWriteService implements Runnable {
     }
 
     private void addTaskToQueue(WriteTask<?> task) {
-        LOGGER.debug("Adding task to requestQueue...");
         try {
             requestQueue.put(task);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
-        LOGGER.debug("Added task to requestQueue DONE!");
     }
 
     private List<WriteTask<?>> createNextBulk() {
-        LOGGER.debug("Getting tasks from requestQueue...");
         List<WriteTask<?>> bulk = new LinkedList();
         try {
             WriteTask<?> task = requestQueue.take(); // block until at least one task is available on queue
@@ -230,9 +229,7 @@ public class BulkWriteService implements Runnable {
             Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
-        LOGGER.debug("Got one task from requestQueue, draining it now...");
         requestQueue.drainTo(bulk);
-        LOGGER.debug("Completed draining queue, consumed a total of {} tasks DONE!", bulk.size());
         return bulk;
     }
 
