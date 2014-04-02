@@ -14,6 +14,25 @@ Memory/Storage/Persistence
 Using Neo4J and bla bla bla
 Todo Kim: Fill in the blanks
 
+Thread limit in Linux
+-------
+During update and import of breeds, the application will need to allocate a lot of threads (usually not more than 2000 concurrent threads).
+It's important to ensure that the thread limit per user and process is set high enough, otherwise the JVM will die with an OutOfMemoryError while trying to allocate a new thread.
+
+This is the configuration set in production AWS to ensure stable operation of application
+
+```
+$ cat /etc/security/limits.conf
+* soft nofile 20000
+* hard nofile 20000
+```
+
+```
+$ cat /etc/security/limits.d/90-nproc.conf
+*          soft    nproc     21024
+root       soft    nproc     unlimited
+```
+
 REST API
 --------
 All results are returned in JSON format with the header: "Content-Type: application/json"  
