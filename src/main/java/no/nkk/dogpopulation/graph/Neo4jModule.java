@@ -65,9 +65,10 @@ public class Neo4jModule extends AbstractModule {
             Schema schema = graphDatabaseService.schema();
             startTime = System.currentTimeMillis();
             createIndexIfNeeded(schema, DogGraphLabel.CATEGORY, DogGraphConstants.CATEGORY_CATEGORY);
-            createIndexIfNeeded(schema, DogGraphLabel.BREED, DogGraphConstants.BREEDSYNONYM_SYNONYM);
+            createIndexIfNeeded(schema, DogGraphLabel.BREED_SYNONYM, DogGraphConstants.BREEDSYNONYM_SYNONYM);
             createIndexIfNeeded(schema, DogGraphLabel.DOG, DogGraphConstants.DOG_NAME);
             createIndexIfNeeded(schema, DogGraphLabel.DOG, DogGraphConstants.DOG_REGNO);
+            createIndexIfNeeded(schema, DogGraphLabel.LITTER, DogGraphConstants.LITTER_ID);
             createUniqueConstraintIfNeeded(schema, DogGraphLabel.DOG, DogGraphConstants.DOG_UUID);
             tx.success();
         }
