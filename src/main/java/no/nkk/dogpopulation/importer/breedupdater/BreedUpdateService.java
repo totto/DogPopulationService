@@ -91,7 +91,9 @@ public class BreedUpdateService {
         return new Runnable() {
             @Override
             public void run() {
-                breedImportStatus.remove(breed);
+                synchronized (breedImportStatus) {
+                    breedImportStatus.remove(breed);
+                }
             }
         };
     }
