@@ -72,7 +72,7 @@ public class BreedImporterTask implements Callable<Integer> {
                     LOGGER.trace("Searching {} dogs timestamped between {} and {}, importing pedigrees...", breed, from, to);
                     Set<String> breedIds = dogSearchClient.listIdsForBreed(breed, from, to);
                     if (!breedIds.isEmpty()) {
-                        LOGGER.debug("Found {} {} dogs timestamped between {} and {}, importing pedigrees...", breedIds.size(), breed, from, to);
+                        LOGGER.trace("Found {} {} dogs timestamped between {} and {}, importing pedigrees...", breedIds.size(), breed, from, to);
                         progress.setTotalTasks(progress.getTotalTasks() + breedIds.size());
                         progress.setWindowTasks(breedIds.size());
                         progress.setWindowCompleted(0);
