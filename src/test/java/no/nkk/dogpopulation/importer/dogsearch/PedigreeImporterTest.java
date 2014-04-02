@@ -4,7 +4,6 @@ import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import no.nkk.dogpopulation.UnittestModule;
-import no.nkk.dogpopulation.concurrent.ManageableExecutor;
 import no.nkk.dogpopulation.graph.GraphQueryService;
 import no.nkk.dogpopulation.graph.Neo4jModule;
 import no.nkk.dogpopulation.graph.bulkwrite.BulkWriteService;
@@ -44,7 +43,8 @@ public class PedigreeImporterTest {
                 new Neo4jModule()
         );
         injector.injectMembers(this);
-        executorService = Executors.newFixedThreadPool(5);
+        executorService = Executors.newFixedThreadPool(50);
+        bulkWriteService.start(executorService);
     }
 
     @AfterMethod
@@ -55,8 +55,6 @@ public class PedigreeImporterTest {
 
     @Test(groups = "fast")
     public void thatImportOfSchaferWorks() throws InterruptedException, ExecutionException, TimeoutException {
-        ExecutorService executorService = new ManageableExecutor(5, 30);
-
         String dogUuid = "93683d2b-3ad9-4531-bb3d-d8c43f9d99f0";
 
         // DogSearchClient dogSearchClient = createExternalDogSearchClient(dogUuid); // run once to extract test-data
