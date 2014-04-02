@@ -50,6 +50,7 @@ public class DogSearchPedigreeImporterTest {
         );
         injector.injectMembers(this);
         executorService = Executors.newFixedThreadPool(5);
+        bulkWriteService.start(executorService);
     }
 
     @AfterMethod
@@ -60,7 +61,6 @@ public class DogSearchPedigreeImporterTest {
 
     @Test(groups = "fast")
     public void thatAllRelevantFieldsArePresentInGraph() throws InterruptedException, ExecutionException, TimeoutException {
-        ExecutorService executorService = Executors.newFixedThreadPool(5);
         DogSearchClient dogSearchClient = new DogSearchClient() {
             @Override
             public Set<String> listIdsForBreed(String breed, LocalDateTime from, LocalDateTime to) {
