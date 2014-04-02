@@ -193,6 +193,8 @@ public class BulkWriteService implements Runnable {
 
         signalAllTasksComplete(currentBulk);
 
+        builderCount.addAndGet(currentBulk.size());
+
         if (LOGGER.isTraceEnabled()) {
             int size;
             synchronized (inProgress) {
