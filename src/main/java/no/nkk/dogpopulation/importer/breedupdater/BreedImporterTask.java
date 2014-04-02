@@ -4,7 +4,6 @@ import no.nkk.dogpopulation.concurrent.ExecutorManager;
 import no.nkk.dogpopulation.concurrent.ManageableExecutor;
 import no.nkk.dogpopulation.graph.GraphQueryService;
 import no.nkk.dogpopulation.importer.PedigreeImporter;
-import no.nkk.dogpopulation.importer.PedigreeImporterFactory;
 import no.nkk.dogpopulation.importer.dogsearch.DogSearchClient;
 import no.nkk.dogpopulation.importer.dogsearch.DogSearchPedigreeImporter;
 import no.nkk.dogpopulation.importer.dogsearch.TraversalStatistics;
@@ -30,7 +29,7 @@ public class BreedImporterTask implements Callable<Integer> {
      */
 
     private final ExecutorManager executorManager;
-    private final PedigreeImporterFactory pedigreeImporterFactory;
+    private final PedigreeImporter pedigreeImporter;
     private final DogSearchClient dogSearchClient;
     private final GraphQueryService graphQueryService;
 
@@ -46,11 +45,10 @@ public class BreedImporterTask implements Callable<Integer> {
     private final Runnable postProcessingTask;
 
     private ManageableExecutor manageableExecutor;
-    private PedigreeImporter breedSpecificPedigreeImporter;
 
-    public BreedImporterTask(Runnable postProcessingTask, PedigreeImporterFactory pedigreeImporterFactory, ExecutorManager executorManager, DogSearchClient dogSearchClient, String breed, BreedImportStatus progress, GraphQueryService graphQueryService) {
+    public BreedImporterTask(Runnable postProcessingTask, PedigreeImporter pedigreeImporter, ExecutorManager executorManager, DogSearchClient dogSearchClient, String breed, BreedImportStatus progress, GraphQueryService graphQueryService) {
         this.executorManager = executorManager;
-        this.pedigreeImporterFactory = pedigreeImporterFactory;
+        this.pedigreeImporter = pedigreeImporter;
         this.dogSearchClient = dogSearchClient;
         this.breed = breed;
         this.progress = progress;
@@ -78,11 +76,10 @@ public class BreedImporterTask implements Callable<Integer> {
                         progress.setTotalTasks(progress.getTotalTasks() + breedIds.size());
                         progress.setWindowTasks(breedIds.size());
                         progress.setWindowCompleted(0);
-                        breedSpecificPedigreeImporter = getPedigreeImporter();
                         ExecutorService breedExecutor = getExecutorService(executorName);
                         List<Future<?>> futures = new ArrayList<>();
                         for (String id : breedIds) {
-                            futures.add(breedExecutor.submit(createTaskForImportOfPedigree(breedSpecificPedigreeImporter, breed, progress, id)));
+                            futures.add(breedExecutor.submit(createTaskForImportOfPedigree(breed, progress, id)));
                             n++;
                         }
                         for (Future<?> future : futures) {
@@ -100,9 +97,6 @@ public class BreedImporterTask implements Callable<Integer> {
                 shutdownExecutor();
                 return n;
             } finally {
-                if (breedSpecificPedigreeImporter != null) {
-                    breedSpecificPedigreeImporter.stop();
-                }
                 postProcessingTask.run();
             }
         } catch (RuntimeException e) {
@@ -116,14 +110,6 @@ public class BreedImporterTask implements Callable<Integer> {
             throw e;
         }
     }
-
-    private PedigreeImporter getPedigreeImporter() {
-        if (breedSpecificPedigreeImporter == null) {
-            breedSpecificPedigreeImporter = pedigreeImporterFactory.createInstance(breed);
-        }
-        return breedSpecificPedigreeImporter;
-    }
-
 
     private void waitForTaskToComplete(Future<?> future) {
         try {
@@ -168,7 +154,7 @@ public class BreedImporterTask implements Callable<Integer> {
         return manageableExecutor;
     }
 
-    private Runnable createTaskForImportOfPedigree(final PedigreeImporter pedigreeImporter, final String breed, final BreedImportStatus progress, final String id) {
+    private Runnable createTaskForImportOfPedigree(final String breed, final BreedImportStatus progress, final String id) {
         return new Runnable() {
             @Override
             public void run() {

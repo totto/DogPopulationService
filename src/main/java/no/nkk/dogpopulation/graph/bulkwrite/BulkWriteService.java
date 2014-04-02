@@ -1,5 +1,6 @@
 package no.nkk.dogpopulation.graph.bulkwrite;
 
+import com.google.inject.Inject;
 import no.nkk.dogpopulation.graph.Builder;
 import no.nkk.dogpopulation.graph.PostStepBuilder;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -61,12 +62,10 @@ public class BulkWriteService implements Runnable {
 
     private final long start;
 
-    private final String context;
 
-
-    public BulkWriteService(GraphDatabaseService graphDb, String context) {
+    @Inject
+    public BulkWriteService(GraphDatabaseService graphDb) {
         this.graphDb = graphDb;
-        this.context = context;
         fullQueue = lock.newCondition();
         emptyQueue = lock.newCondition();
         mySequence = bulkWriterServiceSequence.getAndIncrement();
@@ -77,7 +76,7 @@ public class BulkWriteService implements Runnable {
 
     @Override
     public void run() {
-        LOGGER.debug("Started {}", context);
+        LOGGER.info("Started.");
         while (!done.get()) {
             bulkCount.incrementAndGet();
             final int MAX_RETRIES = 10;
@@ -103,7 +102,7 @@ public class BulkWriteService implements Runnable {
                 }
             }
         }
-        LOGGER.debug("Shutting down {}", context);
+        LOGGER.info("Shutting down.");
     }
 
     @Override
@@ -117,7 +116,7 @@ public class BulkWriteService implements Runnable {
         }
         long currentBulkCount = bulkCount.get();
         long load = builderCount.get() / (1 + ((System.currentTimeMillis() - start) / 1000));
-        return String.format("%d %s (bulk %d, pending %d, load %d builders/sec)", mySequence, context, currentBulkCount, currentPendingCount, load);
+        return String.format("%d (bulk %d, pending %d, load %d builders/sec)", mySequence, currentBulkCount, currentPendingCount, load);
     }
 
     public BulkWriteService start(ExecutorService executorService) {

@@ -3,9 +3,9 @@ package no.nkk.dogpopulation;
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 import com.jayway.restassured.RestAssured;
-import no.nkk.dogpopulation.importer.PedigreeImporterFactory;
+import no.nkk.dogpopulation.importer.PedigreeImporter;
 import no.nkk.dogpopulation.importer.dogsearch.DogSearchClient;
-import no.nkk.dogpopulation.importer.dogsearch.DogTestImporterFactory;
+import no.nkk.dogpopulation.importer.dogsearch.DogTestImporter;
 import no.nkk.dogpopulation.importer.dogsearch.FileReadingDogSearchClient;
 import org.apache.commons.io.FileUtils;
 
@@ -41,7 +41,7 @@ public class UnittestModule extends AbstractModule {
         bind(int.class).annotatedWith(Names.named("maxThreads")).toInstance(3);
         bind(int.class).annotatedWith(Names.named("minThreads")).toInstance(1);
 
-        bind(PedigreeImporterFactory.class).to(DogTestImporterFactory.class);
+        bind(PedigreeImporter.class).to(DogTestImporter.class);
 
         bind(String.class).annotatedWith(Names.named("pedigree-test-uuid")).toInstance("93683d2b-3ad9-4531-bb3d-d8c43f9d99f0");
         bind(DogSearchClient.class).to(FileReadingDogSearchClient.class);

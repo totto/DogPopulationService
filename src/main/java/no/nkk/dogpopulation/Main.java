@@ -1,19 +1,21 @@
 package no.nkk.dogpopulation;
 
-import com.google.inject.Guice;
-import com.google.inject.Inject;
-import com.google.inject.Injector;
-import com.google.inject.Singleton;
+import com.google.inject.*;
+import com.google.inject.name.Names;
 import no.nkk.dogpopulation.breedgroupimport.BreedGroupJsonImporter;
+import no.nkk.dogpopulation.concurrent.ExecutorManager;
 import no.nkk.dogpopulation.concurrent.ThreadingModule;
 import no.nkk.dogpopulation.graph.GraphSchemaMigrator;
 import no.nkk.dogpopulation.graph.Neo4jModule;
+import no.nkk.dogpopulation.graph.bulkwrite.BulkWriteService;
 import no.nkk.dogpopulation.importer.breedupdater.BreedUpdateService;
 import org.eclipse.jetty.server.Server;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
+
+import java.util.concurrent.ExecutorService;
 
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
@@ -89,6 +91,10 @@ public class Main {
 
             BreedGroupJsonImporter breedGroupJsonImporter = injector.getInstance(BreedGroupJsonImporter.class);
             breedGroupJsonImporter.importBreedGroup();
+
+            BulkWriteService bulkWriteService = injector.getInstance(BulkWriteService.class);
+            ExecutorService bulkWriterExecutor = injector.getInstance(Key.get(ExecutorService.class, Names.named(ExecutorManager.BULK_WRITER_MAP_KEY)));
+            bulkWriteService.start(bulkWriterExecutor);
 
             Main main = injector.getInstance(Main.class);
             main.start();

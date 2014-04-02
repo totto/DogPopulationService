@@ -2,9 +2,9 @@ package no.nkk.dogpopulation;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
-import no.nkk.dogpopulation.importer.PedigreeImporterFactory;
+import no.nkk.dogpopulation.importer.PedigreeImporter;
 import no.nkk.dogpopulation.importer.dogsearch.DogSearchClient;
-import no.nkk.dogpopulation.importer.dogsearch.DogSearchPedigreeImporterFactory;
+import no.nkk.dogpopulation.importer.dogsearch.DogSearchPedigreeImporter;
 import no.nkk.dogpopulation.importer.dogsearch.DogSearchSolrClient;
 
 import java.net.MalformedURLException;
@@ -28,7 +28,7 @@ public class ConfigurationModule extends AbstractModule {
         bind(int.class).annotatedWith(Names.named("maxThreads")).toInstance(50);
         bind(int.class).annotatedWith(Names.named("minThreads")).toInstance(5);
 
-        bind(PedigreeImporterFactory.class).to(DogSearchPedigreeImporterFactory.class);
+        bind(PedigreeImporter.class).to(DogSearchPedigreeImporter.class);
         bind(DogSearchClient.class).to(DogSearchSolrClient.class);
     }
 

@@ -2,9 +2,9 @@ package no.nkk.dogpopulation.importer.breedupdater;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
-import no.nkk.dogpopulation.importer.PedigreeImporterFactory;
+import no.nkk.dogpopulation.importer.PedigreeImporter;
 import no.nkk.dogpopulation.importer.dogsearch.DogSearchClient;
-import no.nkk.dogpopulation.importer.dogsearch.DogSearchPedigreeImporterFactory;
+import no.nkk.dogpopulation.importer.dogsearch.DogSearchPedigreeImporter;
 import no.nkk.dogpopulation.importer.dogsearch.DogSearchSolrClient;
 import org.apache.commons.io.FileUtils;
 
@@ -28,7 +28,7 @@ public class IntegrationtestModule extends AbstractModule {
 
         bind(URL.class).annotatedWith(Names.named("breedJsonUrl")).toInstance(toUrl(new File("src/test/resources/breedimport/Raser.json")));
 
-        bind(PedigreeImporterFactory.class).to(DogSearchPedigreeImporterFactory.class);
+        bind(PedigreeImporter.class).to(DogSearchPedigreeImporter.class);
 
         bind(String.class).annotatedWith(Names.named("dogServiceUrl")).toInstance("http://dogsearch.nkk.no/dogservice/dogs");
         bind(DogSearchClient.class).to(DogSearchSolrClient.class);

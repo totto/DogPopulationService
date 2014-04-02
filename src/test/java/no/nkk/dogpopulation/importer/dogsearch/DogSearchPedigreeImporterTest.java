@@ -37,6 +37,8 @@ public class DogSearchPedigreeImporterTest {
     BreedSynonymNodeCache breedSynonymNodeCache;
     @Inject
     Dogs dogs;
+    @Inject
+    BulkWriteService bulkWriteService;
 
     ExecutorService executorService;
 
@@ -98,8 +100,6 @@ public class DogSearchPedigreeImporterTest {
                 throw new UnsupportedOperationException();
             }
         };
-
-        BulkWriteService bulkWriteService = new BulkWriteService(graphDb, "unittest").start(executorService);
 
         DogSearchPedigreeImporter importer = new DogSearchPedigreeImporter(executorService, graphDb, dogSearchClient, dogs, breedSynonymNodeCache, bulkWriteService, graphQueryService);
         Future<String> future = importer.importPedigree("AB/12345/67");

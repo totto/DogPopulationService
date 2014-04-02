@@ -10,6 +10,7 @@ import no.nkk.dogpopulation.concurrent.ThreadingModule;
 import no.nkk.dogpopulation.graph.DogGraphConstants;
 import no.nkk.dogpopulation.graph.GraphQueryService;
 import no.nkk.dogpopulation.graph.Neo4jModule;
+import no.nkk.dogpopulation.graph.bulkwrite.BulkWriteService;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +47,10 @@ public class BreedImportIntegrationTest {
                 BreedUpdateService breedUpdateService = injector.getInstance(BreedUpdateService.class);
                 ExecutorService breedImporterExecutor = injector.getInstance(Key.get(ExecutorService.class, Names.named(ExecutorManager.BREED_IMPORTER_MAP_KEY)));
                 GraphQueryService graphQueryService = injector.getInstance(GraphQueryService.class);
+
+                BulkWriteService bulkWriteService = injector.getInstance(BulkWriteService.class);
+                ExecutorService bulkWriterExecutor = injector.getInstance(Key.get(ExecutorService.class, Names.named(ExecutorManager.BULK_WRITER_MAP_KEY)));
+                bulkWriteService.start(bulkWriterExecutor);
 
             /*
              * Test initialization

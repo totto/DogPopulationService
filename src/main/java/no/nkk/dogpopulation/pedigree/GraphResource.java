@@ -16,7 +16,6 @@ import no.nkk.dogpopulation.graph.litter.LitterStatistics;
 import no.nkk.dogpopulation.graph.pedigree.TopLevelDog;
 import no.nkk.dogpopulation.graph.pedigreecompleteness.PedigreeCompleteness;
 import no.nkk.dogpopulation.importer.PedigreeImporter;
-import no.nkk.dogpopulation.importer.PedigreeImporterFactory;
 import no.nkk.dogpopulation.importer.breedupdater.BreedImportStatus;
 import no.nkk.dogpopulation.importer.breedupdater.BreedImportStatusAggregate;
 import no.nkk.dogpopulation.importer.breedupdater.BreedUpdateService;
@@ -52,7 +51,7 @@ public class GraphResource {
 
     private final DogSearchClient dogSearchClient;
 
-    private final PedigreeImporter updatesPedigreeImporter;
+    private final PedigreeImporter pedigreeImporter;
 
     private final ExecutorService updatesImporterExecutorService;
 
@@ -60,14 +59,14 @@ public class GraphResource {
     public GraphResource(
             @Named(ExecutorManager.UPDATES_IMPORTER_MAP_KEY) ExecutorService updatesImporterExecutorService,
             GraphQueryService graphQueryService, BreedUpdateService breedUpdateService, DogSearchClient dogSearchClient,
-            PedigreeImporterFactory pedigreeImporterFactory) {
+            PedigreeImporter pedigreeImporter) {
         this.breedUpdateService = breedUpdateService;
         objectMapper = new ObjectMapper();
         prettyPrintingObjectWriter = objectMapper.writerWithDefaultPrettyPrinter();
         this.updatesImporterExecutorService = updatesImporterExecutorService;
         this.graphQueryService = graphQueryService;
         this.dogSearchClient = dogSearchClient;
-        this.updatesPedigreeImporter = pedigreeImporterFactory.createInstance("graph-resource");
+        this.pedigreeImporter = pedigreeImporter;
     }
 
 
@@ -77,7 +76,7 @@ public class GraphResource {
     public Response reimportDog(@PathParam("id") String id) {
         LOGGER.trace("reimportDog for dog with id " + id);
 
-        updatesPedigreeImporter.importDogPedigree(id);
+        pedigreeImporter.importDogPedigree(id);
 
         TopLevelDog dog = graphQueryService.getPedigree(id);
 
@@ -101,7 +100,7 @@ public class GraphResource {
 
         Set<String> uuids = dogSearchClient.listIdsForLastWeek();
 
-        UpdatesImporterTask updatesImporterTask = new UpdatesImporterTask(updatesImporterExecutorService, updatesPedigreeImporter, dogSearchClient, uuids);
+        UpdatesImporterTask updatesImporterTask = new UpdatesImporterTask(updatesImporterExecutorService, pedigreeImporter, dogSearchClient, uuids);
         int n = updatesImporterTask.call();
 
         try {
@@ -120,7 +119,7 @@ public class GraphResource {
 
         Set<String> uuids = dogSearchClient.listIdsForLastDay();
 
-        UpdatesImporterTask updatesImporterTask = new UpdatesImporterTask(updatesImporterExecutorService, updatesPedigreeImporter, dogSearchClient, uuids);
+        UpdatesImporterTask updatesImporterTask = new UpdatesImporterTask(updatesImporterExecutorService, pedigreeImporter, dogSearchClient, uuids);
         int n = updatesImporterTask.call();
 
         try {
@@ -139,7 +138,7 @@ public class GraphResource {
 
         Set<String> uuids = dogSearchClient.listIdsForLastHour();
 
-        UpdatesImporterTask updatesImporterTask = new UpdatesImporterTask(updatesImporterExecutorService, updatesPedigreeImporter, dogSearchClient, uuids);
+        UpdatesImporterTask updatesImporterTask = new UpdatesImporterTask(updatesImporterExecutorService, pedigreeImporter, dogSearchClient, uuids);
         int n = updatesImporterTask.call();
 
         try {
@@ -158,7 +157,7 @@ public class GraphResource {
 
         Set<String> uuids = dogSearchClient.listIdsForLastMinute();
 
-        UpdatesImporterTask updatesImporterTask = new UpdatesImporterTask(updatesImporterExecutorService, updatesPedigreeImporter, dogSearchClient, uuids);
+        UpdatesImporterTask updatesImporterTask = new UpdatesImporterTask(updatesImporterExecutorService, pedigreeImporter, dogSearchClient, uuids);
         int n = updatesImporterTask.call();
 
         try {

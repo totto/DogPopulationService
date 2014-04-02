@@ -4,7 +4,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import no.nkk.dogpopulation.concurrent.ExecutorManager;
 import no.nkk.dogpopulation.graph.GraphQueryService;
-import no.nkk.dogpopulation.importer.PedigreeImporterFactory;
+import no.nkk.dogpopulation.importer.PedigreeImporter;
 import no.nkk.dogpopulation.importer.dogsearch.DogSearchClient;
 
 import java.util.*;
@@ -21,15 +21,15 @@ public class BreedUpdateService {
 
     private final ExecutorManager executorManager;
 
-    private final PedigreeImporterFactory pedigreeImporterFactory;
+    private final PedigreeImporter pedigreeImporter;
 
     private final GraphQueryService graphQueryService;
 
     @Inject
-    public BreedUpdateService(DogSearchClient dogSearchClient, ExecutorManager executorManager, PedigreeImporterFactory pedigreeImporterFactory, GraphQueryService graphQueryService) {
+    public BreedUpdateService(DogSearchClient dogSearchClient, ExecutorManager executorManager, PedigreeImporter pedigreeImporter, GraphQueryService graphQueryService) {
         this.dogSearchClient = dogSearchClient;
         this.executorManager = executorManager;
-        this.pedigreeImporterFactory = pedigreeImporterFactory;
+        this.pedigreeImporter = pedigreeImporter;
         this.graphQueryService = graphQueryService;
     }
 
@@ -81,7 +81,7 @@ public class BreedUpdateService {
 
         if (shouldImport) {
             Runnable postProcessingTask = createPostProcessingTask(breed);
-            BreedImporterTask breedImporterTask = new BreedImporterTask(postProcessingTask, pedigreeImporterFactory, executorManager, dogSearchClient, breed, progress, graphQueryService);
+            BreedImporterTask breedImporterTask = new BreedImporterTask(postProcessingTask, pedigreeImporter, executorManager, dogSearchClient, breed, progress, graphQueryService);
             executorManager.getExecutor(ExecutorManager.BREED_IMPORTER_MAP_KEY).submit(breedImporterTask);
         }
         return progress;

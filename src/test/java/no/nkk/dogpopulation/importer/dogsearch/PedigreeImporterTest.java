@@ -32,6 +32,8 @@ public class PedigreeImporterTest {
     BreedSynonymNodeCache breedSynonymNodeCache;
     @Inject
     Dogs dogs;
+    @Inject
+    BulkWriteService bulkWriteService;
 
     ExecutorService executorService;
 
@@ -60,8 +62,6 @@ public class PedigreeImporterTest {
         // DogSearchClient dogSearchClient = createExternalDogSearchClient(dogUuid); // run once to extract test-data
 
         DogSearchClient dogSearchClient = new FileReadingDogSearchClient(dogUuid);
-
-        BulkWriteService bulkWriteService = new BulkWriteService(graphDb, "unittest").start(executorService);
 
         DogSearchPedigreeImporter importer = new DogSearchPedigreeImporter(executorService, graphDb, dogSearchClient, dogs, breedSynonymNodeCache, bulkWriteService, graphQueryService);
         Future<String> future = importer.importPedigree(dogUuid);
