@@ -33,8 +33,8 @@ public class BreedImportIntegrationTest {
     @Test(groups = "oome")
     public void thatImportOfAllBreedsCompletesWithoutExceptions() {
         try {
-            int maxConcurrentBreedImports = 500;
-            int maxConcurrentPedigreePerBreedImports = 500;
+            int maxConcurrentBreedImports = 5;
+            int maxConcurrentPedigreePerBreedImports = 1;
             final Injector injector = Guice.createInjector(
                     new IntegrationtestModule(),
                     new ThreadingModule(maxConcurrentBreedImports, maxConcurrentPedigreePerBreedImports),

@@ -11,12 +11,11 @@ import java.util.concurrent.*;
  */
 public class WriteTask<V> implements Future<V> {
 
-    private final CountDownLatch countDownLatch;
+    private final CountDownLatch countDownLatch = new CountDownLatch(1);
     private final Builder<V> builder;
     private V value;
 
-    public WriteTask(CountDownLatch countDownLatch, Builder<V> builder) {
-        this.countDownLatch = countDownLatch;
+    public WriteTask(Builder<V> builder) {
         this.builder = builder;
     }
 
@@ -24,6 +23,10 @@ public class WriteTask<V> implements Future<V> {
         V value = builder.build(graphDb);
         // Value is dirty and must be unavailable until graph-database transaction is committed, signalled with count-down-latch.
         this.value = value;
+    }
+
+    void signalComplete() {
+        countDownLatch.countDown();
     }
 
     void rollback() {
