@@ -75,46 +75,33 @@ public class BreedImportIntegrationTest {
                 shutdownExecutorAndAwaitTermination(breedImporterExecutor, 24 * 60);
             } catch (OutOfMemoryError e) {
 
-                Runtime runtime = Runtime.getRuntime();
-
-                NumberFormat format = NumberFormat.getInstance();
-
-                StringBuilder sb = new StringBuilder();
-                long maxMemory = runtime.maxMemory();
-                long allocatedMemory = runtime.totalMemory();
-                long freeMemory = runtime.freeMemory();
-
-                sb.append("free memory: " + format.format(freeMemory / 1024) + "  ");
-                sb.append("allocated memory: " + format.format(allocatedMemory / 1024) + "  ");
-                sb.append("max memory: " + format.format(maxMemory / 1024) + "  ");
-                sb.append("total free memory: " + format.format((freeMemory + (maxMemory - allocatedMemory)) / 1024) + "  ");
-
-
-                fail("Unstable version, out of memory. before shotdown\n"+sb);
+                fail("Unstable version, out of memory. before shotdown\n"+getRuntimeMemoryDetails());
 
             } finally {
                 db.shutdown();
             }
         } catch (OutOfMemoryError e) {
 
-            Runtime runtime = Runtime.getRuntime();
-
-            NumberFormat format = NumberFormat.getInstance();
-
-            StringBuilder sb = new StringBuilder();
-            long maxMemory = runtime.maxMemory();
-            long allocatedMemory = runtime.totalMemory();
-            long freeMemory = runtime.freeMemory();
-
-            sb.append("free memory: " + format.format(freeMemory / 1024) + "  ");
-            sb.append("allocated memory: " + format.format(allocatedMemory / 1024) + "  ");
-            sb.append("max memory: " + format.format(maxMemory / 1024) + "  ");
-            sb.append("total free memory: " + format.format((freeMemory + (maxMemory - allocatedMemory)) / 1024) + "  ");
-
-
-            fail("Unstable version, out of memory.\n"+sb);
+            fail("Unstable version, out of memory.\n"+getRuntimeMemoryDetails());
 
         }
+    }
+
+    private String getRuntimeMemoryDetails() {
+        Runtime runtime = Runtime.getRuntime();
+
+        NumberFormat format = NumberFormat.getInstance();
+
+        StringBuilder sb = new StringBuilder();
+        long maxMemory = runtime.maxMemory();
+        long allocatedMemory = runtime.totalMemory();
+        long freeMemory = runtime.freeMemory();
+
+        sb.append("free memory: " + format.format(freeMemory / 1024) + "  ");
+        sb.append("allocated memory: " + format.format(allocatedMemory / 1024) + "  ");
+        sb.append("max memory: " + format.format(maxMemory / 1024) + "  ");
+        sb.append("total free memory: " + format.format((freeMemory + (maxMemory - allocatedMemory)) / 1024) + "  ");
+        return sb.toString();
     }
 
     private void markAllBreedSynonymNodesAsUpdatedToBeginningOfTime(GraphQueryService graphQueryService) {
