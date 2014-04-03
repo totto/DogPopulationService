@@ -43,20 +43,18 @@ public class BulkWriteService implements Runnable {
 
     private final AtomicLong bulkCount = new AtomicLong();
     private final AtomicLong builderCount = new AtomicLong();
+    private final AtomicLong duration = new AtomicLong();
 
-    private final long start;
+    private AtomicReference<Thread> consumerThreadRef = new AtomicReference<>();
 
     // only ever assigned and accessed by single writer thread, no synchronization necessary
     private List<WriteTask<?>> currentBulk;
-
-    private AtomicReference<Thread> consumerThreadRef = new AtomicReference<>();
 
     @Inject
     public BulkWriteService(GraphDatabaseService graphDb) {
         this.graphDb = graphDb;
         mySequence = bulkWriterServiceSequence.getAndIncrement();
         rnd = new Random(System.currentTimeMillis() + mySequence);
-        start = System.currentTimeMillis();
     }
 
 
@@ -101,7 +99,7 @@ public class BulkWriteService implements Runnable {
     @Override
     public String toString() {
         long currentBulkCount = bulkCount.get();
-        long load = builderCount.get() / (1 + ((System.currentTimeMillis() - start) / 1000));
+        long load = builderCount.get() / (1 + ((duration.get()) / 1000));
         return String.format("%d (bulk %d, load %d builders/sec)", mySequence, currentBulkCount, load);
     }
 
@@ -181,11 +179,11 @@ public class BulkWriteService implements Runnable {
      * @throws InterruptedException
      */
     public void writeNextBulk() {
-        long startTime = System.currentTimeMillis();
-
         if (currentBulk == null) {
             currentBulk = createNextBulk();
         }
+
+        long startTime = System.currentTimeMillis(); // do _not_ include queue wait time
 
         bulkWriteToGraph(currentBulk);
 
@@ -194,6 +192,7 @@ public class BulkWriteService implements Runnable {
         signalAllTasksComplete(currentBulk);
 
         builderCount.addAndGet(currentBulk.size());
+        duration.addAndGet(System.currentTimeMillis() - startTime);
 
         if (LOGGER.isTraceEnabled()) {
             int size;
