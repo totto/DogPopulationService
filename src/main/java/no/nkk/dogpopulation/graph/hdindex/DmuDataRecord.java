@@ -17,13 +17,13 @@ public class DmuDataRecord {
     private final int breedCode;
 
     // Reg_år = Registreringsår
-    private final int bornYear;
+    private final int hdXrayYear;
 
     // Køn = 1 for female og 2 for male
     private final int gender;
 
     // RÅK = Race*Reg_år*Køn vekselvirkning ( Race*100000+Reg_år*10+Køn)
-    private final int breedBornYearGender;
+    private final int breedHdXrayYearGender;
 
     // Kuld = Unik identifikation af det enkelte kuld
     private final int litterId;
@@ -34,12 +34,12 @@ public class DmuDataRecord {
     // HD = HD-score
     private final int hdScore;
 
-    public DmuDataRecord(int id, int breedCode, int bornYear, int gender, int breedBornYearGender, int litterId, int motherId, int hdScore) {
+    public DmuDataRecord(int id, int breedCode, int hdXrayYear, int gender, int breedHdXrayYearGender, int litterId, int motherId, int hdScore) {
         this.id = id;
         this.breedCode = breedCode;
-        this.bornYear = bornYear;
+        this.hdXrayYear = hdXrayYear;
         this.gender = gender;
-        this.breedBornYearGender = breedBornYearGender;
+        this.breedHdXrayYearGender = breedHdXrayYearGender;
         this.litterId = litterId;
         this.motherId = motherId;
         this.hdScore = hdScore;
@@ -52,11 +52,11 @@ public class DmuDataRecord {
         out.print(" ");
         out.print(getBreedCode());
         out.print(" ");
-        out.print(getBornYear());
+        out.print(getHdXrayYear());
         out.print(" ");
         out.print(getGender());
         out.print(" ");
-        out.print(getBreedBornYearGender());
+        out.print(getBreedHdXrayYearGender());
         out.print(" ");
         out.print(getLitterId());
         out.print(" ");
@@ -75,16 +75,16 @@ public class DmuDataRecord {
         return breedCode;
     }
 
-    public int getBornYear() {
-        return bornYear;
+    public int getHdXrayYear() {
+        return hdXrayYear;
     }
 
     public int getGender() {
         return gender;
     }
 
-    public int getBreedBornYearGender() {
-        return breedBornYearGender;
+    public int getBreedHdXrayYearGender() {
+        return breedHdXrayYearGender;
     }
 
     public int getLitterId() {

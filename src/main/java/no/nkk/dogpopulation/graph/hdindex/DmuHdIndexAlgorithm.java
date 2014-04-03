@@ -112,20 +112,17 @@ public class DmuHdIndexAlgorithm {
             String uuid = (String) dogNode.getProperty(DogGraphConstants.DOG_UUID);
 
             int born = DmuPedigreeRecord.UNKNOWN;
-            int bornYear = 0; // part of breedBornYearGender, where we probably don't want more than 4 digits.
             if (dogNode.hasProperty(DogGraphConstants.DOG_BORN_YEAR)) {
-                bornYear = (Integer) dogNode.getProperty(DogGraphConstants.DOG_BORN_YEAR);
+                int year = (Integer) dogNode.getProperty(DogGraphConstants.DOG_BORN_YEAR);
                 int month = (Integer) dogNode.getProperty(DogGraphConstants.DOG_BORN_MONTH);
                 int day = (Integer) dogNode.getProperty(DogGraphConstants.DOG_BORN_DAY);
-                born = 10000 * bornYear + 100 * month + day;
+                born = 10000 * year + 100 * month + day;
             }
 
-            /*
-            int hdXrayYear = DmuDataRecord.UNKNOWN;
+            int hdXrayYear = 0;  // part of breedHdXrayYearGender
             if (dogNode.hasProperty(DogGraphConstants.DOG_HDYEAR)) {
                 hdXrayYear = (Integer) dogNode.getProperty(DogGraphConstants.DOG_HDYEAR);
             }
-            */
 
             int hdScore = DmuDataRecord.UNKNOWN;
             if (dogNode.hasProperty(DogGraphConstants.DOG_HDDIAG)) {
@@ -152,7 +149,7 @@ public class DmuHdIndexAlgorithm {
                     gender = 1; // MALE
                 }
             }
-            int breedBornYearGender = (100000 * breedNkkId) + (10 * bornYear) + gender;
+            int breedHdXrayYearGender = (100000 * breedNkkId) + (10 * hdXrayYear) + gender;
 
 
             int litterId = DmuDataRecord.UNKNOWN;
@@ -186,7 +183,7 @@ public class DmuHdIndexAlgorithm {
 
             if (hdScore != DmuDataRecord.UNKNOWN) {
                 // only use records with known HD score in data file.
-                DmuDataRecord dmuDataRecord = new DmuDataRecord(id, breedNkkId, bornYear, gender, breedBornYearGender, litterId, motherId, hdScore);
+                DmuDataRecord dmuDataRecord = new DmuDataRecord(id, breedNkkId, hdXrayYear, gender, breedHdXrayYearGender, litterId, motherId, hdScore);
                 dmuDataRecord.writeTo(dataWriter);
             }
 
