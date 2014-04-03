@@ -30,7 +30,7 @@ public class BulkWriteService implements Runnable {
 
     private final GraphDatabaseService graphDb;
 
-    private final BlockingQueue<WriteTask<?>> requestQueue = new ArrayBlockingQueue<>(50);
+    private final BlockingQueue<WriteTask<?>> requestQueue = new ArrayBlockingQueue<>(500);
 
     // access to this map is guarded by locking the map instance itself
     private final Map<String, BuilderProgress> inProgress = new LinkedHashMap<>();
