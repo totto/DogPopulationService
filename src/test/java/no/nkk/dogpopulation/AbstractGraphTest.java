@@ -46,12 +46,11 @@ public abstract class AbstractGraphTest {
         graphDb.shutdown();
     }
 
-    protected Node addBreed(String breed, String nkkBreedId) {
-        Node breedSynonymNode = breedSynonymNodeCache.getBreed(breed);
+    protected Node addBreed(String synonym, String nkkBreedId) {
+        Node breedSynonymNode = breedSynonymNodeCache.getBreed(synonym);
         try (Transaction tx = graphDb.beginTx()) {
-            Node breedNode = graphDb.createNode(DogGraphLabel.BREED);
-            breedNode.setProperty(DogGraphConstants.BREED_BREED_NAME, breed);
-            breedNode.setProperty(DogGraphConstants.BREED_NKK_BREED_ID, nkkBreedId);
+            Node breedNode = GraphUtils.findOrCreateNode(graphDb, DogGraphLabel.BREED, DogGraphConstants.BREED_NKK_BREED_ID, nkkBreedId);
+            breedNode.setProperty(DogGraphConstants.BREED_BREED_NAME, synonym);
             breedSynonymNode.createRelationshipTo(breedNode, DogGraphRelationshipType.MEMBER_OF);
             tx.success();
         }
