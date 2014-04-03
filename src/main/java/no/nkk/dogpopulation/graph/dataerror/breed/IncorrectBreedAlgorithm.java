@@ -78,18 +78,18 @@ public class IncorrectBreedAlgorithm {
         query.append("WHERE \n");
         query.append("  bf = bm AND bd <> bf \n");
         query.append("RETURN \n");
-        query.append("  d.uuid, f.uuid, m.uuid, bd.breed, bf.breed, bm.breed \n");
+        query.append("  d.uuid, f.uuid, m.uuid, bd.synonym, bf.synonym, bm.synonym \n");
         query.append("ORDER BY d.uuid \n");
         ExecutionResult result1 = engine.execute(query.toString(), params);
         try (ResourceIterator<Map<String,Object>> iterator = result1.iterator()) {
             for (Map<String,Object> record : IteratorUtil.asIterable(iterator)) {
                 IncorrectBreedRecord ibr = new IncorrectBreedRecord();
                 ibr.setUuid((String) record.get("d.uuid"));
-                ibr.setBreed((String) record.get("bd.breed"));
+                ibr.setBreed((String) record.get("bd.synonym"));
                 ibr.setFatherUuid((String) record.get("f.uuid"));
-                ibr.setFatherBreed((String) record.get("bf.breed"));
+                ibr.setFatherBreed((String) record.get("bf.synonym"));
                 ibr.setMotherUuid((String) record.get("m.uuid"));
-                ibr.setMotherBreed((String) record.get("bm.breed"));
+                ibr.setMotherBreed((String) record.get("bm.synonym"));
                 return ibr;
             }
         }
