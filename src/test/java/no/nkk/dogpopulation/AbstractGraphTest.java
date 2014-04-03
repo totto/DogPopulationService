@@ -90,9 +90,9 @@ public abstract class AbstractGraphTest {
         }
     }
 
-    protected Relationship connectChildToMother(String childUuid, String fatherUuid) {
+    protected Relationship connectChildToMother(String childUuid, String motherUuid) {
         try (Transaction tx = graphDb.beginTx()) {
-            Relationship hasMother = dogs.hasParent().child(childUuid).mother(fatherUuid).build(graphDb);
+            Relationship hasMother = dogs.hasParent().child(childUuid).mother(motherUuid).build(graphDb);
             tx.success();
             return hasMother;
         }
