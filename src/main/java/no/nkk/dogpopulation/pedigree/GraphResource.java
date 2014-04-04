@@ -185,6 +185,22 @@ public class GraphResource {
     }
 
     @GET
+    @Path("/breed/importall")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response importAllBreeds() {
+        LOGGER.trace("importAllBreeds()");
+
+        int newBreedsMarked = breedUpdateService.markAllBreedsForImport();
+
+        try {
+            String json = prettyPrintingObjectWriter.writeValueAsString(newBreedsMarked);
+            return Response.ok(json).build();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @GET
     @Path("/breed/import/{breed}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response importBreedFromDogSearch(@PathParam("breed") String breed) {

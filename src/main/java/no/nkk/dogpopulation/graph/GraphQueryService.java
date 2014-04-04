@@ -435,6 +435,20 @@ public class GraphQueryService {
     }
 
 
+    public boolean setMissingUpdatedTo(String breedSynonym, LocalDateTime updatedTo) {
+        Node breedSynonymNode = breedSynonymNodeCache.getBreed(breedSynonym);
+        try (Transaction tx = graphDb.beginTx()) {
+            if (!breedSynonymNode.hasProperty(DogGraphConstants.BREEDSYNONYM_UPDATEDTO)) {
+                breedSynonymNode.setProperty(DogGraphConstants.BREEDSYNONYM_UPDATEDTO, updatedTo.toString(pattern));
+                tx.success();
+                return true; // node updated
+            }
+            tx.success();
+            return false; // not updated
+        }
+    }
+
+
     public List<String> listAllBreedSynonyms() {
         List<String> result = new ArrayList<>();
         try (Transaction tx = graphDb.beginTx()) {

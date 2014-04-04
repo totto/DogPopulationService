@@ -3,6 +3,7 @@ package no.nkk.dogpopulation.importer.breedupdater;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import no.nkk.dogpopulation.concurrent.ExecutorManager;
+import no.nkk.dogpopulation.graph.DogGraphConstants;
 import no.nkk.dogpopulation.graph.GraphQueryService;
 import no.nkk.dogpopulation.importer.PedigreeImporter;
 import no.nkk.dogpopulation.importer.dogsearch.DogSearchClient;
@@ -73,6 +74,18 @@ public class BreedUpdateService {
                 }
             }
         };
+    }
+
+
+    public int markAllBreedsForImport() {
+        int nodesUpdated = 0;
+        for (String breedSynonym : graphQueryService.listAllBreedSynonyms()) {
+            boolean wasUpdated = graphQueryService.setMissingUpdatedTo(breedSynonym, DogGraphConstants.BEGINNING_OF_TIME);
+            if (wasUpdated) {
+                nodesUpdated++;
+            }
+        }
+        return nodesUpdated;
     }
 
 

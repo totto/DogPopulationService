@@ -41,6 +41,7 @@ All results are returned in JSON format with the header: "Content-Type: applicat
 | Resource        | Action | Result           | Attributes  |
 |:------------- |:------------- |:----- |:------ |
 | **Import of specified breed to graph**<br/>http://dogpopulation.nkk.no/dogpopulation/graph/breed/import/Pointer| get |  Start an import, reload too see nr of tasks and status. | **breed**: Case sensitive breed name |
+| **Mark all breeds for auto-import to graph**<br/>http://dogpopulation.nkk.no/dogpopulation/graph/breed/importall| get |  Mark all breed-synonym nodes with updatedTo property causing auto-update. | None |
 | **(Re)import a specific dog (with pedigree) to graph**<br/>http://dogpopulation.nkk.no/dogpopulation/graph/import/dog/ff433553-b14a-4f9d-9408-c10addbefac4 | get |  Start an import, reload too see nr of tasks and status. | **breed**: Case sensitive breed name |
 | **Status of all imports**<br/>http://dogpopulation.nkk.no/dogpopulation/graph/breed/import| get | See status of all ongoing and finished imports | None |
 | **Status of thread-pools**<br/>http://dogpopulation.nkk.no/dogpopulation/concurrent/executor/status| get | See status of all thread-pools | None |
