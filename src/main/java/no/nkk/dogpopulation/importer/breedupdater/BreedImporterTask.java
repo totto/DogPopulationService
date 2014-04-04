@@ -44,17 +44,20 @@ public class BreedImporterTask implements Callable<Integer> {
 
     private final Runnable postProcessingTask;
 
+    private final int timeWindowSeconds;
+
     private ManageableExecutor manageableExecutor;
 
-    public BreedImporterTask(Runnable postProcessingTask, PedigreeImporter pedigreeImporter, ExecutorManager executorManager, DogSearchClient dogSearchClient, String breed, BreedImportStatus progress, GraphQueryService graphQueryService) {
+    public BreedImporterTask(Runnable postProcessingTask, PedigreeImporter pedigreeImporter, ExecutorManager executorManager, DogSearchClient dogSearchClient, String breed, BreedImportStatus progress, GraphQueryService graphQueryService, int timeWindowSeconds) {
         this.executorManager = executorManager;
         this.pedigreeImporter = pedigreeImporter;
         this.dogSearchClient = dogSearchClient;
         this.breed = breed;
         this.progress = progress;
         this.graphQueryService = graphQueryService;
-        executorName = "breed-importer " + breed;
         this.postProcessingTask = postProcessingTask;
+        this.timeWindowSeconds = timeWindowSeconds;
+        executorName = "breed-importer " + breed;
     }
 
 
@@ -63,8 +66,7 @@ public class BreedImporterTask implements Callable<Integer> {
         try {
             LocalDateTime from = graphQueryService.getUpdatedTo(breed);
             LOGGER.debug("Starting update of breed {}, from {}", breed, from.toString());
-            int timeWindowMinutes = 24 * 60;
-            LocalDateTime to = from.plusMinutes(timeWindowMinutes);
+            LocalDateTime to = from.plusSeconds(timeWindowSeconds);
             int n = 0;
             try {
                 progress.updateStartTime();
@@ -91,7 +93,7 @@ public class BreedImporterTask implements Callable<Integer> {
                     progress.setUpdatedTo(to.toString() + "Z");
                     graphQueryService.setUpdatedTo(breed, to);
                     from = graphQueryService.getUpdatedTo(breed);
-                    to = from.plusMinutes(timeWindowMinutes);
+                    to = from.plusSeconds(timeWindowSeconds);
                 }
                 LOGGER.debug("Completed updating breed {}, to {}", breed, to.toString());
                 shutdownExecutor();

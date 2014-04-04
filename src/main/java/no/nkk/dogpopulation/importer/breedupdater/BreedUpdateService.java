@@ -6,6 +6,7 @@ import no.nkk.dogpopulation.concurrent.ExecutorManager;
 import no.nkk.dogpopulation.graph.GraphQueryService;
 import no.nkk.dogpopulation.importer.PedigreeImporter;
 import no.nkk.dogpopulation.importer.dogsearch.DogSearchClient;
+import org.joda.time.LocalDateTime;
 
 import java.util.*;
 
@@ -37,7 +38,7 @@ public class BreedUpdateService {
     public void initializeRecurringUpdates() {
         Timer timer = new Timer("Recurring graph updater", true);
         final int initialDelaySeconds = 5;
-        final int periodSeconds = 2 * 60;
+        final int periodSeconds = 60;
         timer.schedule(createBreedUpdaterTask(), initialDelaySeconds * 1000, periodSeconds * 1000);
     }
 
@@ -45,9 +46,30 @@ public class BreedUpdateService {
         return new TimerTask() {
             @Override
             public void run() {
-                List<String> breedSynonyms = graphQueryService.listAllBreedSynonymsWithExistingPropertyUpdatedTo();
-                for (String breedSynonym : breedSynonyms) {
-                    importBreed(breedSynonym);
+                Map<String, LocalDateTime> breedSynonyms = graphQueryService.mapUpdatedToByBreedSynonymWhereUpdateToIsSet();
+                LocalDateTime now = LocalDateTime.now();
+                LocalDateTime ninetySecondsBeforeNow = now.minusSeconds(90);
+                LocalDateTime ninetyMinutesBeforeNow = now.minusMinutes(90);
+                LocalDateTime thirtySixHoursBeforeNow = now.minusHours(36);
+                for (Map.Entry<String, LocalDateTime> e : breedSynonyms.entrySet()) {
+                    String breedSynonym = e.getKey();
+                    LocalDateTime updatedTo = e.getValue();
+                    if (updatedTo.isAfter(ninetySecondsBeforeNow)) {
+                        // data is already updated within last ninety seconds
+                        continue;
+                    }
+                    if (updatedTo.isAfter(ninetyMinutesBeforeNow)) {
+                        // data is updated within last ninety minutes
+                        importBreed(breedSynonym, 60);
+                        continue;
+                    }
+                    if (updatedTo.isAfter(thirtySixHoursBeforeNow)) {
+                        // data is updated within last thirty six hours
+                        importBreed(breedSynonym, 60 * 60);
+                        continue;
+                    }
+                    // data is older than thirty six hours
+                    importBreed(breedSynonym, 24 * 60 * 60);
                 }
             }
         };
@@ -67,7 +89,7 @@ public class BreedUpdateService {
     }
 
 
-    public BreedImportStatus importBreed(String breed) {
+    public BreedImportStatus importBreed(String breed, int timeWindowSeconds) {
         BreedImportStatus progress;
         boolean shouldImport = false;
         synchronized (breedImportStatus) {
@@ -81,7 +103,7 @@ public class BreedUpdateService {
 
         if (shouldImport) {
             Runnable postProcessingTask = createPostProcessingTask(breed);
-            BreedImporterTask breedImporterTask = new BreedImporterTask(postProcessingTask, pedigreeImporter, executorManager, dogSearchClient, breed, progress, graphQueryService);
+            BreedImporterTask breedImporterTask = new BreedImporterTask(postProcessingTask, pedigreeImporter, executorManager, dogSearchClient, breed, progress, graphQueryService, timeWindowSeconds);
             executorManager.getExecutor(ExecutorManager.BREED_IMPORTER_MAP_KEY).submit(breedImporterTask);
         }
         return progress;

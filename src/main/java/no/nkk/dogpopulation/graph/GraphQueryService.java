@@ -453,8 +453,8 @@ public class GraphQueryService {
     }
 
 
-    public List<String> listAllBreedSynonymsWithExistingPropertyUpdatedTo() {
-        List<String> result = new ArrayList<>();
+    public Map<String, LocalDateTime> mapUpdatedToByBreedSynonymWhereUpdateToIsSet() {
+        Map<String, LocalDateTime> result = new LinkedHashMap<>();
         try (Transaction tx = graphDb.beginTx()) {
             Node breedGroupsNode = getSingleNode(DogGraphLabel.CATEGORY, DogGraphConstants.CATEGORY_CATEGORY, DogGraphConstants.CATEGORY_CATEGORY_BREEDGROUPS);
             for (Path path : graphDb.traversalDescription()
@@ -464,7 +464,8 @@ public class GraphQueryService {
                     .traverse(breedGroupsNode)) {
                 Node breedSynonymNode = path.endNode();
                 if (breedSynonymNode.hasProperty(DogGraphConstants.BREEDSYNONYM_UPDATEDTO)) {
-                    result.add((String) breedSynonymNode.getProperty(DogGraphConstants.BREEDSYNONYM_SYNONYM));
+                    LocalDateTime updatedTo = LocalDateTime.parse((String) breedSynonymNode.getProperty(DogGraphConstants.BREEDSYNONYM_UPDATEDTO));
+                    result.put((String) breedSynonymNode.getProperty(DogGraphConstants.BREEDSYNONYM_SYNONYM), updatedTo);
                 }
             }
             tx.success();
