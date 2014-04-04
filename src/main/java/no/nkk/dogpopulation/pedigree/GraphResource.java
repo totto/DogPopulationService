@@ -190,7 +190,7 @@ public class GraphResource {
     public Response importBreedFromDogSearch(@PathParam("breed") String breed) {
         LOGGER.trace("importBreedFromDogSearch()");
 
-        BreedImportStatus progress = breedUpdateService.importBreed(breed);
+        BreedImportStatus progress = breedUpdateService.importBreed(breed, 24 * 60 * 60);
 
         try {
             String json = prettyPrintingObjectWriter.writeValueAsString(progress);
