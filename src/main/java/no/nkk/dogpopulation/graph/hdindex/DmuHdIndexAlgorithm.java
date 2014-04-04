@@ -5,6 +5,7 @@ import no.nkk.dogpopulation.graph.*;
 import no.nkk.dogpopulation.importer.dogsearch.DogDetails;
 import no.nkk.dogpopulation.importer.dogsearch.DogHealth;
 import no.nkk.dogpopulation.importer.dogsearch.DogHealthHD;
+import no.nkk.dogpopulation.importer.dogsearch.DogId;
 import org.joda.time.DateTime;
 import org.neo4j.graphdb.*;
 import org.slf4j.Logger;
@@ -114,9 +115,18 @@ public class DmuHdIndexAlgorithm {
                 continue;
             }
 
-            visitedNodes.add(dogNode.getId());
-
             String uuid = (String) dogNode.getProperty(DogGraphConstants.DOG_UUID);
+
+            DogDetails dogDetails = getDogDetails(dogNode, uuid);
+            if (dogDetails == null) {
+                continue;
+            }
+
+            if (!dogIsRegisteredInNKK(dogDetails)) {
+                continue;
+            }
+
+            visitedNodes.add(dogNode.getId());
 
             int born = DmuPedigreeRecord.UNKNOWN;
             if (dogNode.hasProperty(DogGraphConstants.DOG_BORN_YEAR)) {
@@ -165,17 +175,14 @@ public class DmuHdIndexAlgorithm {
 
             int id = (int) dogNode.getId();
 
-            DogDetails dogDetails = getDogDetails(dogNode, uuid);
-            if (dogDetails != null) {
-                HdYearAndScore hdYearAndScore = getHdScore(dogDetails, uuid);
-                if (hdYearAndScore != null) {
-                    // only use records with known HD score in data file.
-                    int xRayYear = hdYearAndScore.hdXray.getYear();
-                    int hdScore = hdYearAndScore.hdScore;
-                    int breedHdXrayYearGender = (100000 * breedNkkId) + (10 * xRayYear) + gender;
-                    DmuDataRecord dmuDataRecord = new DmuDataRecord(id, breedNkkId, xRayYear, gender, breedHdXrayYearGender, litterId, motherId, hdScore);
-                    dmuDataRecord.writeTo(dataWriter);
-                }
+            HdYearAndScore hdYearAndScore = getHdScore(dogDetails, uuid);
+            if (hdYearAndScore != null) {
+                // only use records with known HD score in data file.
+                int xRayYear = hdYearAndScore.hdXray.getYear();
+                int hdScore = hdYearAndScore.hdScore;
+                int breedHdXrayYearGender = (100000 * breedNkkId) + (10 * xRayYear) + gender;
+                DmuDataRecord dmuDataRecord = new DmuDataRecord(id, breedNkkId, xRayYear, gender, breedHdXrayYearGender, litterId, motherId, hdScore);
+                dmuDataRecord.writeTo(dataWriter);
             }
 
             DmuPedigreeRecord dmuPedigreeRecord = new DmuPedigreeRecord(id, fatherId, motherId, born, breedNkkId);
@@ -185,6 +192,28 @@ public class DmuHdIndexAlgorithm {
 
         }
     }
+
+
+    private boolean dogIsRegisteredInNKK(DogDetails dogDetails) {
+        DogId[] ids = dogDetails.getIds();
+        if (ids == null) {
+            return false;
+        }
+        boolean hasHuid = false;
+        boolean hasRegno = false;
+        for (DogId dogId : ids) {
+            if ("huid".equalsIgnoreCase(dogId.getType())) {
+                hasHuid = true;
+            } else if ("RegNo".equalsIgnoreCase(dogId.getType())) {
+                hasRegno = true;
+            }
+        }
+        if (!hasHuid) {
+            return true;
+        }
+        return hasRegno;
+    }
+
 
     private DogDetails getDogDetails(Node dogNode, String uuid) {
         if (!dogNode.hasProperty(DogGraphConstants.DOG_JSON)) {
