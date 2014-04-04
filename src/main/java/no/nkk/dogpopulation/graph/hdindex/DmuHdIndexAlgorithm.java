@@ -1,6 +1,11 @@
 package no.nkk.dogpopulation.graph.hdindex;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import no.nkk.dogpopulation.graph.*;
+import no.nkk.dogpopulation.importer.dogsearch.DogDetails;
+import no.nkk.dogpopulation.importer.dogsearch.DogHealth;
+import no.nkk.dogpopulation.importer.dogsearch.DogHealthHD;
+import org.joda.time.DateTime;
 import org.neo4j.graphdb.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,6 +31,8 @@ public class DmuHdIndexAlgorithm {
     private final Set<String> breed;
 
     private final CommonTraversals commonTraversals;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public DmuHdIndexAlgorithm(GraphDatabaseService graphDb, File dataFile, File pedigreeFile, File uuidMappingFile, File breedCodeMappingFile, Set<String> breed) {
         this.graphDb = graphDb;
@@ -124,22 +131,6 @@ public class DmuHdIndexAlgorithm {
                 hdXrayYear = (Integer) dogNode.getProperty(DogGraphConstants.DOG_HDYEAR);
             }
 
-            int hdScore = DmuDataRecord.UNKNOWN;
-            if (dogNode.hasProperty(DogGraphConstants.DOG_HDDIAG)) {
-                String hdDiag = (String) dogNode.getProperty(DogGraphConstants.DOG_HDDIAG);
-                if (hdDiag.startsWith("A")) {
-                    hdScore = 1;
-                } else if (hdDiag.startsWith("B")) {
-                    hdScore = 2;
-                } else if (hdDiag.startsWith("C")) {
-                    hdScore = 3;
-                } else if (hdDiag.startsWith("D")) {
-                    hdScore = 4;
-                } else if (hdDiag.startsWith("E")) {
-                    hdScore = 5;
-                }
-            }
-
             int gender = 1; // Default to MALE if gender is unknown
             if (dogNode.hasProperty(DogGraphConstants.DOG_GENDER)) {
                 DogGender dogGender = DogGender.valueOf(((String) dogNode.getProperty(DogGraphConstants.DOG_GENDER)).toUpperCase());
@@ -178,13 +169,15 @@ public class DmuHdIndexAlgorithm {
                 }
             }
 
-            // TODO use a reproducible id generation scheme
             int id = (int) dogNode.getId();
 
-            if (hdScore != DmuDataRecord.UNKNOWN) {
-                // only use records with known HD score in data file.
-                DmuDataRecord dmuDataRecord = new DmuDataRecord(id, breedNkkId, hdXrayYear, gender, breedHdXrayYearGender, litterId, motherId, hdScore);
-                dmuDataRecord.writeTo(dataWriter);
+            if (hdXrayYear > 0) {
+                HdYearAndScore hdYearAndScore = getHdScore(dogNode, uuid);
+                if (hdYearAndScore != null) {
+                    // only use records with known HD score in data file.
+                    DmuDataRecord dmuDataRecord = new DmuDataRecord(id, breedNkkId, hdYearAndScore.hdXray.getYear(), gender, breedHdXrayYearGender, litterId, motherId, hdYearAndScore.hdScore);
+                    dmuDataRecord.writeTo(dataWriter);
+                }
             }
 
             DmuPedigreeRecord dmuPedigreeRecord = new DmuPedigreeRecord(id, fatherId, motherId, born, breedNkkId);
@@ -193,6 +186,68 @@ public class DmuHdIndexAlgorithm {
             writeUuidMappingRecord(id, uuid, uuidMappingWriter);
 
         }
+    }
+
+    private HdYearAndScore getHdScore(Node dogNode, String uuid) {
+        if (!dogNode.hasProperty(DogGraphConstants.DOG_JSON)) {
+            return null;
+        }
+        String json = (String) dogNode.getProperty(DogGraphConstants.DOG_JSON);
+        DogDetails dogDetails;
+        try {
+            dogDetails = objectMapper.readValue(json, DogDetails.class);
+        } catch (IOException e) {
+            LOGGER.warn("JSON of dog {} cannot be parsed", uuid);
+            return null;
+        }
+        DogHealth health = dogDetails.getHealth();
+        if (health == null) {
+            return null;
+        }
+        DogHealthHD[] dogHealthHDs = health.getHd();
+        if (dogHealthHDs == null) {
+            return null;
+        }
+        HdYearAndScore bestCandidate = null;
+        for (DogHealthHD dogHealthHD : dogHealthHDs) {
+            String hdDiag = dogHealthHD.getDiagnosis();
+            int hdScore;
+            if (hdDiag.startsWith("A")) {
+                hdScore = 1;
+            } else if (hdDiag.startsWith("B")) {
+                hdScore = 2;
+            } else if (hdDiag.startsWith("C")) {
+                hdScore = 3;
+            } else if (hdDiag.startsWith("D")) {
+                hdScore = 4;
+            } else if (hdDiag.startsWith("E")) {
+                hdScore = 5;
+            } else {
+                continue; // not a valid diagnosis
+            }
+            DateTime xRay = getXray(uuid, dogHealthHD);
+            if (bestCandidate == null || xRay.isAfter(bestCandidate.hdXray)) {
+                bestCandidate = new HdYearAndScore(xRay, hdScore);
+            }
+        }
+        return bestCandidate;
+    }
+
+    private DateTime getXray(String uuid, DogHealthHD dogHealthHD) {
+        String xray = dogHealthHD.getXray();
+        if (xray == null) {
+            return null;
+        }
+        if (xray.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            DateTime dateTime = DateTime.parse(xray);
+            return dateTime;
+        } catch (RuntimeException e) {
+            LOGGER.warn("Unable to parse xRay as DateTime: uuid={}, xRay={}", uuid, xray);
+        }
+        return null;
     }
 
 
@@ -212,4 +267,12 @@ public class DmuHdIndexAlgorithm {
         breedMappingWriter.print(NEWLINE);
     }
 
+    static class HdYearAndScore {
+        final DateTime hdXray;
+        final int hdScore;
+        HdYearAndScore(DateTime hdXray, int hdScore) {
+            this.hdXray = hdXray;
+            this.hdScore = hdScore;
+        }
+    }
 }
