@@ -28,9 +28,6 @@ public class ExecutorStatus {
         Date oneMinuteAgo = new Date(System.currentTimeMillis() - (60 * 1000));
         int i = 0;
         for (TaskMetadata meta : taskByStart.values()) {
-            if (i++ >= 10) {
-                break; // only list top 10
-            }
             if (meta.getStart().after(oneMinuteAgo)) {
                 break;
             }
