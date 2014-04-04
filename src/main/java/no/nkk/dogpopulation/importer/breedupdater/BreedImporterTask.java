@@ -48,7 +48,10 @@ public class BreedImporterTask implements Callable<Integer> {
 
     private ManageableExecutor manageableExecutor;
 
-    public BreedImporterTask(Runnable postProcessingTask, PedigreeImporter pedigreeImporter, ExecutorManager executorManager, DogSearchClient dogSearchClient, String breed, BreedImportStatus progress, GraphQueryService graphQueryService, int timeWindowSeconds) {
+    final int concurrentPedigreeImports;
+
+    public BreedImporterTask(int concurrentPedigreeImports, Runnable postProcessingTask, PedigreeImporter pedigreeImporter, ExecutorManager executorManager, DogSearchClient dogSearchClient, String breed, BreedImportStatus progress, GraphQueryService graphQueryService, int timeWindowSeconds) {
+        this.concurrentPedigreeImports = concurrentPedigreeImports;
         this.executorManager = executorManager;
         this.pedigreeImporter = pedigreeImporter;
         this.dogSearchClient = dogSearchClient;
@@ -150,8 +153,7 @@ public class BreedImporterTask implements Callable<Integer> {
 
     private ExecutorService getExecutorService(String executorName) {
         if (manageableExecutor == null) {
-            final int NTHREADS = 5;
-            manageableExecutor = executorManager.addUnboundedQueueExecutor(executorName, NTHREADS);
+            manageableExecutor = executorManager.addUnboundedQueueExecutor(executorName, concurrentPedigreeImports);
         }
         return manageableExecutor;
     }

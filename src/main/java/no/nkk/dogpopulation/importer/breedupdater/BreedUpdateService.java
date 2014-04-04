@@ -17,6 +17,8 @@ import java.util.*;
 @Singleton
 public class BreedUpdateService {
 
+    private final int CONCURRENT_PEDIGREE_IMPORTS_PER_BREED = 5;
+
     private final Map<String, BreedImportStatus> breedImportStatus = new LinkedHashMap<>();
 
     private final DogSearchClient dogSearchClient;
@@ -116,7 +118,7 @@ public class BreedUpdateService {
 
         if (shouldImport) {
             Runnable postProcessingTask = createPostProcessingTask(breed);
-            BreedImporterTask breedImporterTask = new BreedImporterTask(postProcessingTask, pedigreeImporter, executorManager, dogSearchClient, breed, progress, graphQueryService, timeWindowSeconds);
+            BreedImporterTask breedImporterTask = new BreedImporterTask(CONCURRENT_PEDIGREE_IMPORTS_PER_BREED, postProcessingTask, pedigreeImporter, executorManager, dogSearchClient, breed, progress, graphQueryService, timeWindowSeconds);
             executorManager.getExecutor(ExecutorManager.BREED_IMPORTER_MAP_KEY).submit(breedImporterTask);
         }
         return progress;
