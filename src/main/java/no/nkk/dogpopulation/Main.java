@@ -72,7 +72,7 @@ public class Main {
 
         final Injector injector = Guice.createInjector(
                 new ConfigurationModule(),
-                new ThreadingModule(20, 3),
+                new ThreadingModule(20),
                 new Neo4jModule(),
                 new WebModule()
         );

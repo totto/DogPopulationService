@@ -34,10 +34,9 @@ public class BreedImportIntegrationTest {
     public void thatImportOfAllBreedsCompletesWithoutExceptions() {
         try {
             int maxConcurrentBreedImports = 500;
-            int maxConcurrentPedigreePerBreedImports = 50;
             final Injector injector = Guice.createInjector(
                     new IntegrationtestModule(),
-                    new ThreadingModule(maxConcurrentBreedImports, maxConcurrentPedigreePerBreedImports),
+                    new ThreadingModule(maxConcurrentBreedImports),
                     new Neo4jModule()
             );
 

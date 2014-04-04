@@ -13,11 +13,9 @@ import java.util.concurrent.ExecutorService;
 public class ThreadingModule extends AbstractModule {
 
     final int maxConcurrentBreedImports;
-    final int maxConcurrentPedigreePerBreedImports;
 
-    public ThreadingModule(int maxConcurrentBreedImports, int maxConcurrentPedigreePerBreedImports) {
+    public ThreadingModule(int maxConcurrentBreedImports) {
         this.maxConcurrentBreedImports = maxConcurrentBreedImports;
-        this.maxConcurrentPedigreePerBreedImports = maxConcurrentPedigreePerBreedImports;
     }
 
     @Override
