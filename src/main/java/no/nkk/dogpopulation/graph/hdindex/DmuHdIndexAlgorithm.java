@@ -126,11 +126,6 @@ public class DmuHdIndexAlgorithm {
                 born = 10000 * year + 100 * month + day;
             }
 
-            int hdXrayYear = 0;  // part of breedHdXrayYearGender
-            if (dogNode.hasProperty(DogGraphConstants.DOG_HDYEAR)) {
-                hdXrayYear = (Integer) dogNode.getProperty(DogGraphConstants.DOG_HDYEAR);
-            }
-
             int gender = 1; // Default to MALE if gender is unknown
             if (dogNode.hasProperty(DogGraphConstants.DOG_GENDER)) {
                 DogGender dogGender = DogGender.valueOf(((String) dogNode.getProperty(DogGraphConstants.DOG_GENDER)).toUpperCase());
@@ -140,7 +135,6 @@ public class DmuHdIndexAlgorithm {
                     gender = 1; // MALE
                 }
             }
-            int breedHdXrayYearGender = (100000 * breedNkkId) + (10 * hdXrayYear) + gender;
 
 
             int litterId = DmuDataRecord.UNKNOWN;
@@ -171,11 +165,15 @@ public class DmuHdIndexAlgorithm {
 
             int id = (int) dogNode.getId();
 
-            if (hdXrayYear > 0) {
-                HdYearAndScore hdYearAndScore = getHdScore(dogNode, uuid);
+            DogDetails dogDetails = getDogDetails(dogNode, uuid);
+            if (dogDetails != null) {
+                HdYearAndScore hdYearAndScore = getHdScore(dogDetails, uuid);
                 if (hdYearAndScore != null) {
                     // only use records with known HD score in data file.
-                    DmuDataRecord dmuDataRecord = new DmuDataRecord(id, breedNkkId, hdYearAndScore.hdXray.getYear(), gender, breedHdXrayYearGender, litterId, motherId, hdYearAndScore.hdScore);
+                    int xRayYear = hdYearAndScore.hdXray.getYear();
+                    int hdScore = hdYearAndScore.hdScore;
+                    int breedHdXrayYearGender = (100000 * breedNkkId) + (10 * xRayYear) + gender;
+                    DmuDataRecord dmuDataRecord = new DmuDataRecord(id, breedNkkId, xRayYear, gender, breedHdXrayYearGender, litterId, motherId, hdScore);
                     dmuDataRecord.writeTo(dataWriter);
                 }
             }
@@ -188,18 +186,21 @@ public class DmuHdIndexAlgorithm {
         }
     }
 
-    private HdYearAndScore getHdScore(Node dogNode, String uuid) {
+    private DogDetails getDogDetails(Node dogNode, String uuid) {
         if (!dogNode.hasProperty(DogGraphConstants.DOG_JSON)) {
             return null;
         }
         String json = (String) dogNode.getProperty(DogGraphConstants.DOG_JSON);
         DogDetails dogDetails;
         try {
-            dogDetails = objectMapper.readValue(json, DogDetails.class);
+            return objectMapper.readValue(json, DogDetails.class);
         } catch (IOException e) {
             LOGGER.warn("JSON of dog {} cannot be parsed", uuid);
-            return null;
         }
+        return null;
+    }
+
+    private HdYearAndScore getHdScore(DogDetails dogDetails, String uuid) {
         DogHealth health = dogDetails.getHealth();
         if (health == null) {
             return null;
