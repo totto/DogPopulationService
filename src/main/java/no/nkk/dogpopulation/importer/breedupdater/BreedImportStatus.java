@@ -145,7 +145,7 @@ public class BreedImportStatus {
 
     @Override
     public String toString() {
-        return "(" + breed + " " + getProgress() + "%)";
+        return "(" + breed + ", " + getUpdatedTo() + ", " + getProgress() + "%)";
     }
 
     @JsonIgnore
