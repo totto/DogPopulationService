@@ -45,10 +45,6 @@ All results are returned in JSON format with the header: "Content-Type: applicat
 | **(Re)import a specific dog (with pedigree) to graph**<br/>http://dogpopulation.nkk.no/dogpopulation/graph/import/dog/ff433553-b14a-4f9d-9408-c10addbefac4 | get |  Start an import, reload too see nr of tasks and status. | **breed**: Case sensitive breed name |
 | **Status of all imports**<br/>http://dogpopulation.nkk.no/dogpopulation/graph/breed/import| get | See status of all ongoing and finished imports | None |
 | **Status of thread-pools**<br/>http://dogpopulation.nkk.no/dogpopulation/concurrent/executor/status| get | See status of all thread-pools | None |
-| **Import updates from SOLR (last week)**<br/>http://dogpopulation.nkk.no/dogpopulation/graph/import/latest/week| get | Import updates from last week, shows number of updates | None |
-| **Import updates from SOLR (last day)**<br/>http://dogpopulation.nkk.no/dogpopulation/graph/import/latest/day| get | Import updates from last day, shows number of updates | None |
-| **Import updates from SOLR (last hour)**<br/>http://dogpopulation.nkk.no/dogpopulation/graph/import/latest/hour| get | Import updates from last hour, shows number of updates | None |
-| **Import updates from SOLR (last minute)**<br/>http://dogpopulation.nkk.no/dogpopulation/graph/import/latest/minute| get | Import updates from last minute, shows number of updates | None |
 
 ### Dog pedigree
 | Resource        | Action | Result           | Attributes  |

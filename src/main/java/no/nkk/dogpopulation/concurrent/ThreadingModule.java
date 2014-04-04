@@ -28,7 +28,6 @@ public class ThreadingModule extends AbstractModule {
         bind(ExecutorService.class).annotatedWith(Names.named(ExecutorManager.SOLR_MAP_KEY)).toInstance(executorManager.addDirectHandoffExecutor(ExecutorManager.SOLR_MAP_KEY));
         bind(ExecutorService.class).annotatedWith(Names.named(ExecutorManager.BREED_IMPORTER_MAP_KEY)).toInstance(executorManager.addUnboundedQueueExecutor(ExecutorManager.BREED_IMPORTER_MAP_KEY, maxConcurrentBreedImports));
         bind(ExecutorService.class).annotatedWith(Names.named(ExecutorManager.TRAVERSER_MAP_KEY)).toInstance(executorManager.addDirectHandoffExecutor(ExecutorManager.TRAVERSER_MAP_KEY));
-        bind(ExecutorService.class).annotatedWith(Names.named(ExecutorManager.UPDATES_IMPORTER_MAP_KEY)).toInstance(executorManager.addUnboundedQueueExecutor(ExecutorManager.UPDATES_IMPORTER_MAP_KEY, maxConcurrentPedigreePerBreedImports));
     }
 
     @Provides

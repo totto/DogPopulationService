@@ -4,8 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import com.google.inject.name.Named;
-import no.nkk.dogpopulation.concurrent.ExecutorManager;
 import no.nkk.dogpopulation.graph.GraphQueryService;
 import no.nkk.dogpopulation.graph.dataerror.breed.IncorrectBreedRecord;
 import no.nkk.dogpopulation.graph.dataerror.circularparentchain.CircularRecord;
@@ -19,8 +17,6 @@ import no.nkk.dogpopulation.importer.PedigreeImporter;
 import no.nkk.dogpopulation.importer.breedupdater.BreedImportStatus;
 import no.nkk.dogpopulation.importer.breedupdater.BreedImportStatusAggregate;
 import no.nkk.dogpopulation.importer.breedupdater.BreedUpdateService;
-import no.nkk.dogpopulation.importer.dogsearch.DogSearchClient;
-import no.nkk.dogpopulation.importer.dogsearch.UpdatesImporterTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,8 +27,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
 
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
@@ -49,23 +43,15 @@ public class GraphResource {
     private final GraphQueryService graphQueryService;
     private final BreedUpdateService breedUpdateService;
 
-    private final DogSearchClient dogSearchClient;
-
     private final PedigreeImporter pedigreeImporter;
-
-    private final ExecutorService updatesImporterExecutorService;
 
     @Inject
     public GraphResource(
-            @Named(ExecutorManager.UPDATES_IMPORTER_MAP_KEY) ExecutorService updatesImporterExecutorService,
-            GraphQueryService graphQueryService, BreedUpdateService breedUpdateService, DogSearchClient dogSearchClient,
-            PedigreeImporter pedigreeImporter) {
+            GraphQueryService graphQueryService, BreedUpdateService breedUpdateService, PedigreeImporter pedigreeImporter) {
         this.breedUpdateService = breedUpdateService;
         objectMapper = new ObjectMapper();
         prettyPrintingObjectWriter = objectMapper.writerWithDefaultPrettyPrinter();
-        this.updatesImporterExecutorService = updatesImporterExecutorService;
         this.graphQueryService = graphQueryService;
-        this.dogSearchClient = dogSearchClient;
         this.pedigreeImporter = pedigreeImporter;
     }
 
@@ -86,82 +72,6 @@ public class GraphResource {
 
         try {
             String json = prettyPrintingObjectWriter.writeValueAsString(dog);
-            return Response.ok(json).build();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @GET
-    @Path("/import/latest/week")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response updateLastWeek() {
-        LOGGER.trace("updateLastWeek");
-
-        Set<String> uuids = dogSearchClient.listIdsForLastWeek();
-
-        UpdatesImporterTask updatesImporterTask = new UpdatesImporterTask(updatesImporterExecutorService, pedigreeImporter, dogSearchClient, uuids);
-        int n = updatesImporterTask.call();
-
-        try {
-            String json = prettyPrintingObjectWriter.writeValueAsString(n);
-            return Response.ok(json).build();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @GET
-    @Path("/import/latest/day")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response updateLastDay() {
-        LOGGER.trace("updateLastDay");
-
-        Set<String> uuids = dogSearchClient.listIdsForLastDay();
-
-        UpdatesImporterTask updatesImporterTask = new UpdatesImporterTask(updatesImporterExecutorService, pedigreeImporter, dogSearchClient, uuids);
-        int n = updatesImporterTask.call();
-
-        try {
-            String json = prettyPrintingObjectWriter.writeValueAsString(n);
-            return Response.ok(json).build();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @GET
-    @Path("/import/latest/hour")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response updateLastHour() {
-        LOGGER.trace("updateLastHour");
-
-        Set<String> uuids = dogSearchClient.listIdsForLastHour();
-
-        UpdatesImporterTask updatesImporterTask = new UpdatesImporterTask(updatesImporterExecutorService, pedigreeImporter, dogSearchClient, uuids);
-        int n = updatesImporterTask.call();
-
-        try {
-            String json = prettyPrintingObjectWriter.writeValueAsString(n);
-            return Response.ok(json).build();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @GET
-    @Path("/import/latest/minute")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response updateLastMinute() {
-        LOGGER.trace("updateLastMinute");
-
-        Set<String> uuids = dogSearchClient.listIdsForLastMinute();
-
-        UpdatesImporterTask updatesImporterTask = new UpdatesImporterTask(updatesImporterExecutorService, pedigreeImporter, dogSearchClient, uuids);
-        int n = updatesImporterTask.call();
-
-        try {
-            String json = prettyPrintingObjectWriter.writeValueAsString(n);
             return Response.ok(json).build();
         } catch (IOException e) {
             throw new RuntimeException(e);
