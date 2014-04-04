@@ -70,27 +70,6 @@ public class GraphQueryService {
     }
 
 
-    public List<String> getBreeds() {
-        try (Transaction tx = graphDb.beginTx()) {
-            Node breedRoot = getSingleNode(DogGraphLabel.CATEGORY, DogGraphConstants.CATEGORY_CATEGORY, DogGraphConstants.CATEGORY_CATEGORY_BREEDGROUPS);
-            if (breedRoot == null) {
-                return Collections.emptyList();
-            }
-            List<String> breeds = new ArrayList<>(1000);
-            for (Path path : graphDb.traversalDescription()
-                    .depthFirst()
-                    .relationships(DogGraphRelationshipType.MEMBER_OF, Direction.INCOMING)
-                    .evaluator(Evaluators.includingDepths(1, 1))
-                    .traverse(breedRoot)) {
-                Node dogOfBreed = path.endNode();
-                breeds.add((String) dogOfBreed.getProperty(DogGraphConstants.BREEDSYNONYM_SYNONYM));
-            }
-            tx.success();
-            return breeds;
-        }
-    }
-
-
     public List<String> getBreedList(String synonym) {
         try (Transaction tx = graphDb.beginTx()) {
             LinkedHashSet<String> breedSet = new LinkedHashSet<>();

@@ -132,7 +132,7 @@ public class GraphResource {
     public Response getKnownBreeds() {
         LOGGER.trace("getKnownBreeds()");
 
-        List<String> breeds = graphQueryService.getBreeds();
+        List<String> breeds = graphQueryService.listAllBreedSynonyms();
 
         try {
             String json = prettyPrintingObjectWriter.writeValueAsString(breeds);
