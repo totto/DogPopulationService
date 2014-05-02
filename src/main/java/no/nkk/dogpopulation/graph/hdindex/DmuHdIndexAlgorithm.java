@@ -5,6 +5,7 @@ import no.nkk.dogpopulation.graph.*;
 import no.nkk.dogpopulation.graph.dataerror.circularparentchain.CircularAncestryBreedGroupAlgorithm;
 import no.nkk.dogpopulation.graph.dataerror.circularparentchain.CircularParentChainAlgorithm;
 import no.nkk.dogpopulation.graph.dataerror.circularparentchain.CircularRecord;
+import no.nkk.dogpopulation.graph.dataerror.gender.IncorrectOrMissingGenderAlgorithm;
 import no.nkk.dogpopulation.importer.dogsearch.DogDetails;
 import no.nkk.dogpopulation.importer.dogsearch.DogHealth;
 import no.nkk.dogpopulation.importer.dogsearch.DogHealthHD;
@@ -43,6 +44,7 @@ public class DmuHdIndexAlgorithm {
 
     private final CircularAncestryBreedGroupAlgorithm circularAncestryBreedGroupAlgorithm;
     private final CircularParentChainAlgorithm circularParentChainAlgorithm;
+    private final IncorrectOrMissingGenderAlgorithm incorrectOrMissingGenderAlgorithm;
 
     public DmuHdIndexAlgorithm(GraphDatabaseService graphDb, ExecutionEngine engine, File dataFile, File pedigreeFile, File uuidMappingFile, File breedCodeMappingFile, Set<String> breed) {
         this.graphDb = graphDb;
@@ -54,6 +56,7 @@ public class DmuHdIndexAlgorithm {
         this.commonTraversals = new CommonTraversals(graphDb);
         this.circularAncestryBreedGroupAlgorithm = new CircularAncestryBreedGroupAlgorithm(graphDb, engine);
         this.circularParentChainAlgorithm = new CircularParentChainAlgorithm(graphDb, engine);
+        this.incorrectOrMissingGenderAlgorithm = new IncorrectOrMissingGenderAlgorithm(graphDb, engine);
     }
 
 
@@ -90,6 +93,7 @@ public class DmuHdIndexAlgorithm {
         Set<Long> visitedNodes = new HashSet<>();
         Set<Long> dataErrorDogNodes = new LinkedHashSet<>();
         markDogsWithCircularAncestry(dataErrorDogNodes);
+        markDogsWithIncorrectGender(dataErrorDogNodes);
         for (Path breedSynonymPath : commonTraversals.traverseAllBreedSynonymNodesThatAreMembersOfTheSameBreedGroupAsSynonymsInSet(breed)) {
             writeBreedToFiles(dataWriter, pedigreeWriter, uuidMappingWriter, breedMappingWriter, visitedNodes, breedSynonymPath, dataErrorDogNodes);
         }
@@ -105,6 +109,20 @@ public class DmuHdIndexAlgorithm {
             }
             for (CircularRecord cr : circle) {
                 Node dog = GraphUtils.getSingleNode(graphDb, DogGraphLabel.DOG, DogGraphConstants.DOG_UUID, cr.getUuid());
+                if (dog == null) {
+                    continue;
+                }
+                dataErrorDogNodes.add(dog.getId());
+            }
+        }
+    }
+
+
+    private void markDogsWithIncorrectGender(Set<Long> dataErrorDogNodes) {
+        for (String breedSynonym : breed) {
+            List<String> uuids = incorrectOrMissingGenderAlgorithm.findDataError(0, 10000000, breedSynonym);
+            for (String uuid : uuids) {
+                Node dog = GraphUtils.getSingleNode(graphDb, DogGraphLabel.DOG, DogGraphConstants.DOG_UUID, uuid);
                 if (dog == null) {
                     continue;
                 }
