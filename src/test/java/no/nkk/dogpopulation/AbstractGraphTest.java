@@ -1,11 +1,14 @@
 package no.nkk.dogpopulation;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import no.nkk.dogpopulation.graph.*;
 import no.nkk.dogpopulation.graph.dogbuilder.BreedSynonymNodeCache;
 import no.nkk.dogpopulation.graph.dogbuilder.Dogs;
+import no.nkk.dogpopulation.importer.dogsearch.*;
 import org.joda.time.LocalDate;
 import org.neo4j.cypher.javacompat.ExecutionEngine;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -31,6 +34,7 @@ public abstract class AbstractGraphTest {
     @Inject
     protected GraphQueryService graphQueryService;
 
+    private ObjectMapper objectMapper;
 
     @BeforeMethod
     public void initGraph() {
@@ -46,6 +50,13 @@ public abstract class AbstractGraphTest {
         graphDb.shutdown();
     }
 
+    protected ObjectMapper getObjectMapper() {
+        if (objectMapper == null) {
+            objectMapper = new ObjectMapper();
+        }
+        return objectMapper;
+    }
+
     protected Node addBreed(String synonym, String nkkBreedId) {
         Node breedSynonymNode = breedSynonymNodeCache.getBreed(synonym);
         try (Transaction tx = graphDb.beginTx()) {
@@ -59,6 +70,50 @@ public abstract class AbstractGraphTest {
 
     protected Node breed(String breedName) {
         return breedSynonymNodeCache.getBreed(breedName);
+    }
+
+    protected Node addDog(String uuid, String regNo, String born, DogGender gender, String breedName, String hdDiag, String xRayDate) {
+        String name = uuid;
+        DogDetails dogDetails = new DogDetails();
+        dogDetails.setName(name);
+        DogBreed dogBreed = new DogBreed();
+        dogBreed.setName(breedName);
+        dogDetails.setBreed(dogBreed);
+        dogDetails.setId(uuid);
+        if (born != null) {
+            dogDetails.setBorn(born);
+        }
+        if (gender != null) {
+            dogDetails.setGender(gender.name().toLowerCase());
+        }
+        if (regNo != null) {
+            DogId[] ids = new DogId[1];
+            ids[0] = new DogId();
+            ids[0].setType("RegNo");
+            ids[0].setValue(regNo);
+            dogDetails.setIds(ids);
+        }
+        if (hdDiag != null) {
+            DogHealth health = new DogHealth();
+            DogHealthHD[] hd = new DogHealthHD[1];
+            hd[0] = new DogHealthHD();
+            hd[0].setXray(xRayDate);
+            hd[0].setDiagnosis(hdDiag);
+            health.setHd(hd);
+            dogDetails.setHealth(health);
+        }
+        try {
+            String json = getObjectMapper().writeValueAsString(dogDetails);
+            dogDetails.setJson(json);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        Node dog;
+        try (Transaction tx = graphDb.beginTx()) {
+            dog = dogs.dog(uuid).all(dogDetails).build(graphDb);
+            tx.success();
+        }
+        return dog;
     }
 
     protected Node addDog(String uuid, Node breedSynonymNode) {
