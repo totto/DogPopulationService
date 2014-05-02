@@ -2,11 +2,15 @@ package no.nkk.dogpopulation.graph.hdindex;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import no.nkk.dogpopulation.graph.*;
+import no.nkk.dogpopulation.graph.dataerror.circularparentchain.CircularAncestryBreedGroupAlgorithm;
+import no.nkk.dogpopulation.graph.dataerror.circularparentchain.CircularParentChainAlgorithm;
+import no.nkk.dogpopulation.graph.dataerror.circularparentchain.CircularRecord;
 import no.nkk.dogpopulation.importer.dogsearch.DogDetails;
 import no.nkk.dogpopulation.importer.dogsearch.DogHealth;
 import no.nkk.dogpopulation.importer.dogsearch.DogHealthHD;
 import no.nkk.dogpopulation.importer.dogsearch.DogId;
 import org.joda.time.DateTime;
+import org.neo4j.cypher.javacompat.ExecutionEngine;
 import org.neo4j.graphdb.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +18,8 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -35,7 +41,10 @@ public class DmuHdIndexAlgorithm {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public DmuHdIndexAlgorithm(GraphDatabaseService graphDb, File dataFile, File pedigreeFile, File uuidMappingFile, File breedCodeMappingFile, Set<String> breed) {
+    private final CircularAncestryBreedGroupAlgorithm circularAncestryBreedGroupAlgorithm;
+    private final CircularParentChainAlgorithm circularParentChainAlgorithm;
+
+    public DmuHdIndexAlgorithm(GraphDatabaseService graphDb, ExecutionEngine engine, File dataFile, File pedigreeFile, File uuidMappingFile, File breedCodeMappingFile, Set<String> breed) {
         this.graphDb = graphDb;
         this.dataFile = dataFile;
         this.pedigreeFile = pedigreeFile;
@@ -43,6 +52,8 @@ public class DmuHdIndexAlgorithm {
         this.breedCodeMappingFile = breedCodeMappingFile;
         this.breed = breed;
         this.commonTraversals = new CommonTraversals(graphDb);
+        this.circularAncestryBreedGroupAlgorithm = new CircularAncestryBreedGroupAlgorithm(graphDb, engine);
+        this.circularParentChainAlgorithm = new CircularParentChainAlgorithm(graphDb, engine);
     }
 
 
@@ -74,14 +85,36 @@ public class DmuHdIndexAlgorithm {
         }
     }
 
+
     public void writeFiles(PrintWriter dataWriter, PrintWriter pedigreeWriter, PrintWriter uuidMappingWriter, PrintWriter breedMappingWriter) {
         Set<Long> visitedNodes = new HashSet<>();
+        Set<Long> dataErrorDogNodes = new LinkedHashSet<>();
+        markDogsWithCircularAncestry(dataErrorDogNodes);
         for (Path breedSynonymPath : commonTraversals.traverseAllBreedSynonymNodesThatAreMembersOfTheSameBreedGroupAsSynonymsInSet(breed)) {
-            writeBreedToFiles(dataWriter, pedigreeWriter, uuidMappingWriter, breedMappingWriter, visitedNodes, breedSynonymPath);
+            writeBreedToFiles(dataWriter, pedigreeWriter, uuidMappingWriter, breedMappingWriter, visitedNodes, breedSynonymPath, dataErrorDogNodes);
         }
     }
 
-    private void writeBreedToFiles(PrintWriter dataWriter, PrintWriter pedigreeWriter, PrintWriter uuidMappingWriter, PrintWriter breedMappingWriter, Set<Long> visitedNodes, Path breedSynonymPath) {
+
+    private void markDogsWithCircularAncestry(Set<Long> dataErrorDogNodes) {
+        List<String> circleDogs = circularAncestryBreedGroupAlgorithm.run(breed);
+        for (String circleDog : circleDogs) {
+            List<CircularRecord> circle = circularParentChainAlgorithm.run(circleDog);
+            if (circle == null) {
+                continue;
+            }
+            for (CircularRecord cr : circle) {
+                Node dog = GraphUtils.getSingleNode(graphDb, DogGraphLabel.DOG, DogGraphConstants.DOG_UUID, cr.getUuid());
+                if (dog == null) {
+                    continue;
+                }
+                dataErrorDogNodes.add(dog.getId());
+            }
+        }
+    }
+
+
+    private void writeBreedToFiles(PrintWriter dataWriter, PrintWriter pedigreeWriter, PrintWriter uuidMappingWriter, PrintWriter breedMappingWriter, Set<Long> visitedNodes, Path breedSynonymPath, Set<Long> dataErrorDogNodes) {
         int breedNkkId = -1;
         Node breedSynonymNode = breedSynonymPath.endNode();
         String breedName = "Breed Node does not have breed name set!";
@@ -113,6 +146,10 @@ public class DmuHdIndexAlgorithm {
 
             if (visitedNodes.contains(dogNode.getId())) {
                 continue;
+            }
+
+            if (dataErrorDogNodes.contains(dogNode.getId())) {
+                continue; // do not include dogs that have known data-errors
             }
 
             String uuid = (String) dogNode.getProperty(DogGraphConstants.DOG_UUID);
@@ -162,12 +199,16 @@ public class DmuHdIndexAlgorithm {
                 for (Relationship hasParent : dogNode.getRelationships(DogGraphRelationshipType.HAS_PARENT, Direction.OUTGOING)) {
                     Node parentNode = hasParent.getEndNode();
                     ParentRole parentRole = ParentRole.valueOf(((String) hasParent.getProperty(DogGraphConstants.HASPARENT_ROLE)).toUpperCase());
+                    long parentNodeId = parentNode.getId();
+                    if (dataErrorDogNodes.contains(parentNodeId)) {
+                        continue; // do not link to parents that have known data-errors
+                    }
                     switch (parentRole) {
                         case FATHER:
-                            fatherId = (int) parentNode.getId();
+                            fatherId = (int) parentNodeId;
                             break;
                         case MOTHER:
-                            motherId = (int) parentNode.getId();
+                            motherId = (int) parentNodeId;
                             break;
                     }
                 }
@@ -220,7 +261,6 @@ public class DmuHdIndexAlgorithm {
             return null;
         }
         String json = (String) dogNode.getProperty(DogGraphConstants.DOG_JSON);
-        DogDetails dogDetails;
         try {
             return objectMapper.readValue(json, DogDetails.class);
         } catch (IOException e) {

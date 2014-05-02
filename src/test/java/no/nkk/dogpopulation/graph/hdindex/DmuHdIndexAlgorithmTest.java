@@ -72,4 +72,27 @@ public class DmuHdIndexAlgorithmTest extends AbstractGraphTest {
        Assert.assertTrue(breedCodeMappingFile.length() > 0);
     }
 
+    @Test
+    public void thatCirclesGetEliminated() throws IOException {
+        // given
+        String breed1 = "Breed1";
+        addBreed(breed1, "1");
+        addDog("A", "NO/00777/95", "2008-02-26", DogGender.FEMALE, breed1, "A2", "2010-06-10");
+        addDog("C", "NO/00777/93", "2005-07-11", DogGender.FEMALE, breed1, "B2", "2007-06-12");
+        connectChildToMother("A", "C");
+        connectChildToMother("C", "A");
+
+
+        Set<String> breedSet = new LinkedHashSet<>();
+        breedSet.add(breed1);
+
+        // when
+        graphQueryService.writeDmuFiles(dataFile, pedigreeFile, uuidMappingFile, breedCodeMappingFile, breedSet);
+
+        // then
+        Assert.assertTrue(dataFile.isFile());
+        Assert.assertEquals(dataFile.length(), 0);
+        Assert.assertTrue(pedigreeFile.isFile());
+        Assert.assertEquals(pedigreeFile.length(), 0);
+    }
 }
