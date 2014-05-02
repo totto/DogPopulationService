@@ -16,7 +16,7 @@ Todo Kim: Fill in the blanks
 
 Thread limit in Linux
 -------
-During update and import of breeds, the application will need to allocate a lot of threads (usually not more than 2000 concurrent threads).
+During update and import of breeds, the application will need to allocate a lot of threads (usually no more than 2000 concurrent threads).
 It's important to ensure that the thread limit per user and process is set high enough, otherwise the JVM will die with an OutOfMemoryError while trying to allocate a new thread.
 
 This is the configuration set in production AWS to ensure stable operation of application
