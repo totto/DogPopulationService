@@ -4,7 +4,7 @@
 
     <groupId>no.nkk</groupId>
     <artifactId>DogPopulationService</artifactId>
-    <version>1.1-SNAPSHOT</version>
+    <version>1.0.1</version>
 
     <packaging>jar</packaging>
     <name>DogPopulationService</name>
@@ -66,7 +66,7 @@
         <developerConnection>scm:git:ssh://git@github.com/NKK-IT-Utvikling/DogPopulationService.git</developerConnection>
         <connection>scm:git:https://github.com/NKK-IT-Utvikling/DogPopulationService.git</connection>
         <url>https://github.com:NKK-IT-Utvikling/DogPopulationService.git</url>
-        <tag>HEAD</tag>
+        <tag>DogPopulationService-1.0.1</tag>
     </scm>
 
     <build>
