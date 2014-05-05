@@ -35,6 +35,7 @@ public class DmuHdIndexAlgorithm {
     private final File pedigreeFile;
     private final File uuidMappingFile;
     private final File breedCodeMappingFile;
+    private final File dataErrorFile;
 
     private final Set<String> breed;
 
@@ -46,12 +47,13 @@ public class DmuHdIndexAlgorithm {
     private final CircularParentChainAlgorithm circularParentChainAlgorithm;
     private final IncorrectOrMissingGenderAlgorithm incorrectOrMissingGenderAlgorithm;
 
-    public DmuHdIndexAlgorithm(GraphDatabaseService graphDb, ExecutionEngine engine, File dataFile, File pedigreeFile, File uuidMappingFile, File breedCodeMappingFile, Set<String> breed) {
+    public DmuHdIndexAlgorithm(GraphDatabaseService graphDb, ExecutionEngine engine, File dataFile, File pedigreeFile, File uuidMappingFile, File breedCodeMappingFile, File dataErrorFile, Set<String> breed) {
         this.graphDb = graphDb;
         this.dataFile = dataFile;
         this.pedigreeFile = pedigreeFile;
         this.uuidMappingFile = uuidMappingFile;
         this.breedCodeMappingFile = breedCodeMappingFile;
+        this.dataErrorFile = dataErrorFile;
         this.breed = breed;
         this.commonTraversals = new CommonTraversals(graphDb);
         this.circularAncestryBreedGroupAlgorithm = new CircularAncestryBreedGroupAlgorithm(graphDb, engine);
@@ -66,7 +68,11 @@ public class DmuHdIndexAlgorithm {
             try(PrintWriter pedigreeOut = new PrintWriter(new OutputStreamWriter(new FileOutputStream(pedigreeFile), Charset.forName("ISO-8859-1")))) {
                 try(PrintWriter uuidMappingOut = new PrintWriter(new OutputStreamWriter(new FileOutputStream(uuidMappingFile), Charset.forName("ISO-8859-1")))) {
                     try(PrintWriter breedMappingOut = new PrintWriter(new OutputStreamWriter(new FileOutputStream(breedCodeMappingFile), Charset.forName("ISO-8859-1")))) {
-                        writeFiles(dataOut, pedigreeOut, uuidMappingOut, breedMappingOut);
+                        try(PrintWriter dataErrorOut = new PrintWriter(new OutputStreamWriter(new FileOutputStream(dataErrorFile), Charset.forName("ISO-8859-1")))) {
+                            writeFiles(dataOut, pedigreeOut, uuidMappingOut, breedMappingOut, dataErrorOut);
+                            dataErrorOut.flush();
+                        }
+                        breedMappingOut.flush();
                     }
                     uuidMappingOut.flush();
                 }
@@ -83,26 +89,28 @@ public class DmuHdIndexAlgorithm {
                 pedigreeFile.delete();
                 uuidMappingFile.delete();
                 breedCodeMappingFile.delete();
+                dataErrorFile.delete();
                 folder.delete();
             }
         }
     }
 
 
-    public void writeFiles(PrintWriter dataWriter, PrintWriter pedigreeWriter, PrintWriter uuidMappingWriter, PrintWriter breedMappingWriter) {
+    public void writeFiles(PrintWriter dataWriter, PrintWriter pedigreeWriter, PrintWriter uuidMappingWriter, PrintWriter breedMappingWriter, PrintWriter dataErrorWriter) {
         Set<Long> visitedNodes = new HashSet<>();
         Set<Long> dataErrorDogNodes = new LinkedHashSet<>();
-        markDogsWithCircularAncestry(dataErrorDogNodes);
-        markDogsWithIncorrectGender(dataErrorDogNodes);
+        markDogsWithCircularAncestry(dataErrorDogNodes, dataErrorWriter);
+        markDogsWithIncorrectGender(dataErrorDogNodes, dataErrorWriter);
         for (Path breedSynonymPath : commonTraversals.traverseAllBreedSynonymNodesThatAreMembersOfTheSameBreedGroupAsSynonymsInSet(breed)) {
             writeBreedToFiles(dataWriter, pedigreeWriter, uuidMappingWriter, breedMappingWriter, visitedNodes, breedSynonymPath, dataErrorDogNodes);
         }
     }
 
 
-    private void markDogsWithCircularAncestry(Set<Long> dataErrorDogNodes) {
+    private void markDogsWithCircularAncestry(Set<Long> dataErrorDogNodes, PrintWriter dataErrorWriter) {
         List<String> circleDogs = circularAncestryBreedGroupAlgorithm.run(breed);
-        for (String circleDog : circleDogs) {
+        for (int i=0; i<circleDogs.size(); i++) {
+            String circleDog = circleDogs.get(i);
             List<CircularRecord> circle = circularParentChainAlgorithm.run(circleDog);
             if (circle == null) {
                 continue;
@@ -113,12 +121,13 @@ public class DmuHdIndexAlgorithm {
                     continue;
                 }
                 dataErrorDogNodes.add(dog.getId());
+                dataErrorWriter.println("CIRCLE " + i + " -- " + dog.getId() + "  " + cr.getUuid());
             }
         }
     }
 
 
-    private void markDogsWithIncorrectGender(Set<Long> dataErrorDogNodes) {
+    private void markDogsWithIncorrectGender(Set<Long> dataErrorDogNodes, PrintWriter dataErrorWriter) {
         for (String breedSynonym : breed) {
             List<String> uuids = incorrectOrMissingGenderAlgorithm.findDataError(0, 10000000, breedSynonym);
             for (String uuid : uuids) {
@@ -127,6 +136,7 @@ public class DmuHdIndexAlgorithm {
                     continue;
                 }
                 dataErrorDogNodes.add(dog.getId());
+                dataErrorWriter.println("GENDER -- " + dog.getId() + "  " + uuid);
             }
         }
     }

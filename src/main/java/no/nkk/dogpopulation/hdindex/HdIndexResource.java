@@ -35,7 +35,7 @@ public class HdIndexResource {
     private final File hdIndexFolder;
 
     private enum HdIndexFileType {
-        DATA, PEDIGREE, UUID_MAPPING, BREED_CODE_MAPPING
+        DATA, PEDIGREE, UUID_MAPPING, BREED_CODE_MAPPING, DATA_ERROR_FILE
     }
 
     @Inject
@@ -148,7 +148,7 @@ public class HdIndexResource {
             }
         } else {
             // generate file
-            graphQueryService.writeDmuFiles(map.get(HdIndexFileType.DATA), map.get(HdIndexFileType.PEDIGREE), map.get(HdIndexFileType.UUID_MAPPING), map.get(HdIndexFileType.BREED_CODE_MAPPING), breed);
+            graphQueryService.writeDmuFiles(map.get(HdIndexFileType.DATA), map.get(HdIndexFileType.PEDIGREE), map.get(HdIndexFileType.UUID_MAPPING), map.get(HdIndexFileType.BREED_CODE_MAPPING), map.get(HdIndexFileType.DATA_ERROR_FILE), breed);
             lock.countDown(); // signal file generation completion
             synchronized (lockedFiles) {
                 lockedFiles.remove(map.get(HdIndexFileType.DATA).getName());
@@ -165,6 +165,7 @@ public class HdIndexResource {
         String pedigreeFilename = String.format("hdindex-pedigree-%s.txt", breed);
         String uuidMappingFilename = String.format("hdindex-uuid-map-%s.txt", breed);
         String breedCodeMappingFilename = String.format("hdindex-breed-map-%s.txt", breed);
+        String dataErrorFilename = String.format("hdindex-errors-%s.txt", breed);
         File folder = new File(hdIndexFolder, breed);
         try {
             FileUtils.forceMkdir(folder);
@@ -175,11 +176,13 @@ public class HdIndexResource {
         File pedigreeFile = new File(folder, pedigreeFilename);
         File uuidMappingFile = new File(folder, uuidMappingFilename);
         File breedCodeMappingFile = new File(folder, breedCodeMappingFilename);
+        File dataErrorFile = new File(folder, dataErrorFilename);
 
         map.put(HdIndexFileType.DATA, dataFile);
         map.put(HdIndexFileType.PEDIGREE, pedigreeFile);
         map.put(HdIndexFileType.UUID_MAPPING, uuidMappingFile);
         map.put(HdIndexFileType.BREED_CODE_MAPPING, breedCodeMappingFile);
+        map.put(HdIndexFileType.DATA_ERROR_FILE, dataErrorFile);
         return map;
     }
 }
