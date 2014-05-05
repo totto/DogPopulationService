@@ -299,6 +299,9 @@ public class DmuHdIndexAlgorithm {
         HdYearAndScore bestCandidate = null;
         for (DogHealthHD dogHealthHD : dogHealthHDs) {
             String hdDiag = dogHealthHD.getDiagnosis();
+            if (hdDiag == null) {
+                continue;
+            }
             int hdScore;
             if (hdDiag.startsWith("A")) {
                 hdScore = 1;
@@ -314,6 +317,9 @@ public class DmuHdIndexAlgorithm {
                 continue; // not a valid diagnosis
             }
             DateTime xRay = getXray(uuid, dogHealthHD);
+            if (xRay == null) {
+                continue;
+            }
             if (bestCandidate == null || xRay.isAfter(bestCandidate.hdXray)) {
                 bestCandidate = new HdYearAndScore(xRay, hdScore);
             }
