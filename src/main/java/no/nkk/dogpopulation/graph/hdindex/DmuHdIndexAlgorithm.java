@@ -64,7 +64,7 @@ public class DmuHdIndexAlgorithm {
         markDogsWithCircularAncestry(dataErrorDogNodes);
         markDogsWithIncorrectGender(dataErrorDogNodes);
         for (Path breedSynonymPath : commonTraversals.traverseAllBreedSynonymNodesThatAreMembersOfTheSameBreedGroupAsSynonymsInSet(breed)) {
-            writeBreedToFiles(visitedNodes, breedSynonymPath, dataErrorDogNodes);
+            buildDataset(visitedNodes, breedSynonymPath, dataErrorDogNodes);
         }
         return dataset;
     }
@@ -105,7 +105,7 @@ public class DmuHdIndexAlgorithm {
     }
 
 
-    private void writeBreedToFiles(Set<Long> visitedNodes, Path breedSynonymPath, Set<Long> dataErrorDogNodes) {
+    private void buildDataset(Set<Long> visitedNodes, Path breedSynonymPath, Set<Long> dataErrorDogNodes) {
         int breedNkkId = -1;
         Node breedSynonymNode = breedSynonymPath.endNode();
         String breedName = "Breed Node does not have breed name set!";
