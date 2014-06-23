@@ -9,18 +9,16 @@ public class DmuPedigreeRecord implements DmuWritableRecord {
 
     public static int UNKNOWN = -9999999;
 
-    private final String uuid;
-
     // ID = Unik identifikation af individet (samme som i datafilen)
-    private final int id;
+    private final long id;
 
     // Far_id = Unik identifikation af faderen
     // Ukendte forældre kodes med negativ racekode (Racekode*(-1))
-    private final int fatherId;
+    private final long fatherId;
 
     // Mor_id = Unik identifikation af moderen (samme som i datafilen)
     // Ukendte forældre kodes med negativ racekode (Racekode*(-1))
-    private final int motherId;
+    private final long motherId;
 
     // F_dato = Fødselsdato (YYYYMMDD)
     // Ukendte fødselsdatoer kodes med -9999999. --> UNKNOWN
@@ -29,8 +27,7 @@ public class DmuPedigreeRecord implements DmuWritableRecord {
     // Race = Race kode (samme som i datafilen)
     private final int breedCode;
 
-    public DmuPedigreeRecord(String uuid, int id, int fatherId, int motherId, int birthDate, int breedCode) {
-        this.uuid = uuid;
+    public DmuPedigreeRecord(long id, long fatherId, long motherId, int birthDate, int breedCode) {
         this.id = id;
         this.fatherId = fatherId;
         this.motherId = motherId;
@@ -54,19 +51,15 @@ public class DmuPedigreeRecord implements DmuWritableRecord {
     }
 
 
-    public String getUuid() {
-        return uuid;
-    }
-
-    public int getId() {
+    public long getId() {
         return id;
     }
 
-    public int getFatherId() {
+    public long getFatherId() {
         return fatherId;
     }
 
-    public int getMotherId() {
+    public long getMotherId() {
         return motherId;
     }
 

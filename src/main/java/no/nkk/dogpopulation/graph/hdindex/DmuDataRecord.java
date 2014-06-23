@@ -10,10 +10,8 @@ public class DmuDataRecord implements DmuWritableRecord {
     // Manglende værdier kodes -9999999
     public static int UNKNOWN = -9999999;
 
-    private final String uuid;
-
     // ID = Unik identifikation af individet
-    private final int id;
+    private final long id;
 
     // Race = Indvidets race
     private final int breedCode;
@@ -31,13 +29,12 @@ public class DmuDataRecord implements DmuWritableRecord {
     private final int litterId;
 
     // Mor = Unik identifikation af moderen
-    private final int motherId;
+    private final long motherId;
 
     // HD = HD-score
     private final int hdScore;
 
-    public DmuDataRecord(String uuid, int id, int breedCode, int hdXrayYear, int gender, int breedHdXrayYearGender, int litterId, int motherId, int hdScore) {
-        this.uuid = uuid;
+    public DmuDataRecord(long id, int breedCode, int hdXrayYear, int gender, int breedHdXrayYearGender, int litterId, long motherId, int hdScore) {
         this.id = id;
         this.breedCode = breedCode;
         this.hdXrayYear = hdXrayYear;
@@ -70,11 +67,7 @@ public class DmuDataRecord implements DmuWritableRecord {
     }
 
 
-    public String getUuid() {
-        return uuid;
-    }
-
-    public int getId() {
+    public long getId() {
         return id;
     }
 
@@ -98,7 +91,7 @@ public class DmuDataRecord implements DmuWritableRecord {
         return litterId;
     }
 
-    public int getMotherId() {
+    public long getMotherId() {
         return motherId;
     }
 

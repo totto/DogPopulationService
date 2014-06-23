@@ -4,10 +4,10 @@ import java.io.PrintWriter;
 
 public class DmuUuidRecord implements DmuWritableRecord {
 
-    private final int id;
+    private final long id;
     private final String uuid;
 
-    public DmuUuidRecord(int id, String uuid) {
+    public DmuUuidRecord(long id, String uuid) {
         this.id = id;
         this.uuid = uuid;
     }
@@ -21,7 +21,7 @@ public class DmuUuidRecord implements DmuWritableRecord {
         out.print(NEWLINE);
     }
 
-    public String getUuid() {
-        return uuid;
+    public long getId() {
+        return id;
     }
 }

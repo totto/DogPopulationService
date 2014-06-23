@@ -7,45 +7,45 @@ import java.util.Map;
 
 public class DmuDataset {
 
-    private final Map<String, DmuDataRecord> dataRecords = new LinkedHashMap<>();
-    private final Map<String, DmuPedigreeRecord> pedigreeRecords = new LinkedHashMap<>();
-    private final Map<String, DmuDataErrorRecord> dataErrorRecords = new LinkedHashMap<>();
-    private final Map<String, DmuUuidRecord> uuidRecords = new LinkedHashMap<>();
+    private final Map<Long, DmuDataRecord> dataRecords = new LinkedHashMap<>();
+    private final Map<Long, DmuPedigreeRecord> pedigreeRecords = new LinkedHashMap<>();
+    private final Map<Long, DmuDataErrorRecord> dataErrorRecords = new LinkedHashMap<>();
+    private final Map<Long, DmuUuidRecord> uuidRecords = new LinkedHashMap<>();
     private final List<DmuBreedCodeRecord> breedCodeRecords = new ArrayList<>();
 
     void add(DmuDataRecord record) {
-        dataRecords.put(record.getUuid(), record);
+        dataRecords.put(record.getId(), record);
     }
 
     void add(DmuPedigreeRecord record) {
-        pedigreeRecords.put(record.getUuid(), record);
+        pedigreeRecords.put(record.getId(), record);
     }
 
     void add(DmuDataErrorRecord record) {
-        dataErrorRecords.put(record.getUuid(), record);
+        dataErrorRecords.put(record.getId(), record);
     }
 
     void add(DmuUuidRecord record) {
-        uuidRecords.put(record.getUuid(), record);
+        uuidRecords.put(record.getId(), record);
     }
 
     void add(DmuBreedCodeRecord record) {
         breedCodeRecords.add(record);
     }
 
-    Map<String, DmuDataRecord> getDataRecords() {
+    Map<Long, DmuDataRecord> getDataRecords() {
         return dataRecords;
     }
 
-    Map<String, DmuPedigreeRecord> getPedigreeRecords() {
+    Map<Long, DmuPedigreeRecord> getPedigreeRecords() {
         return pedigreeRecords;
     }
 
-    Map<String, DmuDataErrorRecord> getDataErrorRecords() {
+    Map<Long, DmuDataErrorRecord> getDataErrorRecords() {
         return dataErrorRecords;
     }
 
-    Map<String, DmuUuidRecord> getUuidRecords() {
+    Map<Long, DmuUuidRecord> getUuidRecords() {
         return uuidRecords;
     }
 

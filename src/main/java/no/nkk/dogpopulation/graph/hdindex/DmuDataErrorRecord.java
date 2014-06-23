@@ -4,11 +4,11 @@ import java.io.PrintWriter;
 
 public class DmuDataErrorRecord implements DmuWritableRecord {
 
-    private final String uuid;
+    private final long id;
     private final String message;
 
-    public DmuDataErrorRecord(String uuid, String message) {
-        this.uuid = uuid;
+    public DmuDataErrorRecord(long id, String message) {
+        this.id = id;
         this.message = message;
     }
 
@@ -17,7 +17,7 @@ public class DmuDataErrorRecord implements DmuWritableRecord {
         out.println(message);
     }
 
-    public String getUuid() {
-        return uuid;
+    public long getId() {
+        return id;
     }
 }

@@ -84,7 +84,7 @@ public class DmuHdIndexAlgorithm {
                     continue;
                 }
                 dataErrorDogNodes.add(dog.getId());
-                dataset.add(new DmuDataErrorRecord(cr.getUuid(), "CIRCLE " + i + " -- " + dog.getId() + "  " + cr.getUuid()));
+                dataset.add(new DmuDataErrorRecord(dog.getId(), "CIRCLE " + i + " -- " + dog.getId() + "  " + cr.getUuid()));
             }
         }
     }
@@ -99,7 +99,7 @@ public class DmuHdIndexAlgorithm {
                     continue;
                 }
                 dataErrorDogNodes.add(dog.getId());
-                dataset.add(new DmuDataErrorRecord(uuid, "GENDER -- " + dog.getId() + "  " + uuid));
+                dataset.add(new DmuDataErrorRecord(dog.getId(), "GENDER -- " + dog.getId() + "  " + uuid));
             }
         }
     }
@@ -184,8 +184,8 @@ public class DmuHdIndexAlgorithm {
                 }
             }
 
-            int motherId = -breedNkkId;
-            int fatherId = -breedNkkId;
+            long motherId = -breedNkkId;
+            long fatherId = -breedNkkId;
             if (dogNode.hasRelationship(DogGraphRelationshipType.HAS_PARENT)) {
                 for (Relationship hasParent : dogNode.getRelationships(DogGraphRelationshipType.HAS_PARENT, Direction.OUTGOING)) {
                     Node parentNode = hasParent.getEndNode();
@@ -196,16 +196,16 @@ public class DmuHdIndexAlgorithm {
                     }
                     switch (parentRole) {
                         case FATHER:
-                            fatherId = (int) parentNodeId;
+                            fatherId = parentNodeId;
                             break;
                         case MOTHER:
-                            motherId = (int) parentNodeId;
+                            motherId = parentNodeId;
                             break;
                     }
                 }
             }
 
-            int id = (int) dogNode.getId();
+            long id = dogNode.getId();
 
             HdYearAndScore hdYearAndScore = getHdScore(dogDetails, uuid);
             if (hdYearAndScore != null) {
@@ -213,10 +213,10 @@ public class DmuHdIndexAlgorithm {
                 int xRayYear = hdYearAndScore.hdXray.getYear();
                 int hdScore = hdYearAndScore.hdScore;
                 int breedHdXrayYearGender = (100000 * breedNkkId) + (10 * xRayYear) + gender;
-                dataset.add(new DmuDataRecord(uuid, id, breedNkkId, xRayYear, gender, breedHdXrayYearGender, litterId, motherId, hdScore));
+                dataset.add(new DmuDataRecord(id, breedNkkId, xRayYear, gender, breedHdXrayYearGender, litterId, motherId, hdScore));
             }
 
-            dataset.add(new DmuPedigreeRecord(uuid, id, fatherId, motherId, born, breedNkkId));
+            dataset.add(new DmuPedigreeRecord(id, fatherId, motherId, born, breedNkkId));
 
             dataset.add(new DmuUuidRecord(id, uuid));
         }
