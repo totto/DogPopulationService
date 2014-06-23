@@ -5,10 +5,12 @@ import java.io.PrintWriter;
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
-public class DmuDataRecord {
+public class DmuDataRecord implements DmuWritableRecord {
 
     // Manglende værdier kodes -9999999
     public static int UNKNOWN = -9999999;
+
+    private final String uuid;
 
     // ID = Unik identifikation af individet
     private final int id;
@@ -34,7 +36,8 @@ public class DmuDataRecord {
     // HD = HD-score
     private final int hdScore;
 
-    public DmuDataRecord(int id, int breedCode, int hdXrayYear, int gender, int breedHdXrayYearGender, int litterId, int motherId, int hdScore) {
+    public DmuDataRecord(String uuid, int id, int breedCode, int hdXrayYear, int gender, int breedHdXrayYearGender, int litterId, int motherId, int hdScore) {
+        this.uuid = uuid;
         this.id = id;
         this.breedCode = breedCode;
         this.hdXrayYear = hdXrayYear;
@@ -67,6 +70,10 @@ public class DmuDataRecord {
     }
 
 
+    public String getUuid() {
+        return uuid;
+    }
+
     public int getId() {
         return id;
     }
@@ -98,4 +105,5 @@ public class DmuDataRecord {
     public int getHdScore() {
         return hdScore;
     }
+
 }

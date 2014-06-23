@@ -16,8 +16,8 @@ import org.neo4j.graphdb.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
-import java.nio.charset.Charset;
+import java.io.File;
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -31,12 +31,6 @@ public class DmuHdIndexAlgorithm {
 
     private final GraphDatabaseService graphDb;
 
-    private final File dataFile;
-    private final File pedigreeFile;
-    private final File uuidMappingFile;
-    private final File breedCodeMappingFile;
-    private final File dataErrorFile;
-
     private final Set<String> breed;
 
     private final CommonTraversals commonTraversals;
@@ -47,13 +41,10 @@ public class DmuHdIndexAlgorithm {
     private final CircularParentChainAlgorithm circularParentChainAlgorithm;
     private final IncorrectOrMissingGenderAlgorithm incorrectOrMissingGenderAlgorithm;
 
-    public DmuHdIndexAlgorithm(GraphDatabaseService graphDb, ExecutionEngine engine, File dataFile, File pedigreeFile, File uuidMappingFile, File breedCodeMappingFile, File dataErrorFile, Set<String> breed) {
+    private final DmuDataset dataset = new DmuDataset();
+
+    public DmuHdIndexAlgorithm(GraphDatabaseService graphDb, ExecutionEngine engine, Set<String> breed) {
         this.graphDb = graphDb;
-        this.dataFile = dataFile;
-        this.pedigreeFile = pedigreeFile;
-        this.uuidMappingFile = uuidMappingFile;
-        this.breedCodeMappingFile = breedCodeMappingFile;
-        this.dataErrorFile = dataErrorFile;
         this.breed = breed;
         this.commonTraversals = new CommonTraversals(graphDb);
         this.circularAncestryBreedGroupAlgorithm = new CircularAncestryBreedGroupAlgorithm(graphDb, engine);
@@ -61,53 +52,25 @@ public class DmuHdIndexAlgorithm {
         this.incorrectOrMissingGenderAlgorithm = new IncorrectOrMissingGenderAlgorithm(graphDb, engine);
     }
 
-
-    public void writeFiles() {
-        boolean success = false;
-        try(PrintWriter dataOut = new PrintWriter(new OutputStreamWriter(new FileOutputStream(dataFile), Charset.forName("ISO-8859-1")))) {
-            try(PrintWriter pedigreeOut = new PrintWriter(new OutputStreamWriter(new FileOutputStream(pedigreeFile), Charset.forName("ISO-8859-1")))) {
-                try(PrintWriter uuidMappingOut = new PrintWriter(new OutputStreamWriter(new FileOutputStream(uuidMappingFile), Charset.forName("ISO-8859-1")))) {
-                    try(PrintWriter breedMappingOut = new PrintWriter(new OutputStreamWriter(new FileOutputStream(breedCodeMappingFile), Charset.forName("ISO-8859-1")))) {
-                        try(PrintWriter dataErrorOut = new PrintWriter(new OutputStreamWriter(new FileOutputStream(dataErrorFile), Charset.forName("ISO-8859-1")))) {
-                            writeFiles(dataOut, pedigreeOut, uuidMappingOut, breedMappingOut, dataErrorOut);
-                            dataErrorOut.flush();
-                        }
-                        breedMappingOut.flush();
-                    }
-                    uuidMappingOut.flush();
-                }
-                pedigreeOut.flush();
-            }
-            dataOut.flush();
-            success = true;
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        } finally {
-            if (!success) {
-                File folder = dataFile.getParentFile();
-                dataFile.delete();
-                pedigreeFile.delete();
-                uuidMappingFile.delete();
-                breedCodeMappingFile.delete();
-                dataErrorFile.delete();
-                folder.delete();
-            }
-        }
+    public void writeFiles(File dataFile, File pedigreeFile, File uuidMappingFile, File breedCodeMappingFile, File dataErrorFile) {
+        DmuDataset dmuDataset = extractData();
+        DmuDatasetWriter dmuDatasetWriter = new DmuDatasetWriter(dataFile, pedigreeFile, uuidMappingFile, breedCodeMappingFile, dataErrorFile);
+        dmuDatasetWriter.writeFiles(dmuDataset);
     }
 
-
-    public void writeFiles(PrintWriter dataWriter, PrintWriter pedigreeWriter, PrintWriter uuidMappingWriter, PrintWriter breedMappingWriter, PrintWriter dataErrorWriter) {
+    DmuDataset extractData() {
         Set<Long> visitedNodes = new HashSet<>();
         Set<Long> dataErrorDogNodes = new LinkedHashSet<>();
-        markDogsWithCircularAncestry(dataErrorDogNodes, dataErrorWriter);
-        markDogsWithIncorrectGender(dataErrorDogNodes, dataErrorWriter);
+        markDogsWithCircularAncestry(dataErrorDogNodes);
+        markDogsWithIncorrectGender(dataErrorDogNodes);
         for (Path breedSynonymPath : commonTraversals.traverseAllBreedSynonymNodesThatAreMembersOfTheSameBreedGroupAsSynonymsInSet(breed)) {
-            writeBreedToFiles(dataWriter, pedigreeWriter, uuidMappingWriter, breedMappingWriter, visitedNodes, breedSynonymPath, dataErrorDogNodes);
+            writeBreedToFiles(visitedNodes, breedSynonymPath, dataErrorDogNodes);
         }
+        return dataset;
     }
 
 
-    private void markDogsWithCircularAncestry(Set<Long> dataErrorDogNodes, PrintWriter dataErrorWriter) {
+    private void markDogsWithCircularAncestry(Set<Long> dataErrorDogNodes) {
         List<String> circleDogs = circularAncestryBreedGroupAlgorithm.run(breed);
         for (int i=0; i<circleDogs.size(); i++) {
             String circleDog = circleDogs.get(i);
@@ -121,13 +84,13 @@ public class DmuHdIndexAlgorithm {
                     continue;
                 }
                 dataErrorDogNodes.add(dog.getId());
-                dataErrorWriter.println("CIRCLE " + i + " -- " + dog.getId() + "  " + cr.getUuid());
+                dataset.add(new DmuDataErrorRecord(cr.getUuid(), "CIRCLE " + i + " -- " + dog.getId() + "  " + cr.getUuid()));
             }
         }
     }
 
 
-    private void markDogsWithIncorrectGender(Set<Long> dataErrorDogNodes, PrintWriter dataErrorWriter) {
+    private void markDogsWithIncorrectGender(Set<Long> dataErrorDogNodes) {
         for (String breedSynonym : breed) {
             List<String> uuids = incorrectOrMissingGenderAlgorithm.findDataError(0, 10000000, breedSynonym);
             for (String uuid : uuids) {
@@ -136,13 +99,13 @@ public class DmuHdIndexAlgorithm {
                     continue;
                 }
                 dataErrorDogNodes.add(dog.getId());
-                dataErrorWriter.println("GENDER -- " + dog.getId() + "  " + uuid);
+                dataset.add(new DmuDataErrorRecord(uuid, "GENDER -- " + dog.getId() + "  " + uuid));
             }
         }
     }
 
 
-    private void writeBreedToFiles(PrintWriter dataWriter, PrintWriter pedigreeWriter, PrintWriter uuidMappingWriter, PrintWriter breedMappingWriter, Set<Long> visitedNodes, Path breedSynonymPath, Set<Long> dataErrorDogNodes) {
+    private void writeBreedToFiles(Set<Long> visitedNodes, Path breedSynonymPath, Set<Long> dataErrorDogNodes) {
         int breedNkkId = -1;
         Node breedSynonymNode = breedSynonymPath.endNode();
         String breedName = "Breed Node does not have breed name set!";
@@ -167,7 +130,7 @@ public class DmuHdIndexAlgorithm {
             throw new UnknownBreedCodeException(breedName);
         }
 
-        writeBreedCodeMappingRecord(breedMappingWriter, breedName, breedNkkId);
+        dataset.add(new DmuBreedCodeRecord(breedNkkId, breedName));
 
         for (Path path : commonTraversals.traverseDogsOfBreed(breedSynonymNode)) {
             Node dogNode = path.endNode();
@@ -250,15 +213,12 @@ public class DmuHdIndexAlgorithm {
                 int xRayYear = hdYearAndScore.hdXray.getYear();
                 int hdScore = hdYearAndScore.hdScore;
                 int breedHdXrayYearGender = (100000 * breedNkkId) + (10 * xRayYear) + gender;
-                DmuDataRecord dmuDataRecord = new DmuDataRecord(id, breedNkkId, xRayYear, gender, breedHdXrayYearGender, litterId, motherId, hdScore);
-                dmuDataRecord.writeTo(dataWriter);
+                dataset.add(new DmuDataRecord(uuid, id, breedNkkId, xRayYear, gender, breedHdXrayYearGender, litterId, motherId, hdScore));
             }
 
-            DmuPedigreeRecord dmuPedigreeRecord = new DmuPedigreeRecord(id, fatherId, motherId, born, breedNkkId);
-            dmuPedigreeRecord.writeTo(pedigreeWriter);
+            dataset.add(new DmuPedigreeRecord(uuid, id, fatherId, motherId, born, breedNkkId));
 
-            writeUuidMappingRecord(id, uuid, uuidMappingWriter);
-
+            dataset.add(new DmuUuidRecord(id, uuid));
         }
     }
 
@@ -354,22 +314,6 @@ public class DmuHdIndexAlgorithm {
         return null;
     }
 
-
-    private void writeUuidMappingRecord(int id, String uuid, PrintWriter uuidMappingWriter) {
-        final String NEWLINE = "\r\n";
-        uuidMappingWriter.print(id);
-        uuidMappingWriter.print(" ");
-        uuidMappingWriter.print(uuid);
-        uuidMappingWriter.print(NEWLINE);
-    }
-
-    private void writeBreedCodeMappingRecord(PrintWriter breedMappingWriter, String breedName, int breedCode) {
-        final String NEWLINE = "\r\n";
-        breedMappingWriter.print(breedCode);
-        breedMappingWriter.print(" ");
-        breedMappingWriter.print(breedName);
-        breedMappingWriter.print(NEWLINE);
-    }
 
     static class HdYearAndScore {
         final DateTime hdXray;

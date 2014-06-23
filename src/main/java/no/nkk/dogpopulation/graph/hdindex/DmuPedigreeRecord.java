@@ -5,9 +5,11 @@ import java.io.PrintWriter;
 /**
  * @author <a href="mailto:kim.christian.swenson@gmail.com">Kim Christian Swenson</a>
  */
-public class DmuPedigreeRecord {
+public class DmuPedigreeRecord implements DmuWritableRecord {
 
     public static int UNKNOWN = -9999999;
+
+    private final String uuid;
 
     // ID = Unik identifikation af individet (samme som i datafilen)
     private final int id;
@@ -27,7 +29,8 @@ public class DmuPedigreeRecord {
     // Race = Race kode (samme som i datafilen)
     private final int breedCode;
 
-    public DmuPedigreeRecord(int id, int fatherId, int motherId, int birthDate, int breedCode) {
+    public DmuPedigreeRecord(String uuid, int id, int fatherId, int motherId, int birthDate, int breedCode) {
+        this.uuid = uuid;
         this.id = id;
         this.fatherId = fatherId;
         this.motherId = motherId;
@@ -50,6 +53,10 @@ public class DmuPedigreeRecord {
         out.print(NEWLINE);
     }
 
+
+    public String getUuid() {
+        return uuid;
+    }
 
     public int getId() {
         return id;
