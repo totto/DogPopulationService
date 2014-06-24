@@ -8,7 +8,11 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.*;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
@@ -26,6 +30,8 @@ import java.util.concurrent.TimeUnit;
 public class HdIndexResource {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HdIndexResource.class);
+
+    private static final boolean DEFAULT_REGENERATE_LITTER_ID = true;
 
     // all access must be synchronized on the map reference itself
     private final Map<String, CountDownLatch> lockedFiles = new LinkedHashMap<>();
@@ -53,7 +59,7 @@ public class HdIndexResource {
     @GET
     @Path("/{breed}/data")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    public Response getHdIndexDataFile(@PathParam("breed") String breed, @QueryParam("breed") Set<String> breedSet) {
+    public Response getHdIndexDataFile(@PathParam("breed") String breed, @QueryParam("breed") Set<String> breedSet, @QueryParam("regenerateLitterId") Boolean regenerateLitterId) {
         LOGGER.trace("getHdIndexDataFile()");
 
         Map<HdIndexFileType, File> map = mapFiles(breed);
@@ -63,7 +69,7 @@ public class HdIndexResource {
                 return Response.status(Response.Status.BAD_REQUEST).build();
             }
             try {
-                getHdIndexFiles(breedSet, map);
+                getHdIndexFiles(breedSet, map, regenerateLitterId != null ? regenerateLitterId : DEFAULT_REGENERATE_LITTER_ID);
             } catch (UnknownBreedCodeException e) {
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Unknown breed code of race \"" + e.getMessage() + "\"").build();
             }
@@ -79,7 +85,7 @@ public class HdIndexResource {
     @GET
     @Path("/{breed}/pedigree")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    public Response getHdIndexPedigreeFile(@PathParam("breed") String breed, @QueryParam("breed") Set<String> breedSet) {
+    public Response getHdIndexPedigreeFile(@PathParam("breed") String breed, @QueryParam("breed") Set<String> breedSet, @QueryParam("regenerateLitterId") Boolean regenerateLitterId) {
         LOGGER.trace("getHdIndexPedigreeFile()");
 
         Map<HdIndexFileType, File> map = mapFiles(breed);
@@ -89,7 +95,7 @@ public class HdIndexResource {
                 return Response.status(Response.Status.BAD_REQUEST).build();
             }
             try {
-                getHdIndexFiles(breedSet, map);
+                getHdIndexFiles(breedSet, map, regenerateLitterId != null ? regenerateLitterId : DEFAULT_REGENERATE_LITTER_ID);
             } catch (UnknownBreedCodeException e) {
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Unknown breed code of race \"" + e.getMessage() + "\"").build();
             }
@@ -105,9 +111,8 @@ public class HdIndexResource {
     @GET
     @Path("/{breed}/uuidmapping")
     @Produces(MediaType.APPLICATION_OCTET_STREAM)
-    public Response getHdIndexUuidFile(@PathParam("breed") String breed, @QueryParam("breed") Set<String> breedSet) {
+    public Response getHdIndexUuidFile(@PathParam("breed") String breed, @QueryParam("breed") Set<String> breedSet, @QueryParam("regenerateLitterId") Boolean regenerateLitterId) {
         LOGGER.trace("getHdIndexUuidFile()");
-
         Map<HdIndexFileType, File> map = mapFiles(breed);
 
         if (!map.get(HdIndexFileType.UUID_MAPPING).isFile()) {
@@ -115,7 +120,7 @@ public class HdIndexResource {
                 return Response.status(Response.Status.BAD_REQUEST).build();
             }
             try {
-                getHdIndexFiles(breedSet, map);
+                getHdIndexFiles(breedSet, map, regenerateLitterId != null ? regenerateLitterId : DEFAULT_REGENERATE_LITTER_ID);
             } catch (UnknownBreedCodeException e) {
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Unknown breed code of race \"" + e.getMessage() + "\"").build();
             }
@@ -128,7 +133,7 @@ public class HdIndexResource {
     }
 
 
-    private Map<HdIndexFileType, File> getHdIndexFiles(Set<String> breed, Map<HdIndexFileType, File> map) {
+    private Map<HdIndexFileType, File> getHdIndexFiles(Set<String> breed, Map<HdIndexFileType, File> map, boolean regenerateLitterId) {
         CountDownLatch lock = null;
         CountDownLatch existingLock;
         synchronized (lockedFiles) {
@@ -148,7 +153,7 @@ public class HdIndexResource {
             }
         } else {
             // generate file
-            graphQueryService.writeDmuFiles(map.get(HdIndexFileType.DATA), map.get(HdIndexFileType.PEDIGREE), map.get(HdIndexFileType.UUID_MAPPING), map.get(HdIndexFileType.BREED_CODE_MAPPING), map.get(HdIndexFileType.DATA_ERROR_FILE), breed);
+            graphQueryService.writeDmuFiles(map.get(HdIndexFileType.DATA), map.get(HdIndexFileType.PEDIGREE), map.get(HdIndexFileType.UUID_MAPPING), map.get(HdIndexFileType.BREED_CODE_MAPPING), map.get(HdIndexFileType.DATA_ERROR_FILE), breed, regenerateLitterId);
             lock.countDown(); // signal file generation completion
             synchronized (lockedFiles) {
                 lockedFiles.remove(map.get(HdIndexFileType.DATA).getName());

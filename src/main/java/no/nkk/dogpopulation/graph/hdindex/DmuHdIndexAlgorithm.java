@@ -53,9 +53,12 @@ public class DmuHdIndexAlgorithm {
 
     private final DmuDataset dataset = new DmuDataset();
 
-    public DmuHdIndexAlgorithm(GraphDatabaseService graphDb, ExecutionEngine engine, Set<String> breed) {
+    private final boolean regenerateLitterId;
+
+    public DmuHdIndexAlgorithm(GraphDatabaseService graphDb, ExecutionEngine engine, Set<String> breed, boolean regenerateLitterId) {
         this.graphDb = graphDb;
         this.breed = breed;
+        this.regenerateLitterId = regenerateLitterId;
         this.commonTraversals = new CommonTraversals(graphDb);
         this.circularAncestryBreedGroupAlgorithm = new CircularAncestryBreedGroupAlgorithm(graphDb, engine);
         this.circularParentChainAlgorithm = new CircularParentChainAlgorithm(graphDb, engine);
@@ -208,15 +211,22 @@ public class DmuHdIndexAlgorithm {
             }
 
             long litterId = DmuDataRecord.UNKNOWN;
+            if (regenerateLitterId) {
+                if (motherId >= 0) {
+                    litterId = motherId;
+                } else if (fatherId >= 0) {
+                    litterId = fatherId;
+                }
 
-            if (motherId >= 0) {
-                litterId = motherId;
-            } else if (fatherId >= 0) {
-                litterId = fatherId;
-            }
-
-            if (litterId >= 0 && born >= 0) {
-                litterId = 10000 * (litterId % 100000) + ((born / 100) % 10000);
+                if (litterId >= 0 && born >= 0) {
+                    litterId = 10000 * (litterId % 100000) + ((born / 100) % 10000);
+                } else if (dogNode.hasRelationship(DogGraphRelationshipType.IN_LITTER)) {
+                    for (Relationship inLitter : dogNode.getRelationships(Direction.OUTGOING, DogGraphRelationshipType.IN_LITTER)) {
+                        Node litterNode = inLitter.getEndNode();
+                        litterId = (int) litterNode.getId();
+                        break; // use first valid litter-id that can be found
+                    }
+                }
             } else if (dogNode.hasRelationship(DogGraphRelationshipType.IN_LITTER)) {
                 for (Relationship inLitter : dogNode.getRelationships(Direction.OUTGOING, DogGraphRelationshipType.IN_LITTER)) {
                     Node litterNode = inLitter.getEndNode();

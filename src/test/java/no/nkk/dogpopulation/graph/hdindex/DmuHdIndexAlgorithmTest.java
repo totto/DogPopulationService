@@ -61,7 +61,7 @@ public class DmuHdIndexAlgorithmTest extends AbstractGraphTest {
         breedSet.add(breed1);
 
         // when
-        graphQueryService.writeDmuFiles(dataFile, pedigreeFile, uuidMappingFile, breedCodeMappingFile, dataErrorFile, breedSet);
+        graphQueryService.writeDmuFiles(dataFile, pedigreeFile, uuidMappingFile, breedCodeMappingFile, dataErrorFile, breedSet, true);
 
         // then
        Assert.assertTrue(dataFile.isFile());
@@ -91,7 +91,7 @@ public class DmuHdIndexAlgorithmTest extends AbstractGraphTest {
         breedSet.add(breed1);
 
         // when
-        graphQueryService.writeDmuFiles(dataFile, pedigreeFile, uuidMappingFile, breedCodeMappingFile, dataErrorFile, breedSet);
+        graphQueryService.writeDmuFiles(dataFile, pedigreeFile, uuidMappingFile, breedCodeMappingFile, dataErrorFile, breedSet, true);
 
         // then
         Assert.assertTrue(dataFile.isFile());
@@ -118,7 +118,7 @@ public class DmuHdIndexAlgorithmTest extends AbstractGraphTest {
         breedSet.add(breed1);
 
         // when
-        graphQueryService.writeDmuFiles(dataFile, pedigreeFile, uuidMappingFile, breedCodeMappingFile, dataErrorFile, breedSet);
+        graphQueryService.writeDmuFiles(dataFile, pedigreeFile, uuidMappingFile, breedCodeMappingFile, dataErrorFile, breedSet, true);
 
         // then
         Assert.assertTrue(dataFile.isFile());

@@ -28,14 +28,26 @@ import no.nkk.dogpopulation.graph.pedigreecompleteness.PedigreeCompletenessAlgor
 import no.nkk.dogpopulation.importer.dogsearch.DogDetails;
 import org.joda.time.LocalDateTime;
 import org.neo4j.cypher.javacompat.ExecutionEngine;
-import org.neo4j.graphdb.*;
+import org.neo4j.graphdb.Direction;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Path;
+import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.traversal.Evaluators;
 import org.neo4j.graphdb.traversal.Uniqueness;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * All public methods must wrap access to the graph-database within a transaction. Private methods may assume that
@@ -61,9 +73,9 @@ public class GraphQueryService {
     }
 
 
-    public void writeDmuFiles(File dataFile, File pedigreeFile, File uuidMappingFile, File breedCodeMappingFile, File dataErrorFile, Set<String> breed) {
+    public void writeDmuFiles(File dataFile, File pedigreeFile, File uuidMappingFile, File breedCodeMappingFile, File dataErrorFile, Set<String> breed, boolean regenerateLitterId) {
         try (Transaction tx = graphDb.beginTx()) {
-            DmuHdIndexAlgorithm algorithm = new DmuHdIndexAlgorithm(graphDb, engine, breed);
+            DmuHdIndexAlgorithm algorithm = new DmuHdIndexAlgorithm(graphDb, engine, breed, regenerateLitterId);
             algorithm.writeFiles(dataFile, pedigreeFile, uuidMappingFile, breedCodeMappingFile, dataErrorFile);
             tx.success();
         }
