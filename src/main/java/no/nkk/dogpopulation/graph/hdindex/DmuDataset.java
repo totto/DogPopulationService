@@ -39,35 +39,31 @@ public class DmuDataset {
 
     void filterByRelationToDogWithHDxrayImageTaken() {
         Set<Long> includeFilter = new HashSet<>();
-        for (Map.Entry<Long, DmuPedigreeRecord> e : pedigreeRecords.entrySet()) {
-            Set<Long> pedigree = new HashSet<>();
-            if (includePedigreeIfRelatedToDogWithXray(pedigree, e.getValue())) {
-                includeFilter.addAll(pedigree);
-            }
+        for (Long key: dataRecords.keySet()) {
+            DmuPedigreeRecord pedigreeRecord = pedigreeRecords.get(key);
+            addPedigree(includeFilter, pedigreeRecord);
         }
         filterPedigreeRecords(includeFilter);
     }
 
-    private boolean includePedigreeIfRelatedToDogWithXray(Set<Long> pedigree, DmuPedigreeRecord dmuPedigreeRecord) {
-        pedigree.add(dmuPedigreeRecord.getId());
-        boolean include = false;
-        if (dataRecords.containsKey(dmuPedigreeRecord.getId())) {
-            include = true;
+    private void addPedigree(Set<Long> pedigree, DmuPedigreeRecord dmuPedigreeRecord) {
+        if (pedigree.contains(dmuPedigreeRecord.getId())) {
+            return;
         }
-        include |= includeParent(pedigree, dmuPedigreeRecord.getFatherId());
-        include |= includeParent(pedigree, dmuPedigreeRecord.getMotherId());
-        return include;
+        pedigree.add(dmuPedigreeRecord.getId());
+        includeParent(pedigree, dmuPedigreeRecord.getFatherId());
+        includeParent(pedigree, dmuPedigreeRecord.getMotherId());
     }
 
-    private boolean includeParent(Set<Long> pedigree, long parentId) {
+    private void includeParent(Set<Long> pedigree, long parentId) {
         if (parentId < 0) {
-            return false;
+            return;
         }
         DmuPedigreeRecord parentRecord = pedigreeRecords.get(parentId);
         if (parentRecord == null) {
-            return false;
+            return;
         }
-        return includePedigreeIfRelatedToDogWithXray(pedigree, parentRecord);
+        addPedigree(pedigree, parentRecord);
     }
 
     private void filterPedigreeRecords(Set<Long> includeFilter) {
