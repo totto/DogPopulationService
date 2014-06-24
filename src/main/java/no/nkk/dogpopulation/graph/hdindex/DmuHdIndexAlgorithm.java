@@ -248,7 +248,18 @@ public class DmuHdIndexAlgorithm {
 
             dataset.add(new DmuPedigreeRecord(id, fatherId, motherId, born, breedNkkId));
 
-            dataset.add(new DmuUuidRecord(id, uuid));
+            String regno = null;
+            String chip = null;
+            for (DogId dogId : dogDetails.getIds()) {
+                if ("RegNo".equals(dogId.getType())) {
+                    regno = dogId.getValue();
+                }
+                if ("Chip".equals(dogId.getType())) {
+                    chip = dogId.getValue();
+                }
+            }
+
+            dataset.add(new DmuUuidRecord(id, uuid, regno, chip));
         }
     }
 
