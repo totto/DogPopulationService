@@ -1,7 +1,13 @@
 package no.nkk.dogpopulation.graph.hdindex;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import no.nkk.dogpopulation.graph.*;
+import no.nkk.dogpopulation.graph.CommonTraversals;
+import no.nkk.dogpopulation.graph.DogGender;
+import no.nkk.dogpopulation.graph.DogGraphConstants;
+import no.nkk.dogpopulation.graph.DogGraphLabel;
+import no.nkk.dogpopulation.graph.DogGraphRelationshipType;
+import no.nkk.dogpopulation.graph.GraphUtils;
+import no.nkk.dogpopulation.graph.ParentRole;
 import no.nkk.dogpopulation.graph.dataerror.circularparentchain.CircularAncestryBreedGroupAlgorithm;
 import no.nkk.dogpopulation.graph.dataerror.circularparentchain.CircularParentChainAlgorithm;
 import no.nkk.dogpopulation.graph.dataerror.circularparentchain.CircularRecord;
@@ -12,7 +18,11 @@ import no.nkk.dogpopulation.importer.dogsearch.DogHealthHD;
 import no.nkk.dogpopulation.importer.dogsearch.DogId;
 import org.joda.time.DateTime;
 import org.neo4j.cypher.javacompat.ExecutionEngine;
-import org.neo4j.graphdb.*;
+import org.neo4j.graphdb.Direction;
+import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Path;
+import org.neo4j.graphdb.Relationship;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,6 +76,7 @@ public class DmuHdIndexAlgorithm {
         for (Path breedSynonymPath : commonTraversals.traverseAllBreedSynonymNodesThatAreMembersOfTheSameBreedGroupAsSynonymsInSet(breed)) {
             buildDataset(visitedNodes, breedSynonymPath, dataErrorDogNodes);
         }
+        dataset.filterByRelationToDogWithHDxrayImageTaken();
         return dataset;
     }
 
