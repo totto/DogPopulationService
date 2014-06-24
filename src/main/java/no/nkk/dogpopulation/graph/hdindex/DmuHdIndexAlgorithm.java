@@ -186,15 +186,6 @@ public class DmuHdIndexAlgorithm {
             }
 
 
-            int litterId = DmuDataRecord.UNKNOWN;
-            if (dogNode.hasRelationship(DogGraphRelationshipType.IN_LITTER)) {
-                for (Relationship inLitter : dogNode.getRelationships(Direction.OUTGOING, DogGraphRelationshipType.IN_LITTER)) {
-                    Node litterNode = inLitter.getEndNode();
-                    litterId = (int) litterNode.getId();
-                    break; // use first valid litter-id that can be found
-                }
-            }
-
             long motherId = -breedNkkId;
             long fatherId = -breedNkkId;
             if (dogNode.hasRelationship(DogGraphRelationshipType.HAS_PARENT)) {
@@ -216,6 +207,24 @@ public class DmuHdIndexAlgorithm {
                 }
             }
 
+            long litterId = DmuDataRecord.UNKNOWN;
+
+            if (motherId >= 0) {
+                litterId = motherId;
+            } else if (fatherId >= 0) {
+                litterId = fatherId;
+            }
+
+            if (litterId >= 0 && born >= 0) {
+                litterId = 10000 * (litterId % 100000) + ((born / 100) % 10000);
+            } else if (dogNode.hasRelationship(DogGraphRelationshipType.IN_LITTER)) {
+                for (Relationship inLitter : dogNode.getRelationships(Direction.OUTGOING, DogGraphRelationshipType.IN_LITTER)) {
+                    Node litterNode = inLitter.getEndNode();
+                    litterId = (int) litterNode.getId();
+                    break; // use first valid litter-id that can be found
+                }
+            }
+
             long id = dogNode.getId();
 
             HdYearAndScore hdYearAndScore = getHdScore(dogDetails, uuid);
@@ -224,7 +233,7 @@ public class DmuHdIndexAlgorithm {
                 int xRayYear = hdYearAndScore.hdXray.getYear();
                 int hdScore = hdYearAndScore.hdScore;
                 int breedHdXrayYearGender = (100000 * breedNkkId) + (10 * xRayYear) + gender;
-                dataset.add(new DmuDataRecord(id, breedNkkId, xRayYear, gender, breedHdXrayYearGender, litterId, motherId, hdScore));
+                dataset.add(new DmuDataRecord(id, breedNkkId, xRayYear, gender, breedHdXrayYearGender, (int) litterId, motherId, hdScore));
             }
 
             dataset.add(new DmuPedigreeRecord(id, fatherId, motherId, born, breedNkkId));
