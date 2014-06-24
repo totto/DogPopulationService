@@ -72,6 +72,9 @@ public class HdIndexResource {
                 getHdIndexFiles(breedSet, map, regenerateLitterId != null ? regenerateLitterId : DEFAULT_REGENERATE_LITTER_ID);
             } catch (UnknownBreedCodeException e) {
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Unknown breed code of race \"" + e.getMessage() + "\"").build();
+            } catch (RuntimeException e) {
+                LOGGER.error("", e);
+                throw e;
             }
         }
 
@@ -98,6 +101,9 @@ public class HdIndexResource {
                 getHdIndexFiles(breedSet, map, regenerateLitterId != null ? regenerateLitterId : DEFAULT_REGENERATE_LITTER_ID);
             } catch (UnknownBreedCodeException e) {
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Unknown breed code of race \"" + e.getMessage() + "\"").build();
+            } catch (RuntimeException e) {
+                LOGGER.error("", e);
+                throw e;
             }
         }
 
@@ -123,6 +129,9 @@ public class HdIndexResource {
                 getHdIndexFiles(breedSet, map, regenerateLitterId != null ? regenerateLitterId : DEFAULT_REGENERATE_LITTER_ID);
             } catch (UnknownBreedCodeException e) {
                 return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity("Unknown breed code of race \"" + e.getMessage() + "\"").build();
+            } catch (RuntimeException e) {
+                LOGGER.error("", e);
+                throw e;
             }
         }
 
