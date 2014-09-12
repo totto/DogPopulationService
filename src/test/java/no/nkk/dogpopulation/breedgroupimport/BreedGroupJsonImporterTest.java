@@ -29,7 +29,7 @@ public class BreedGroupJsonImporterTest extends AbstractGraphTest {
 
     @Test(groups = "fast")
     public void thatJsonCanBeImportedIntoEmptyDatabase() throws IOException {
-        //URL url = new URL("http://dogid.nkk.no/ras/Raser.json");
+        //URL url = new URL("https://raw.githubusercontent.com/NKK-IT-Utvikling/Breedmapping/master/Raser.json");
          URL url = new File("src/test/resources/breedimport/Raser.json").toURI().toURL();
         BreedGroupJsonImporter importer = new BreedGroupJsonImporter(url, graphDb);
         importer.importBreedGroup();
