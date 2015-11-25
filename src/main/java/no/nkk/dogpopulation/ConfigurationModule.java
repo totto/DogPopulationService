@@ -21,7 +21,7 @@ public class ConfigurationModule extends AbstractModule {
     protected void configure() {
         bind(String.class).annotatedWith(Names.named("hdindex-folder")).toInstance("hdindex");
 
-        bind(String.class).annotatedWith(Names.named("dogServiceUrl")).toInstance("http://dogsearch.nkk.no/dogservice/dogs");
+        bind(String.class).annotatedWith(Names.named("dogServiceUrl")).toInstance("http://10.241.77.17:8983/solr/dogs");
         bind(URL.class).annotatedWith(Names.named("breedJsonUrl")).toInstance(toUrl("https://raw.githubusercontent.com/NKK-IT-Utvikling/Breedmapping/master/Raser.json"));
         bind(String.class).annotatedWith(Names.named("neo4jFolder")).toInstance("data/dogdb");
         bind(int.class).annotatedWith(Names.named("httpPort")).toInstance(8051);

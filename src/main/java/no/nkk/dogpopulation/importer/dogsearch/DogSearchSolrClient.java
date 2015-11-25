@@ -5,10 +5,10 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import no.nkk.dogpopulation.concurrent.ExecutorManager;
+import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.HttpSolrServer;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.SolrDocument;
@@ -34,7 +34,7 @@ public class DogSearchSolrClient implements DogSearchClient {
     private static final Logger LOGGER = LoggerFactory.getLogger(DogSearchSolrClient.class);
     private static final Logger DOGSEARCH = LoggerFactory.getLogger("dogsearch");
 
-    private final SolrServer solrServer;
+    private final SolrClient solrServer;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     private final Random rnd = new Random();
@@ -46,7 +46,7 @@ public class DogSearchSolrClient implements DogSearchClient {
     @Inject
     public DogSearchSolrClient(@Named(ExecutorManager.SOLR_MAP_KEY) ExecutorService executorService, @Named("dogServiceUrl") String dogServiceUrl) {
         this.executorService = executorService;
-        solrServer = new HttpSolrServer(dogServiceUrl);
+        solrServer = new HttpSolrClient(dogServiceUrl);
     }
 
     public Set<String> listIdsForBreed(final String breed, final LocalDateTime from, final LocalDateTime to) {
@@ -168,7 +168,11 @@ public class DogSearchSolrClient implements DogSearchClient {
         final int maxWaitTimeMs = 300 * 1000; // at most 5 minutes between retries
         for (int i=1; true; i++) {
             try {
-                return solrServer.query(solrQuery);
+                try {
+                    return solrServer.query(solrQuery);
+                } catch (IOException e) {
+                    throw new RuntimeException("Error solr query", e);
+                }
             } catch (SolrServerException e) {
                 if (i >= maxRetries) {
                     throw new RuntimeException("Failed again after retrying " + i + " times.", e);

@@ -10,12 +10,6 @@
     <name>DogPopulationService</name>
     <url />
 
-    <parent>
-        <groupId>no.cantara.emi</groupId>
-        <artifactId>parent</artifactId>
-        <version>2</version>
-    </parent>
-
     <organization>
         <name>NKK</name>
         <url>http://www.nkk.no/</url>
@@ -35,19 +29,11 @@
     </developers>
 
     <properties>
-        <slf4j.version>1.7.6</slf4j.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <slf4j.version>1.7.13</slf4j.version>
         <jetty.version>9.1.1.v20140108</jetty.version>
-        <jersey.version>2.5.1</jersey.version>
+        <jersey.version>2.22.1</jersey.version>
     </properties>
-
-    <repositories>
-        <!-- Needed for parent -->
-        <repository>
-            <id>cantara-releases</id>
-            <name>Cantara Release Repository</name>
-            <url>http://mvnrepo.cantara.no/content/repositories/releases/</url>
-        </repository>
-    </repositories>
 
     <distributionManagement>
         <repository>
@@ -63,9 +49,7 @@
     </distributionManagement>
 
     <scm>
-        <developerConnection>scm:git:ssh://git@github.com/NKK-IT-Utvikling/DogPopulationService.git</developerConnection>
-        <connection>scm:git:https://github.com/NKK-IT-Utvikling/DogPopulationService.git</connection>
-        <url>https://github.com:NKK-IT-Utvikling/DogPopulationService.git</url>
+        <connection>scm:git:git@github.com:NKK-IT-Utvikling/DogPopulationService.git</connection>
         <tag>HEAD</tag>
     </scm>
 
@@ -86,7 +70,30 @@
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.3</version>
+                <configuration>
+                    <source>1.7</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.5.2</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>2.7</version>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
+                <version>2.4.2</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -109,8 +116,68 @@
                 </executions>
             </plugin>
             <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>appassembler-maven-plugin</artifactId>
+                <version>1.5</version>
+                <configuration>
+                    <daemons>
+                        <daemon>
+                            <id>dogpopulationservice</id>
+                            <mainClass>no.nkk.dogpopulation.Main</mainClass>
+                            <platforms>
+                                <platform>jsw</platform>
+                            </platforms>
+                            <jvmSettings>
+                                <initialMemorySize>1024</initialMemorySize>
+                                <maxMemorySize>2048</maxMemorySize>
+                            </jvmSettings>
+                            <generatorConfigurations>
+                                <generatorConfiguration>
+                                    <generator>jsw</generator>
+                                    <includes>
+                                        <include>windows-x86-32</include>
+                                        <include>windows-x86-64</include>
+                                    </includes>
+                                </generatorConfiguration>
+                            </generatorConfigurations>
+                        </daemon>
+                    </daemons>
+                    <repoPath>lib</repoPath>
+                    <repositoryLayout>flat</repositoryLayout>
+                    <useWildcardClassPath>true</useWildcardClassPath>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>generate-jsw-scripts</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>generate-daemons</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.3</version>
+                <configuration>
+                    <descriptors>
+                        <descriptor>src/main/assembly/jsw.xml</descriptor>
+                    </descriptors>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
+                <version>2.6</version>
                 <configuration>
                     <archive>
                         <manifestEntries>
@@ -122,6 +189,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.19</version>
                 <configuration>
                     <useSystemClassLoader>true</useSystemClassLoader>
                     <useManifestOnlyJar>false</useManifestOnlyJar>
@@ -215,13 +283,13 @@
         <dependency>
             <groupId>org.neo4j</groupId>
             <artifactId>neo4j</artifactId>
-            <version>2.0.1</version>
+            <version>2.3.1</version>
         </dependency>
 
         <dependency>
             <groupId>org.apache.solr</groupId>
             <artifactId>solr-solrj</artifactId>
-            <version>4.6.1</version>
+            <version>5.3.1</version>
         </dependency>
 
         <!-- Json encode/decode support -->
@@ -290,7 +358,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>16.0.1</version>
+            <version>18.0</version>
         </dependency>
 
         <dependency>
